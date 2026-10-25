@@ -524,6 +524,7 @@ td:last-child { text-align: right; font-weight: 600; }
     <div class="dsep"></div>
     <button class="dk slot" id="ask-dock" data-tip="Ask the city" title="Ask the city"><svg class="ic" viewBox="0 0 24 24" data-ic="chat"></svg></button>
     <button class="dk slot" id="pol-dock" data-tip="Policies" title="Policies"><svg class="ic" viewBox="0 0 24 24" data-ic="book"></svg></button>
+    <button class="dk slot" id="live-dock" data-tip="Go live: edit one plan together" title="Go live: edit one plan together" hidden><svg class="ic" viewBox="0 0 24 24" data-ic="live"></svg></button>
   </nav>
   <div id="toolhint" hidden></div>
   <div id="infopop" class="glass" hidden>
@@ -569,6 +570,7 @@ td:last-child { text-align: right; font-weight: 600; }
 <script>/*__HP_BACKEND__*/</script>
 <script>/*__HP_LIB:hp-ask__*/</script>
 <script>/*__HP_LIB:hp-policy__*/</script>
+<script>/*__HP_LIB:hp-live__*/</script>
 <script>/*__HP_CONTEXT__*/</script>
 <script>/*__HP_BUILDINGS__*/</script>
 <script type="importmap">
@@ -2572,16 +2574,18 @@ const HOST = {
   toast: (m) => toast(m),
   showCursors: (list) => { const seen = new Set(); for (const c of list || []) { seen.add(c.id); let L = cursorLabels.get(c.id); if (!L) { L = addLabel('', 'cursor', c.x, 2, c.z, { w: 60 }); cursorLabels.set(c.id, L); } L.el.innerHTML = `<i style="background:${c.color}"></i><span style="background:${c.color}">${String(c.name || 'Guest').replace(/</g, '&lt;')}</span>`; L.p.set(c.x, 2, c.z); L.hide = false; } for (const [id, L] of cursorLabels) if (!seen.has(id)) L.hide = true; },
   loadLivePlan: async ({ planId, edits, result }) => { let r = result && result.trips ? result : null; if (!r && planId) { try { r = await B.getScenario(planId); } catch (e) { console.warn(e); } } restoreEdits(edits || {}); switchView('plan'); if (r && r.trips && ENG) { engineCache.set(editsKeyOf(currentEdits()), r); fillEngine(ENG.plan, r); useWorld(true); afterSettle('Live plan'); } else settle('Live plan'); },
-  onLiveChange: () => {},
-  onLiveAvailable: () => {},
+  onLiveChange: (on) => { $('#live-dock').classList.toggle('on', !!on); },
+  onLiveAvailable: (ok) => { $('#live-dock').hidden = !ok; },
 };
 window.HPHost = HOST;
 const MODS = {}; window.__mods = MODS;
 try { if (window.HPAsk) MODS.ask = window.HPAsk.mount(HOST); } catch (e) { console.warn('ask module', e); }
 try { if (window.HPPolicy) MODS.policy = window.HPPolicy.mount(HOST); } catch (e) { console.warn('policy module', e); }
+try { if (window.HPLive) { MODS.live = window.HPLive.mount(HOST, { pill: false, liveUrl: './live.mjs' }); LIVE = MODS.live; Promise.resolve(LIVE.ready).then(ok => { $('#live-dock').hidden = !ok; }).catch(() => {}); } } catch (e) { console.warn('live module', e); }
 function openModule(k) { for (const [n, m] of Object.entries(MODS)) if (n !== k && n !== 'live') m.close?.(); toggleAI(false); closeInspector(); MODS[k]?.toggle?.(); setTimeout(() => { $('#ask-dock').classList.toggle('on', !!MODS.ask && !MODS.ask.el?.classList.contains('hpx-closed')); $('#pol-dock').classList.toggle('on', !!MODS.policy && !MODS.policy.el?.classList.contains('hpx-closed')); }, 30); }
 $('#ask-dock').onclick = () => MODS.ask ? openModule('ask') : toast('Ask isn’t available in this build.');
 $('#pol-dock').onclick = () => MODS.policy ? openModule('policy') : toast('Policies aren’t available in this build.');
+$('#live-dock').onclick = () => MODS.live ? MODS.live.toggle() : toast('Live needs the shared session: start with ./run.sh --live');
 { let lastCur = 0; cv.addEventListener('pointermove', (ev) => { if (!LIVE || !LIVE.isLive || !LIVE.isLive()) return; const n = performance.now(); if (n - lastCur < 120) return; lastCur = n; const g = groundAt(ev); if (g) LIVE.cursor(g.x, g.z); }); }
 window.__bw = { MODS, HOST, settle, applyEdits, resetPlan, currentEdits, setApi: (u) => { ENGINE_API = u; }, engineCache, B, ENG, TOY, useWorld, loadHeroView, plannerOptions, S, V, ui, EDGES, HERO_EDGES, INLETS, BLOCK_OF, NBLOCK, setInfo, flyTo, jumpTo, setCompare, runDemo, camera, controls, scene, renderer, composer, water, settle, togglePed, setTool, askAI, openPitch, grade, followPerson, inspectBlock, BLD, CAL, Scenario, baseCarRoutes, valueOf, run: (n = 30) => { for (let i = 0; i < n; i++) { last -= 33; tick(performance.now()); } } };
 </script>

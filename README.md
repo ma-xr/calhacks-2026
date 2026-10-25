@@ -29,6 +29,20 @@ Copy `.env.example` to `.env` and add:
 
 Without keys, those panels say so, and everything else works.
 
+### Collaborate: one shared plan
+```bash
+./run.sh --live
+```
+This also starts the shared session: SpacetimeDB on `:3000`, which needs the [SpacetimeDB CLI](https://spacetimedb.com/install) and Node 18+. It then prints a link like `http://192.168.x.x:8765/variants/a1-skyline-clean/index.html`.
+
+Collaborators on the same network open that link and press **Go live** in the dock. Everyone then edits the same plan:
+- car-free streets and block edits sync in about 3 s, together with the engine's result
+- each person's name and cursor appear on the map
+- an activity feed shows who changed what
+- Reset clears the plan for everyone
+
+If macOS asks whether Python, spacetime or node may accept incoming connections, allow it. The engine call from SpacetimeDB goes through a small proxy on the host's global IPv6 address. If the host has no IPv6, edits still sync but plans won't recompute; see `backend/live/README.md`.
+
 ### Offline / static
 `mockup/variants/a1-skyline-clean/index.html?snapshot` replays frozen engine results with no engine running. Serve `mockup/` with any static server. Published demo: https://claude.ai/artifact/PH5gp1pVKFvpRW7kvmvfm1
 
@@ -39,6 +53,7 @@ Without keys, those panels say so, and everything else works.
 - **Compare:** swipe between today and your plan.
 - **Policies:** congestion charge on any entry road, parking price, reopening Market St (pre-2020).
 - **Ask the city:** questions answered from the simulation, with the map flying to what's mentioned.
+- **Go live:** edit one plan together with others on your network (`./run.sh --live`).
 - **About the numbers:** every parameter with its source, marked as data, literature or assumed.
 
 ## How it works
@@ -49,7 +64,7 @@ Without keys, those panels say so, and everything else works.
 | API contract | `docs/contracts/sim-api.md` | Every endpoint and field |
 | Research and validation | `research/` | Literature, case studies (Market St, JFK Promenade, superblocks…), the parameter table with sources, and the model-vs-reality validation |
 | Web app | `mockup/variants/a1-skyline-clean/` | three.js. `template.html` is the source; `scripts/build_mockup.py` builds `index.html` |
-| Shared frontend libraries | `mockup/lib/` | `hp-backend.js` (engine connector), `hp-context.js` (faded city around the map), `hp-buildings.js` (recognizable SF buildings), `hp-ask.js` / `hp-policy.js` (panels), `hp-live.js` (optional multiplayer, not mounted) |
+| Shared frontend libraries | `mockup/lib/` | `hp-backend.js` (engine connector), `hp-context.js` (faded city around the map), `hp-buildings.js` (recognizable SF buildings), `hp-ask.js` / `hp-policy.js` (panels), `hp-live.js` (Go live: shared plan via SpacetimeDB) |
 | World data | `data/processed/` | `world.json` (roads, buildings, POIs, gateways), `context.json` (surrounding city), `buildings_detail.json` (building parts and landmarks). All built from OSM by `scripts/build_*.py` |
 | Engine inputs | `data/backend/` | Cleaned LODES, ACS, land use, businesses, traffic counts, BART |
 | Offline snapshot | `mockup/backend-snapshot/` | Frozen engine results. Refresh with `scripts/snapshot_backend.py` while the engine runs |
