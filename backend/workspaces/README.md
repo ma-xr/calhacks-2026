@@ -27,7 +27,7 @@ Measured locally: a fresh plan takes about **3 s** from `set_pedestrian` to the 
 
 ```bash
 spacetime start
-# second terminal, from backend/live/
+# second terminal, from backend/workspaces/
 npm install
 npm run publish:local      # spacetime publish commonground --server local --yes
 npm run e2e                # optional: two people, invite, shared edit, shared result, viewer refused

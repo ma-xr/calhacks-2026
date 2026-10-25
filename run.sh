@@ -40,6 +40,9 @@ fi
 # 3 · Build the web app (inlines the world, the engine connector and the offline snapshot)
 say "Building the web app…"
 "$PY" scripts/build_mockup.py mockup/variants/a1-skyline-clean/template.html mockup/variants/a1-skyline-clean/index.html >/dev/null
+# The website (mockup/site/) loads its SpacetimeDB client from next to itself
+[[ -f mockup/site/shared/city.json ]] || "$PY" scripts/build_site_map.py >/dev/null
+cp backend/workspaces/client/dist/live.mjs mockup/site/live.mjs
 
 # 4 · Start the engine
 PIDS=()

@@ -333,7 +333,7 @@ function render(core) {
   const v = core.view();
   paint($('#top'), top(v));
   let html;
-  if (v.offline) html = `<div class="banner">Can’t reach the live server. Run <code>spacetime start</code> and publish the module (see <code>backend/live/README.md</code>), then reload.</div>` + home(v);
+  if (v.offline) html = `<div class="banner">Can’t reach the live server. Run <code>spacetime start</code> and publish the module (see <code>backend/workspaces/README.md</code>), then reload.</div>` + home(v);
   else if (v.connecting) html = `<div class="skel"><div class="spin"></div></div>`;
   else {
     const r = v.route;

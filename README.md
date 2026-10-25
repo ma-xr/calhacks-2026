@@ -23,7 +23,7 @@ On the first run, `run.sh` creates `backend/.venv` and installs the engine's dep
 Stop both with **Ctrl-C**. Logs are in `.run/`. Change the ports with `HP_PORT=… WEB_PORT=… ./run.sh`.
 
 ### The CommonGround website (workspaces)
-`mockup/site/` is the team website: a home page, workspaces, invite links with admin, editor and viewer roles, and plans that move through a Draft → In review → Approved → Archived board. It runs on its own SpacetimeDB module (`backend/workspaces/`, database `commonground`), separate from the 3D app and its Go live. On Windows, `.un.ps1` starts everything and opens http://localhost:8765/site/. Elsewhere: run `./run.sh`, then `spacetime start` and `cd backend/workspaces && npm install && npm run publish:local`. To demo collaboration on one computer, use **Add another person** in the account menu.
+`mockup/site/` is the team website: a home page, workspaces, invite links with admin, editor and viewer roles, and plans that move through a Draft → In review → Approved → Archived board. It runs on its own SpacetimeDB module (`backend/workspaces/`, database `commonground`), separate from the 3D app and its Go live. On Windows, `.\run.ps1` starts everything and opens http://localhost:8765/site/. Elsewhere: run `./run.sh`, then `spacetime start` and `cd backend/workspaces && npm install && npm run publish:local`. To demo collaboration on one computer, use **Add another person** in the account menu.
 
 ### Optional: AI features
 Copy `.env.example` to `.env` and add:
