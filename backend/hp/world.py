@@ -83,6 +83,7 @@ class World:
         self._pois(W["pois"])
         self._inlets(W["stations"], W["gateways"])
         self._blocks()
+        self._ramps()
 
     # ── roads ──
     def _edges(self, E):
@@ -392,6 +393,45 @@ class World:
                 ids[r] = len(ids)
             self.block_of[i] = ids[r]
         self.n_blocks = len(ids)
+
+    # ── freeway ramps (motorway_link), closable as a whole ──
+    def _ramps(self):
+        """Group motorway_link edges that share nodes into ramps. Each gets a name from the surface streets it meets,
+        and is an on-ramp (street → freeway), off-ramp (freeway → street) or connector (freeway → freeway)."""
+        link = [i for i in range(self.E) if self.edge_cls[i] == "motorway_link"]
+        par = {}
+
+        def find(x):
+            while par.setdefault(x, x) != x:
+                par[x] = par[par[x]]
+                x = par[x]
+            return x
+        for e in link:
+            par[find(int(self.edge_a[e]))] = find(int(self.edge_b[e]))
+        groups = {}
+        for e in link:
+            groups.setdefault(find(int(self.edge_a[e])), []).append(e)
+        surface = {}  # node -> surface street names meeting it
+        for i in range(self.E):
+            if self.edge_car[i] and not self.edge_hw[i]:
+                for n in (int(self.edge_a[i]), int(self.edge_b[i])):
+                    surface.setdefault(n, set()).add(self.edge_name[i])
+        arcs = [k for k in range(len(self.car_arc_edge)) if self.edge_cls[self.car_arc_edge[k]] == "motorway_link"]
+        self.ramps = []
+        for es in sorted(groups.values(), key=lambda es: min(es)):
+            ess = set(es)
+            mine = [k for k in arcs if self.car_arc_edge[k] in ess]
+            on = any(int(self.car_arc_from[k]) in surface for k in mine)
+            off = any(int(self.car_arc_to[k]) in surface for k in mine)
+            streets = sorted({nm for k in mine for n in (int(self.car_arc_from[k]), int(self.car_arc_to[k])) for nm in surface.get(n, ()) if nm})
+            kind = "on" if on and not off else "off" if off and not on else "connector" if not (on or off) else "ramps"
+            label = {"on": "on-ramp", "off": "off-ramp", "connector": "freeway connector", "ramps": "ramps"}[kind]
+            where = " / ".join(_short(n) for n in streets[:2])
+            mid = np.mean([self.edge_mid[e] for e in es], 0)
+            self.ramps.append({"id": len(self.ramps), "name": f"{where} {label}" if where else label.capitalize(), "kind": kind,
+                               "edges": sorted(int(e) for e in es), "x": float(mid[0]), "z": float(mid[1]),
+                               "inside": bool(self.in_box(*mid)), "streets": streets})
+        self.ramp_of = {e: r["id"] for r in self.ramps for e in r["edges"]}
 
     def edges_named(self, name):
         return [i for i, n in enumerate(self.edge_name) if n == name]

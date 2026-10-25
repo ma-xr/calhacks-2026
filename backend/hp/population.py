@@ -47,6 +47,8 @@ def zone_template(zone, floor_m2, P):
     off_m2 = P["office_sqft_per_job"] * SQM_PER_SQFT
     ret_m2 = P["retail_sqft_per_job"] * SQM_PER_SQFT
     pph = P["sf_persons_per_household"]
+    if zone == "park":  # open space: the building is gone
+        return 0.0, 0.0, 0.0
     if zone == "office":
         return floor_m2 * .92 / off_m2, floor_m2 * .08 / ret_m2, 0.0
     if zone == "retail":

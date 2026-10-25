@@ -14,11 +14,16 @@ from .population import (MODES, REGIONS, RESIDENT, THROUGH, TIERS, VISITOR, WORK
                          PopulationBuilder, agent_name, edited_capacity, inlet_capacity, inlet_penalty_s, through_eligible)
 
 CAR, TRANSIT, WALK, BIKE = 0, 1, 2, 3
-CAT_LUNCH = {"restaurant": 1.3, "fast_food": 1.1, "cafe": 0.8, "bar": 0.2, "shop": 0.0}
+# "park" exists only as plan-made POIs (a building turned into a park or plaza), so these weights never touch the baseline.
+CAT_LUNCH = {"restaurant": 1.3, "fast_food": 1.1, "cafe": 0.8, "bar": 0.2, "shop": 0.0, "park": 0.4}
 CAT_COFFEE = {"cafe": 1.0}
 CAT_ERRAND = {"shop": 1.0, "cafe": 0.3, "fast_food": 0.2}
-CAT_EVENING = {"restaurant": 1.0, "bar": 1.1, "cafe": 0.15}
-CAT_VISIT = {"shop": 1.0, "restaurant": 0.5, "cafe": 0.4, "fast_food": 0.3, "bar": 0.1}
+CAT_EVENING = {"restaurant": 1.0, "bar": 1.1, "cafe": 0.15, "park": 0.1}
+CAT_VISIT = {"shop": 1.0, "restaurant": 0.5, "cafe": 0.4, "fast_food": 0.3, "bar": 0.1, "park": 0.3}
+TREATMENTS = ("slow", "bike_lane", "road_diet")
+SHOP_TYPES = {"cafe": "cafe", "restaurant": "restaurant", "bar": "bar", "fast_food": "fast_food", "shop": "shop", "grocery": "shop"}
+SHOP_NAMES = {"cafe": "New café", "restaurant": "New restaurant", "bar": "New bar", "fast_food": "New quick bite", "shop": "New shop",
+              "grocery": "New grocery"}
 PURPOSE_SEED = {"coffee_am": 8, "lunch": 1, "coffee": 2, "errand": 3, "evening": 4, "visit": 5, "visit2": 6, "visit3": 7}
 CAR_OCCUPANCY = 1.12  # persons per commuter car (drive alone + carpool mix)
 MAX_SAMPLE_TRIPS = 4000
@@ -42,10 +47,24 @@ def edits_key(edits):
     norm = {"pedestrianized": sorted(int(e) for e in edits.get("pedestrianized", [])),
             "reopened": sorted(int(e) for e in edits.get("reopened", [])),
             "reopen_mode": edits.get("reopen_mode") if edits.get("reopen_mode") in ("pre2020",) else "",
-            "blocks": {str(int(k)): {"scale": round(float(v.get("scale", 1)), 3), "zone": v.get("zone") or ""} for k, v in sorted(edits.get("blocks", {}).items(), key=lambda kv: int(kv[0]))},
+            "blocks": {str(int(k)): {"scale": round(float(v.get("scale", 1)), 3), "zone": v.get("zone") or "",
+                                     **({"shops": v["shops"]} if v.get("shops") in SHOP_TYPES else {})} for k, v in sorted(edits.get("blocks", {}).items(), key=lambda kv: int(kv[0]))},
             "policies": sorted([{"kind": p["kind"], "target": p.get("target") or "", "amount": round(float(p.get("amount", 0)), 2),
                                    **({"params": {k: p["params"][k] for k in sorted(p["params"])}} if p.get("params") else {})} for p in edits.get("policies", [])], key=lambda p: (p["kind"], p["target"]))}
+    # Newer edit kinds join the key only when used, so every older plan keeps its id (narrative caches and snapshots key on it).
+    st = {str(int(k)): v for k, v in (edits.get("street_treatments") or {}).items() if v in TREATMENTS}
+    if st:
+        norm["street_treatments"] = dict(sorted(st.items(), key=lambda kv: int(kv[0])))
+    cr = sorted({int(e) for e in edits.get("closed_roads", []) or []})
+    if cr:
+        norm["closed_roads"] = cr
     return norm, hashlib.sha1(json.dumps(norm, sort_keys=True).encode()).hexdigest()[:12]
+
+
+def is_noop(norm):
+    """True when normalized edits change nothing, i.e. the scenario is the baseline."""
+    return not (norm["pedestrianized"] or norm["blocks"] or norm["policies"] or norm["reopened"]
+                or norm.get("street_treatments") or norm.get("closed_roads"))
 
 
 class Engine:
@@ -119,16 +138,45 @@ class Engine:
         return sorted(i for i in mk if w.edge_mid[i][0] < x_main)
 
     def closed_for(self, norm):
+        """Edges closed to cars: car-free streets plus closed freeway ramps (see closed_ramps)."""
         w = self.w
         closed = set(self.base_closed) - set(norm.get("reopened", []))
         closed |= {e for e in norm["pedestrianized"] if 0 <= e < w.E and w.edge_car[e] and not w.edge_hw[e]}
-        return closed
+        return closed | self.closed_ramps(norm)
+
+    def closed_ramps(self, norm):
+        """Freeway ramps (motorway_link) closed by the plan. Closed to cars only: nobody walks on a ramp."""
+        w = self.w
+        return {e for e in norm.get("closed_roads", []) if 0 <= e < w.E and w.edge_cls[e] == "motorway_link"}
+
+    def treatments(self, norm):
+        """{edge: kind} for slow streets, bike lanes and road diets on streets that are open to cars."""
+        w, closed = self.w, self.closed_for(norm)
+        return {int(e): k for e, k in (norm.get("street_treatments") or {}).items()
+                if 0 <= int(e) < w.E and w.edge_car[int(e)] and not w.edge_hw[int(e)] and int(e) not in closed}
 
     def cost_factor(self, norm):
         f = np.ones(self.w.E)
         if norm.get("reopen_mode") == "pre2020":
             f[[e for e in norm.get("reopened", []) if e in set(self.base_closed)]] = self.P["market_pre2020_cost_factor"]
+        slow = [e for e, k in self.treatments(norm).items() if k == "slow"]
+        if slow:
+            f[slow] *= self.P["slow_street_cost_factor"]
         return f
+
+    def capacity(self, norm):
+        """Lane capacity per edge in this plan: a road diet or a protected bike lane takes one general lane
+        (streets keep at least one). Slow streets keep their lanes; their travel-time factor deters through
+        traffic (capping them at a living street's capacity overshot the observed volume drop: −90% vs −35…−61%)."""
+        cap = self.cap
+        tr = {e: k for e, k in self.treatments(norm).items() if k in ("road_diet", "bike_lane")}
+        if not tr:
+            return cap
+        cap = cap.copy()
+        w = self.w
+        for e in tr:
+            cap[e] *= max(1.0, w.edge_lanes[e] - 1) / w.edge_lanes[e]
+        return cap
 
     def _poi_buildings(self):
         w = self.w
@@ -170,13 +218,17 @@ class Engine:
                     self.poi_google[pid] = r
         return np.clip(q, 0.25, 3.0)
 
-    def walknet(self, car_free):
-        key = frozenset(car_free)
+    def walknet(self, car_free, treat=None):
+        """Walking/cycling network for a set of car-free edges and street treatments ({edge: kind}).
+        walknet(frozenset()) is the bonus-free physical network that welfare is measured on."""
+        treat = {int(e): k for e, k in (treat or {}).items() if k in ("slow", "bike_lane")}  # road diets don't change walking
+        key = (frozenset(car_free), frozenset(treat.items()))
         net = self._walknets.get(key)
         if net is None:
             P = self.P
             net = WalkNet(self.w, car_free, P["walking_speed_m_s"], P["car_free_walk_comfort_bonus"],
-                          P["bike_speed_m_s"], P["car_free_bike_comfort_bonus"], P["busy_street_bike_penalty"], P["route_noise_sd"])
+                          P["bike_speed_m_s"], P["car_free_bike_comfort_bonus"], P["busy_street_bike_penalty"], P["route_noise_sd"],
+                          treat=treat, slow_share=P["slow_street_comfort_share"])
             if len(self._walknets) > 6:
                 self._walknets.pop(next(iter(self._walknets)))
             self._walknets[key] = net
@@ -219,12 +271,15 @@ class Engine:
         t0 = time.time()
         P, w = self.P, self.w
         norm, key = edits_key(edits)
-        is_base = not (norm["pedestrianized"] or norm["blocks"] or norm["policies"] or norm["reopened"])
+        is_base = is_noop(norm)
         closed = self.closed_for(norm)
+        closed_walk = closed - self.closed_ramps(norm)
+        treat = self.treatments(norm)
         pop = self.pb.for_edits(norm)
         car = CarNet(w, closed, self.cost_factor(norm))
-        walk = self.walknet(closed)
-        ctx = Ctx(self, pop, car, walk, norm, closed)
+        walk = self.walknet(closed_walk, treat)
+        ctx = Ctx(self, pop, car, walk, norm, closed, closed_walk, treat)
+        cap = self.capacity(norm)
         ref = None if (is_base or self.baseline is None) else self.baseline["_state"]
         days = P["settle_days_plan"]
         vol_avg = self.seed["vol"].copy()
@@ -237,7 +292,7 @@ class Engine:
             prev = vol_avg.copy()
             vol_avg += (vol - vol_avg) / (k + 2)
             gaps.append(float(np.abs(vol_avg - prev).sum() / max(prev.sum(), 1)))
-            cong = self._bpr(vol_avg)
+            cong = self._bpr(vol_avg, cap)
             if progress:
                 progress(k + 1, days, gaps[-1])
         car.reset()
@@ -251,11 +306,11 @@ class Engine:
                          "gap": round(gaps[-1], 4), "gaps": [round(g, 4) for g in gaps]}
         return res
 
-    def _bpr(self, vol):
+    def _bpr(self, vol, cap=None):
         P = self.P
         modeled_share = 1 - P["background_traffic_share"]
         total = vol / modeled_share
-        x = total / np.maximum(self.cap, 1)[None, :]
+        x = total / np.maximum(self.cap if cap is None else cap, 1)[None, :]
         f = 1 + P["bpr_alpha"] * np.power(x, P["bpr_beta"])
         f[:, ~self.w.edge_car] = 1
         return np.minimum(f, 8.0)
@@ -276,8 +331,11 @@ class Engine:
 class Ctx:
     """Everything for one scenario evaluation."""
 
-    def __init__(self, eng, pop, car, walk, edits, closed):
+    def __init__(self, eng, pop, car, walk, edits, closed, closed_walk=None, treat=None):
         self.e, self.pop, self.car, self.walk, self.edits, self.closed = eng, pop, car, walk, edits, closed
+        # closed: shut to cars (incl. ramps); closed_walk: the car-free streets people walk on; treat: {edge: kind}.
+        self.closed_walk = closed if closed_walk is None else closed_walk
+        self.treat = treat or {}
         w, P = eng.w, eng.P
         n = pop.n
         self.n = n
@@ -313,21 +371,33 @@ class Ctx:
         car.factor = car.factor * self.fx.edge_cost_factor
 
     def _pois(self):
-        """Base POIs plus plan-only shops created by rezoning a building to retail or mixed use."""
+        """Base POIs plus plan-only places: a park or plaza on a block turned into one, the business type a block
+        edit opens (`shops`), or the shop mix that rezoning a building to retail or mixed use brings."""
         w, e = self.e.w, self.e
         node, cat, q, edges, xy, bld, ids, names = list(w.poi_node), list(w.poi_cat), list(e.poi_q), list(w.poi_edges), list(map(tuple, w.poi_xy)), list(e.poi_bld), list(range(w.P)), [p["name"] for p in w.pois]
+
+        def add(b, i, c, x, zz, quality, name):
+            node.append(w.nearest_node(x, zz, w.ped_main)); cat.append(c); q.append(quality); edges.append(w.edges_near(x, zz))
+            xy.append((x, zz)); bld.append(b); ids.append(5000 + b * 5 + i); names.append(name)
         for b, ed in sorted(self.edits.get("blocks", {}).items(), key=lambda kv: int(kv[0])):
-            b = int(b); z = ed.get("zone")
-            kind = w.bld_kind[b] if 0 <= b < w.B else None
+            b = int(b); z = ed.get("zone"); shop = ed.get("shops")
+            if not 0 <= b < w.B:
+                continue
+            kind = w.bld_kind[b]
+            n = int(np.clip(round(math.sqrt(w.bld_area[b]) / 14), 1, 4))
+            if z == "park":
+                # Bigger open spaces draw people from further away; a pocket plaza still beats nothing.
+                area = w.bld_area[b]
+                add(b, 0, "park", *w.bld_c[b], float(np.clip(math.sqrt(area) / 35, 0.6, 2.5)), "New park" if area >= 1500 else "New plaza")
+                continue
+            if shop in SHOP_TYPES:  # one business of the chosen type opens on the ground floor
+                add(b, 0, SHOP_TYPES[shop], w.bld_c[b][0], w.bld_c[b][1] + 6, 1.1, SHOP_NAMES[shop])
+                continue
             if z not in ("retail", "mixed") or kind in ("retail",) or (z == "mixed" and kind == "mixed"):
                 continue
-            n = int(np.clip(round(math.sqrt(w.bld_area[b]) / 14), 1, 4))
             for i in range(n):
                 c = ["cafe", "restaurant", "shop", "fast_food"][i % 4]
-                x, zz = w.bld_c[b][0] + (i - n / 2) * 8, w.bld_c[b][1] + 6
-                node.append(w.nearest_node(x, zz, w.ped_main)); cat.append(c); q.append(1.1); edges.append(w.edges_near(x, zz))
-                xy.append((x, zz)); bld.append(b); ids.append(5000 + b * 5 + i)
-                names.append({"cafe": "New café", "restaurant": "New restaurant", "shop": "New shop", "fast_food": "New quick bite"}[c])
+                add(b, i, c, w.bld_c[b][0] + (i - n / 2) * 8, w.bld_c[b][1] + 6, 1.1, SHOP_NAMES[c])
         class T: pass
         t = T()
         t.node, t.cat, t.q, t.edges, t.xy, t.bld, t.ids, t.names = np.array(node), np.array(cat), np.array(q), edges, np.array(xy), np.array(bld), np.array(ids), names
@@ -724,14 +794,25 @@ class Ctx:
             out.append(best[:3])
         return out
 
+    def calm_weight(self):
+        """Per edge: 1 on car-free streets, `slow_street_comfort_share` on slow streets, else 0. Scales the frontage
+        bonus and street lingering."""
+        if not hasattr(self, "_calm"):
+            wt = np.zeros(self.e.w.E)
+            if self.closed_walk:
+                wt[list(self.closed_walk)] = 1.0
+            slow = [e for e, k in self.treat.items() if k == "slow"]
+            if slow:
+                wt[slow] = np.maximum(wt[slow], self.e.P["slow_street_comfort_share"])
+            self._calm = wt
+        return self._calm
+
     def poi_bonus(self):
-        """POIs fronting a car-free street get an attractiveness bonus (pleasant frontage, café seating)."""
+        """POIs fronting a car-free street get an attractiveness bonus (pleasant frontage, café seating); a slow
+        street gives part of it. Returns a weight per POI (1 = full bonus)."""
         if not hasattr(self, "_poi_cf"):
-            cf = self.walk.car_free
-            planned = np.zeros(self.e.w.E, bool)
-            if self.closed:
-                planned[list(self.closed)] = True
-            self._poi_cf = np.array([bool(edges) and planned[edges].any() for edges in self.PO.edges])
+            wt = self.calm_weight()
+            self._poi_cf = np.array([float(wt[edges].max()) if edges else 0.0 for edges in self.PO.edges])
         return self._poi_cf
 
     def choose_poi(self, agent_ids, origins, cats, purpose, radius):
@@ -782,7 +863,8 @@ class Ctx:
         drive = (self.mode == CAR) & ~self.gone
         veh = np.where(pop.kind == THROUGH, S, S / CAR_OCCUPANCY)
         vmt_in = float((car_hour * w.edge_len[None, :]).sum() / 1609.34)
-        veh_h = float((car_hour * (w.edge_free_s[None, :] * cong)).sum() / 3600)
+        # Travel-time factors (slow streets, pre-2020 Market turns, plugin levers) are real time for the drivers who still use those edges.
+        veh_h = float((car_hour * (w.edge_free_s[None, :] * cong * self.car.factor[None, :])).sum() / 3600)
         free_h = float((car_hour * w.edge_free_s[None, :]).sum() / 3600)
         bg = P["background_traffic_share"] / (1 - P["background_traffic_share"])
         miles_out = np.array([REGIONS[r]["miles"] for r in pop.region], float)
@@ -791,15 +873,16 @@ class Ctx:
         # Retail: destination visits + walk-by impulse visits (walkers only)
         cat = self.PO.cat
         NP = self.PO.n
-        ticket = np.array([P["avg_ticket_usd"].get(c, 20) for c in cat])
-        capture = np.array([P["impulse_capture_per_passerby"].get(c, 0.005) for c in cat])
+        # Parks and plazas are free to use: no revenue and no walk-in "sales" from passers-by.
+        ticket = np.array([0.0 if c == "park" else P["avg_ticket_usd"].get(c, 20) for c in cat])
+        capture = np.array([0.0 if c == "park" else P["impulse_capture_per_passerby"].get(c, 0.005) for c in cat])
         walkby_hour = np.zeros((H, NP))
         for j, edges in enumerate(self.PO.edges):
             if edges:
                 walkby_hour[:, j] = ped_hour[:, edges].sum(1)
         bonus = self.poi_bonus()
         prop = np.stack([e.hour_propensity.get(c, np.ones(24)) for c in cat], 1)  # (24, NP)
-        impulse_hour = walkby_hour * prop * (capture * self.PO.q * np.where(bonus, 1 + P["car_free_poi_attractiveness_bonus"], 1))[None, :]
+        impulse_hour = walkby_hour * prop * (capture * self.PO.q * (1 + P["car_free_poi_attractiveness_bonus"] * bonus))[None, :]
         dest_hour = np.zeros((H, NP))
         for (i, q, t, d, purpose) in visits:
             dest_hour[min(23, int(t // 3600)), q] += S
@@ -847,10 +930,9 @@ class Ctx:
                     if rd[0] in rows and rm[0] in rows:
                         tie_pairs.insert(0, (int(maria), int(dev), int(q), int(b * win)))
                         break
-        cf = np.zeros(w.E, bool)
-        if self.closed:
-            cf[list(self.closed)] = True
-        linger = ped_hour[:, cf] * P["street_dwell_share_car_free"]
+        calm = self.calm_weight()
+        cf = calm > 0
+        linger = ped_hour[:, cf] * (P["street_dwell_share_car_free"] * calm[cf])[None, :]
         street_enc = float((linger * np.minimum(np.maximum(linger - 1, 0), K) / 2).sum())
         enc += street_enc; enc_hab += street_enc * 0.6
         new_ties = enc_hab * P["tie_formation_prob_per_repeat_encounter"] * P["repeat_days_per_year"] / P["workdays_per_year"]
@@ -865,7 +947,9 @@ class Ctx:
         # Land use
         off, oth, resc = edited_capacity(w, P, e.pb.base_cap, self.edits) if self.edits.get("blocks") else e.pb.base_cap
         jobs = float((off + oth).sum()); residents = float(resc.sum())
-        floor_delta = sum(w.bld_floor_area[int(b)] * (float(v.get("scale", 1)) - 1) for b, v in self.edits.get("blocks", {}).items() if 0 <= int(b) < w.B)
+        # A park removes the building's floor area entirely (scale doesn't apply to open space).
+        floor_delta = sum(-w.bld_floor_area[int(b)] if v.get("zone") == "park" else w.bld_floor_area[int(b)] * (float(v.get("scale", 1)) - 1)
+                          for b, v in self.edits.get("blocks", {}).items() if 0 <= int(b) < w.B)
         access = self._access(res_rows)
         # Health: active minutes
         active_min = (walk_m / P["walking_speed_m_s"] + bike_m / P["bike_speed_m_s"]) / 60
@@ -950,7 +1034,8 @@ class Ctx:
                        "cs_by_id": {int(i): float(c) for i, c, k in zip(pop.id, cs_usd, pop.kind) if k == WORKER and np.isfinite(c)},
                        "pop": pop, "mode": self.mode.copy(), "gone": self.gone.copy(), "legs": legs, "visits": visits,
                        "ped_hour": ped_hour, "bike_hour": bike_hour, "walk_m": walk_m, "active_min": active_min, "bg": bg,
-                       "tie_pairs": tie_pairs, "closed": sorted(self.closed), "ctx": self, "logsum_usd": cs_usd,
+                       "tie_pairs": tie_pairs, "closed": sorted(self.closed), "closed_walk": sorted(self.closed_walk),
+                       "closed_roads": sorted(set(self.closed) - set(self.closed_walk)), "treat": dict(self.treat), "ctx": self, "logsum_usd": cs_usd,
                        "deaths_averted": deaths_averted, "neighbor_ties": neighbor_ties},
             "edges": {"car_day": car_hour.sum(0) * (1 + bg), "car_agents_day": car_hour.sum(0), "ped_day": ped_hour.sum(0), "bike_day": bike_hour.sum(0),
                       "congestion_am": cong[8], "congestion_pm": cong[17], "car_hour": car_hour * (1 + bg), "ped_hour": ped_hour},
@@ -988,10 +1073,11 @@ class Ctx:
             return 0.0
         L = wk.len_m
         groups = []
+        PO = self.PO  # base POIs plus the plan's new shops and parks
         for cats in (("restaurant", "fast_food"), ("cafe",), ("shop",)):
-            nodes = w.poi_node[np.isin(w.poi_cat, cats) & (w.poi_node >= 0)]
+            nodes = PO.node[np.isin(PO.cat, cats) & (PO.node >= 0)]
             groups.append(np.unique(nodes))
-        parks = []
+        parks = [int(n) for n in PO.node[(PO.cat == "park") & (PO.node >= 0)]]
         for pk in w.raw.get("parks", []):
             c = pk.get("c") or (pk.get("p") or [[0, 0]])[0]
             n = w.nearest_node(c[0], c[1], w.ped_main)

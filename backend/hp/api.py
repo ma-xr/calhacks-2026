@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 
 from . import policies as PL
 from . import results as R
-from .engine import CAR, Engine, edits_key
+from .engine import CAR, SHOP_TYPES, TREATMENTS, Engine, edits_key, is_noop
 from .inputs import Inputs
 from .params import Params
 from .population import REGIONS, WORKER, agent_name
@@ -103,7 +103,7 @@ class State:
 
     def run(self, edits, name=None, progress=None):
         norm, key = edits_key(edits)
-        sid = "baseline" if not (norm["pedestrianized"] or norm["blocks"] or norm["policies"] or norm["reopened"]) else key
+        sid = "baseline" if is_noop(norm) else key
         if sid in self.scen:
             self.scen.move_to_end(sid)
             res = self.scen[sid]
@@ -125,6 +125,7 @@ class State:
         return sid
 
 
+ZONES = ("res", "office", "retail", "mixed", "park")
 MAX_TRIPS_CAP = 100000  # more than every trip of the day; the sample share reaches 1.0 before this
 S = State()
 
@@ -175,7 +176,10 @@ def world():
         "block_of": w.block_of.tolist(), "n_blocks": w.n_blocks,
         "editable_edges": [e for e in w.editable_edges if e not in set(eng.base_closed)],
         "base_car_free_edges": eng.base_closed,
-        "zones": ["res", "office", "retail", "mixed"],
+        "zones": list(ZONES),
+        "street_treatments": list(TREATMENTS),
+        "shop_types": list(SHOP_TYPES),
+        "ramps": [{k: r[k] for k in ("id", "name", "kind", "edges", "x", "z", "inside")} for r in w.ramps],
         "population": {"present_workers": eng.pb.present_workers, "residents": eng.pb.residents, "agents": int(eng.pb.base.n)},
         "calibration": getattr(eng, "calibration", None),
         "params": P.meta,
@@ -210,11 +214,16 @@ def _clean_edits(body):
             continue
         sc = float(v.get("scale", 1.0))
         z = v.get("zone") or ""
+        shop = v.get("shops") or ""
         if not (0.25 <= sc <= 4.0):
             raise HTTPException(400, f"block {b}: scale must be 0.25–4")
-        if z and z not in ("res", "office", "retail", "mixed"):
+        if z and z not in ZONES:
             raise HTTPException(400, f"block {b}: unknown zone {z}")
-        blocks[str(b)] = {"scale": sc, "zone": z}
+        if shop and shop not in SHOP_TYPES:
+            raise HTTPException(400, f"block {b}: unknown business type {shop}; one of {', '.join(SHOP_TYPES)}")
+        if z == "park":
+            sc, shop = 1.0, ""  # open space: no density, no shops
+        blocks[str(b)] = {"scale": sc, "zone": z, **({"shops": shop} if shop else {})}
     pols = []
     for p in edits.get("policies", []) or []:
         if p.get("kind") not in PL.BUILTIN_KINDS and p.get("kind") not in PL.kinds():
@@ -226,7 +235,15 @@ def _clean_edits(body):
         if p["kind"] not in PL.BUILTIN_KINDS and isinstance(p.get("params"), dict):  # plugin params, clipped to its PARAMS
             pol["params"] = PL.resolve_params(PL.get(p["kind"]), PL.policy_params(p))
         pols.append(pol)
-    return {"pedestrianized": ped, "reopened": reo, "blocks": blocks, "policies": pols}
+    treat = {}
+    editable = set(w.editable_edges)
+    for k, kind in (edits.get("street_treatments") or {}).items():
+        if kind not in TREATMENTS:
+            raise HTTPException(400, f"edge {k}: unknown street treatment {kind!r}; one of {', '.join(TREATMENTS)}")
+        if int(k) in editable:
+            treat[str(int(k))] = kind
+    ramps = sorted({int(e) for e in edits.get("closed_roads", []) or [] if int(e) in w.ramp_of})
+    return {"pedestrianized": ped, "reopened": reo, "blocks": blocks, "policies": pols, "street_treatments": treat, "closed_roads": ramps}
 
 
 @app.post("/scenario")

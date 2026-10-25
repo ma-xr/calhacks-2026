@@ -186,9 +186,12 @@ class CarNet:
 
 
 class WalkNet:
-    """Undirected walking (and cycling) graph. Car-free streets feel shorter (comfort bonus)."""
+    """Undirected walking (and cycling) graph. Car-free streets feel shorter (comfort bonus). Street treatments
+    ({edge: "slow" | "bike_lane"}): a slow street gives `slow_share` of the car-free bonus to walkers and cyclists,
+    a protected bike lane the full cycling bonus; neither carries the busy-street penalty for those it calms."""
 
-    def __init__(self, world, car_free, walk_speed, walk_bonus, bike_speed, bike_bonus, bike_busy=1.1, route_noise=0.25):
+    def __init__(self, world, car_free, walk_speed, walk_bonus, bike_speed, bike_bonus, bike_busy=1.1, route_noise=0.25,
+                 treat=None, slow_share=0.6):
         self.w = world
         w = world
         cf = np.zeros(w.E, bool)
@@ -196,9 +199,15 @@ class WalkNet:
             cf[list(car_free)] = True
         cf |= np.array([c == "pedestrian" for c in w.edge_cls])
         self.car_free = cf
+        slow = np.zeros(w.E, bool); lane = np.zeros(w.E, bool)
+        for edge, kind in (treat or {}).items():
+            slow[edge] |= kind == "slow"
+            lane[edge] |= kind == "bike_lane"
         e = w.ped_arc_edge
         busy = np.array([c in ("primary", "secondary") for c in w.edge_cls])
-        mult = np.where(cf[e], 1 - walk_bonus, 1.0) * np.where(busy[e] & ~cf[e], 1.12, 1.0)
+        walk_calm = cf | slow
+        wb = np.where(cf, walk_bonus, np.where(slow, walk_bonus * slow_share, 0.0))
+        mult = (1 - wb[e]) * np.where(busy[e] & ~walk_calm[e], 1.12, 1.0)
         self.walk_cost = w.edge_len[e] / walk_speed * mult  # perceived seconds
         self.walk_len = w.edge_len[e]
         g = csr_matrix((self.walk_cost, (w.ped_arc_from, w.ped_arc_to)), shape=(w.N, w.N))
@@ -210,7 +219,9 @@ class WalkNet:
         self.lookup = np.full((N, N), -1, dtype=np.int32)
         for i in np.argsort(-self.walk_cost):
             self.lookup[w.ped_arc_from[i], w.ped_arc_to[i]] = i
-        bmult = np.where(cf[e], 1 - bike_bonus, 1.0) * np.where(busy[e] & ~cf[e], bike_busy, 1.0)
+        bike_calm = cf | slow | lane
+        bb = np.where(cf | lane, bike_bonus, np.where(slow, bike_bonus * slow_share, 0.0))
+        bmult = (1 - bb[e]) * np.where(busy[e] & ~bike_calm[e], bike_busy, 1.0)
         self.bike_cost = w.edge_len[e] / bike_speed * bmult
         # Cyclists differ in how they weigh streets: three seeded draws of edge-level noise (same draw for both directions).
         rng = np.random.default_rng(99)

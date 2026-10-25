@@ -165,3 +165,89 @@ def test_closing_an_inlet_street_moves_traffic_to_neighbours(eng):
     assert others_r > others_b
     assert r["metrics"]["commuters"]["car"] >= 0.95 * b["metrics"]["commuters"]["car"]
     assert _car_unreachable_workers(r) == (0, 0)
+
+
+# ───────────────────────── new edits: street treatments, ramp closures, parks, business types ─────────────────────────
+def test_new_edit_fields_left_empty_keep_ids_and_the_baseline(eng):
+    """Empty new fields change nothing: the same scenario id (narrative caches and snapshots key on it) and the baseline."""
+    import hashlib, json
+    old_norm = {"pedestrianized": [1, 2], "reopened": [], "reopen_mode": "", "blocks": {"5": {"scale": 2.0, "zone": ""}}, "policies": []}
+    old_key = hashlib.sha1(json.dumps(old_norm, sort_keys=True).encode()).hexdigest()[:12]
+    new = {"pedestrianized": [2, 1], "blocks": {"5": {"scale": 2, "shops": ""}}, "street_treatments": {}, "closed_roads": []}
+    assert edits_key(new)[1] == old_key
+    assert eng.evaluate({"street_treatments": {}, "closed_roads": []})["id"] == "baseline"
+
+
+def test_slow_street_cuts_traffic_less_than_car_free(eng):
+    """SF Slow Streets: weekday car volume −35…−61%, walking and cycling up. Car-free removes all of it."""
+    w, b = eng.w, eng.baseline
+    es = w.stretch("2nd Street", "Market Street", "Folsom Street")
+    r = eng.evaluate({"street_treatments": {str(e): "slow" for e in es}})
+    car_b, car_r = b["edges"]["car_day"][es].sum(), r["edges"]["car_day"][es].sum()
+    assert 0.2 * car_b < car_r < 0.8 * car_b
+    assert r["edges"]["ped_day"][es].sum() > b["edges"]["ped_day"][es].sum()
+    assert r["edges"]["bike_day"][es].sum() > b["edges"]["bike_day"][es].sum()
+    assert r["metrics"]["delay_hours"] != b["metrics"]["delay_hours"]
+
+
+def test_bike_lane_draws_cyclists(eng):
+    w, b = eng.w, eng.baseline
+    es = w.stretch("Howard Street", "2nd Street", "5th Street")
+    r = eng.evaluate({"street_treatments": {str(e): "bike_lane" for e in es}})
+    assert r["edges"]["bike_day"][es].sum() > 1.1 * b["edges"]["bike_day"][es].sum()
+
+
+def test_road_diet_raises_congestion(eng):
+    w, b = eng.w, eng.baseline
+    es = w.stretch("Folsom Street", "2nd Street", "5th Street")
+    r = eng.evaluate({"street_treatments": {str(e): "road_diet" for e in es}})
+    assert r["edges"]["congestion_am"][es].mean() > b["edges"]["congestion_am"][es].mean()
+    assert r["edges"]["car_day"][es].sum() < b["edges"]["car_day"][es].sum()
+
+
+def test_closing_a_freeway_ramp_moves_traffic_to_other_ramps(eng):
+    """Central Freeway / Embarcadero: traffic shifts to other ramps; few trips vanish (~3%)."""
+    w, b = eng.w, eng.baseline
+    ramp = max((r for r in w.ramps if r["inside"]), key=lambda r: b["edges"]["car_day"][r["edges"]].sum())
+    assert b["edges"]["car_day"][ramp["edges"]].sum() > 0
+    r = eng.evaluate({"closed_roads": ramp["edges"]})
+    assert r["edges"]["car_day"][ramp["edges"]].sum() == 0
+    others = [e for g in w.ramps if g["id"] != ramp["id"] for e in g["edges"]]
+    assert r["edges"]["car_day"][others].sum() > b["edges"]["car_day"][others].sum()
+    assert r["metrics"]["commuters"]["car"] >= 0.95 * b["metrics"]["commuters"]["car"]
+    assert not set(ramp["edges"]) & set(r["_state"]["closed_walk"])  # a closed ramp is not a walkable street
+    assert _car_unreachable_workers(r) == (0, 0)
+
+
+def _busiest_office(eng):
+    off = eng.pb.base_cap[0] * eng.w.bld_inside
+    return int(np.argmax(off))
+
+
+def test_park_replaces_a_building(eng):
+    """A park: the building's jobs and floor area go; people visit it and meet there; it sells nothing."""
+    b0 = _busiest_office(eng)
+    r = eng.evaluate({"blocks": {str(b0): {"zone": "park"}}})
+    bm, rm = eng.baseline["metrics"], r["metrics"]
+    assert rm["jobs"] < bm["jobs"]
+    assert rm["floor_delta_m2"] < 0
+    parks = [p for p in r["virtual_pois"] if p["category"] == "park"]
+    assert len(parks) == 1 and parks[0]["visits_day"] > 0 and parks[0]["revenue_day"] == 0
+
+
+def test_business_type_opens_the_chosen_shops(eng):
+    b0 = _busiest_office(eng)
+    r = eng.evaluate({"blocks": {str(b0): {"shops": "bar"}}})
+    vp = r["virtual_pois"]
+    assert vp and {p["category"] for p in vp} == {"bar"}
+    assert r["metrics"]["jobs"] == eng.baseline["metrics"]["jobs"]  # no rezoning: the building keeps its use
+    g = eng.evaluate({"blocks": {str(b0): {"shops": "grocery"}}})["virtual_pois"]
+    assert len(g) == 1 and g[0]["category"] == "shop" and g[0]["name"] == "New grocery"
+
+
+@pytest.mark.xfail(strict=True, reason="Known: plans replan against the baseline's final-day car times from the seed state, so trip "
+                                        "suppression on early days shifts flows; a plan that changes nothing is worth ~+$0.36M/yr")
+def test_plan_that_changes_nothing_equals_baseline(eng):
+    r = eng.evaluate({"pedestrianized": [10 ** 6]})  # an edge id that doesn't exist: not the baseline id, but no change
+    assert r["id"] != "baseline"
+    assert r["metrics"]["neighbor_ties"] == eng.baseline["metrics"]["neighbor_ties"]

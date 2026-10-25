@@ -5,6 +5,7 @@
 | Date | Change |
 |---|---|
 | 2026-10-25 | **Mobility valuation fix:** commuter consumer surplus (`value.lines` "Commuter time & cost") is now computed on physical walking distances. The car-free comfort bonus still drives route and mode choice, but no longer counts as time saved; that amenity is credited under social/economy. On perceived distances it pushed some walks under the 55-min availability cutoff, which made a small alley closure worth about +$10M. |
+| 2026-10-25 | **v0.5 (additive): new edits.** `edits.street_treatments` `{edge_id: "slow" \| "bike_lane" \| "road_diet"}` on editable streets. A slow street keeps its lanes but its car travel time is ×`slow_street_cost_factor` (1.5), and walkers and cyclists get `slow_street_comfort_share` (0.6) of a car-free street's comfort, lingering and frontage bonus. A bike lane or road diet takes one general lane (minimum one); a bike lane also gives cyclists the full car-free comfort bonus. `edits.closed_roads` is a list of freeway ramp edge ids (`motorway_link`, see `GET /world → ramps`): closed to cars only. Blocks gain `zone: "park"` (that building becomes a park or plaza: no jobs, homes or floor area; one free POI of category `park` that people visit at lunch, in the evening and on visits; `scale` is ignored) and `shops: "cafe" \| "restaurant" \| "bar" \| "fast_food" \| "shop" \| "grocery"` (one business of that type opens in the building; `grocery` is category `shop`; the building keeps its use unless `zone` changes it). New fields enter the scenario id only when used, so every older plan keeps its id. `GET /world` adds `ramps`, `street_treatments` and `shop_types`, and `zones` gains `park`. Results add `edges.closed_roads` and `edges.treatments`; `edges.car_free` lists car-free streets only (not closed ramps). Virtual POIs (new shops and parks) now count toward `access_15min`. **Delay now includes per-edge travel-time factors** (slow streets, the pre-2020 Market St turns, plugin levers), so the pre-2020 Market St reopening reports about +29 veh-h/day more delay than before; the baseline and every plan without such factors are unchanged. |
 | 2026-10-25 | **Valuation (product decision):** health (WHO HEAT × VSL) and crash costs are no longer monetized. `value.health` is always 0, has no line, and is excluded from `value.total`. Environment is CO₂ only, at $120/t (low bound of the EPA 2023 range). `metrics.deaths_averted_per_yr` and walking minutes are still reported as plain metrics. `value.total` = mobility + social + economy + environment. |
 | 2026-10-24 | **BREAKING (v0.4): inlets are a variable-length list.** Cars now enter and leave at every road that crosses the map edge, not 5 fixed gates. `GET /world → inlets` has 3 rail inlets plus ~60 car inlets (5 legacy keys `i80`, `us101`, `mkt`, `fol`, `bwy` and generated ones such as `howard_st_south`). **Stop assuming ids 0–7 or any order**: look inlets up by `key` and `mode`, and size per-inlet arrays (`result.inlets`) from the list. Car inlets gain `side`, `cls`, `lanes`, `at` (point on the map edge), `has_entry`, `has_exit`, `edges` (crossing edge ids) and `legacy`. `regions[].car_inlets` maps each usable inlet key to its extra outside minutes. Trip `inlet_in`/`inlet_out` are the inlets each driver actually chose. A `congestion_charge` with a `target` is a toll on entering at that inlet key (unknown keys → 400). |
 | 2026-10-24 | v0.1 draft |
@@ -51,8 +52,12 @@ Static data for one session; fetch it once.
              "rating": 4.5, "reviews": 1200, "price_level": 2, "has_popular_times": true }, ...],
   "block_of": [0, 0, 1, ...],        // per building id
   "n_blocks": 412,
-  "editable_edges": [12, 13, ...],   // edges that can be pedestrianized (no highways)
-  "zones": ["res", "office", "retail", "mixed"],
+  "editable_edges": [12, 13, ...],   // edges that can be pedestrianized or get a street treatment (no highways)
+  "zones": ["res", "office", "retail", "mixed", "park"],
+  "street_treatments": ["slow", "bike_lane", "road_diet"],
+  "shop_types": ["cafe", "restaurant", "bar", "fast_food", "shop", "grocery"],
+  "ramps": [{ "id": 4, "name": "Fremont St off-ramp", "kind": "off", "edges": [12, 13, ...], "x": 359.0, "z": 180.1, "inside": true }, ...],
+                                     // freeway ramps (motorway_link edges grouped); kind: on | off | connector | ramps
   "params": { "<key>": { "value": ..., "status": "data|literature|assumed", "source": "url" } },
   "hero": { "agent_id": 913, "friend_id": 448, "street_edges": [1070, 832, ...], "street": "2nd Street" }
 }
@@ -69,10 +74,14 @@ Runs a plan against the cached baseline and returns the result (target ≤ 2 s).
   "name": "Plan A",                                   // optional
   "edits": {
     "pedestrianized": [1070, 832, 1423],              // edge ids
-    "blocks": { "512": { "scale": 1.5, "zone": "res" } },   // building id → edit; zone optional
+    "blocks": { "512": { "scale": 1.5, "zone": "res" },      // building id → edit; zone optional
+                "551": { "zone": "park" },                   // this building becomes a park or plaza
+                "1424": { "shops": "cafe" } },               // a café opens in this building
     "policies": [{ "kind": "congestion_charge", "target": "i80", "amount": 5 }],  // optional; also "parking_price"
     "reopened": [],                  // optional: base car-free edges (Market St) to reopen to cars
-    "reopen_mode": ""                // optional: "pre2020" = reopened with the old forced-turn restrictions
+    "reopen_mode": "",               // optional: "pre2020" = reopened with the old forced-turn restrictions
+    "street_treatments": { "1070": "slow", "771": "bike_lane", "802": "road_diet" },   // optional
+    "closed_roads": [12, 13]         // optional: freeway ramp edges (GET /world → ramps[].edges)
   }
 }
 ```
@@ -135,7 +144,9 @@ These endpoints only narrate numbers the engine already produced. Every response
     "car_day": [..], "ped_day": [..],     // people per day on the edge (scaled)
     "congestion_am": [..], "congestion_pm": [..],   // travel-time factor (1 = free flow) at 8–9 and 17–18
     "bike_day": [..],                     // cyclists per day
-    "car_free": [..],                     // edge ids closed to cars in this scenario (base + plan)
+    "car_free": [..],                     // car-free street edge ids in this scenario (base + plan; not closed ramps)
+    "closed_roads": [..],                 // freeway ramp edges closed in this scenario
+    "treatments": { "1070": "slow" },     // street treatments in this scenario
     "car_hour": [[24]..], "ped_hour": [[24]..]   // people per hour, edge-major
   },
   "pois": {                               // arrays indexed by POI id (filtered list)

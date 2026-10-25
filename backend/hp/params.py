@@ -103,6 +103,8 @@ DEFAULTS = {
     "tie_formation_prob_per_repeat_encounter": (0.02, A, "chance a repeated co-presence becomes an acquaintance"),
     "repeat_days_per_year": (60, A, "days a habitual lunch spot pairing repeats per year"),
     "street_dwell_share_car_free": (0.08, A, "share of passers-by who linger on a car-free street"),
+    "slow_street_cost_factor": (1.5, A, "car travel-time factor on a slow street (local access only, barriers; lanes kept). Gives 2nd St about −45% car volume, inside SF Slow Streets' −35…−61%"),
+    "slow_street_comfort_share": (0.6, A, "share of a car-free street's walking/cycling comfort, lingering and frontage bonus that a slow street gives"),
     "appleyard_friends_by_traffic": ({"light": 3.0, "moderate": 1.3, "heavy": 0.9}, L, "Appleyard 1969 Livable Streets: friends per resident by street traffic"),
     "rent_walkability_elasticity": (0.04, A, "% rent change per 10% change in nearby foot traffic/amenity access"),
 }

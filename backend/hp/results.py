@@ -111,7 +111,7 @@ def leg_json(ctx, L):
     pop = ctx.pop
     i = L["row"]
     if L["mode"] == "car":
-        dur = float(sum(w.edge_free_s[s >> 1] * ctx.cong[min(23, int(L["t"] // 3600)), s >> 1] for s in steps))
+        dur = float(sum(w.edge_free_s[s >> 1] * ctx.cong[min(23, int(L["t"] // 3600)), s >> 1] * ctx.car.factor[s >> 1] for s in steps))
         th, tt = _trim(w, steps)
     else:
         dur = L["dur"]; th = tt = 0
@@ -241,7 +241,9 @@ def to_json(engine, res, base, lite=False, sample_must=(), max_trips=4000):
         "metrics": m, "delta": d, "value": val,
         "edges": {"car_day": E["car_day"], "ped_day": E["ped_day"], "bike_day": E["bike_day"],
                   "congestion_am": E["congestion_am"], "congestion_pm": E["congestion_pm"],
-                  "car_free": sorted(res["_state"]["closed"])},
+                  "car_free": sorted(res["_state"].get("closed_walk", res["_state"]["closed"])),
+                  "closed_roads": res["_state"].get("closed_roads", []),
+                  "treatments": {str(e): k for e, k in sorted(res["_state"].get("treat", {}).items())}},
         "pois": {"visits_day": res["pois"]["visits_day"], "revenue_day": res["pois"]["revenue_day"], "walkby_day": res["pois"]["walkby_day"]},
         "blocks": res["blocks"],
         "inlets": res["inlets"],
