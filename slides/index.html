@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Human Project</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;700;800;900&family=Overpass+Mono:wght@500&display=swap">
+<style>
+/* Colors mean what they mean in the app: pink = a new tie, amber = people walking,
+   cyan = cars, purple = a car-free edit, green = a gain, red = a cost. */
+:root {
+  --fog: #E8EDF1;
+  --paper: #F7F9FB;
+  --ink: #12223A;
+  --ink2: #46566E;
+  --ink3: #7A889C;
+  --rule: #C8D2DC;
+  --road: #2A394D;
+  --tie: #E3317F;
+  --walk: #EE9400;
+  --car: #169FD6;
+  --edit: #8F55E8;
+  --gain: #16894A;
+  --cost: #CC3D3D;
+  --mob: #6F86B8;
+  --env: #22A595;
+  --hatch: repeating-linear-gradient(135deg, #CC3D3D 0 6px, #EDB0B0 6px 11px);
+  --f: 'Overpass', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'Overpass Mono', ui-monospace, Menlo, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #0E1828; }
+body { overflow: hidden; font-family: var(--f); color: var(--ink); -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; }
+
+#deck { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: 50% 50%; }
+.slide { position: absolute; inset: 0; background: var(--fog); display: none; overflow: hidden; }
+.slide.active { display: block; }
+.pad { position: absolute; left: 112px; right: 112px; top: 92px; bottom: 150px; }
+
+/* Type scale: 19 / 22 / 26 / 30 / 44 / 68 / 132 */
+h1, h2, h3, p { margin: 0; }
+h1 { font-size: 132px; line-height: .92; font-weight: 900; letter-spacing: -.035em; }
+h2 { font-size: 68px; line-height: 1.04; font-weight: 800; letter-spacing: -.025em; max-width: 1500px; text-wrap: balance; }
+h3 { font-size: 30px; line-height: 1.2; font-weight: 700; letter-spacing: -.01em; }
+.lead { font-size: 30px; line-height: 1.42; color: var(--ink2); max-width: 30em; }
+.body { font-size: 26px; line-height: 1.45; color: var(--ink2); }
+.small { font-size: 22px; line-height: 1.45; color: var(--ink2); }
+.cap { font-size: 19px; line-height: 1.45; color: var(--ink3); }
+.code { font-family: var(--mono); font-size: .86em; color: var(--ink); }
+b, strong { color: var(--ink); font-weight: 700; }
+.gain { color: var(--gain); }
+.cost { color: var(--cost); }
+
+/* Route line: Meta's four video parts, drawn as a transit line */
+.route { position: absolute; left: 112px; right: 112px; bottom: 50px; height: 56px; }
+.route .seg { position: absolute; top: 9px; height: 4px; border-radius: 2px; background: var(--rule); }
+.route .seg.done { background: var(--ink); }
+.route .stop { position: absolute; top: 0; width: 22px; height: 22px; margin-left: -11px; border-radius: 50%; background: var(--fog); border: 4px solid var(--rule); }
+.route .stop.done { border-color: var(--ink); background: var(--ink); }
+.route .stop.here { border-color: var(--ink); background: var(--fog); width: 30px; height: 30px; margin-left: -15px; top: -4px; border-width: 7px; }
+.route .lbl { position: absolute; top: 32px; font-size: 19px; color: var(--ink3); white-space: nowrap; transform: translateX(-50%); }
+.route .lbl.first { transform: none; }
+.route .lbl.last { transform: translateX(-100%); }
+.route .lbl.here { color: var(--ink); font-weight: 700; }
+
+/* Full-bleed product frames */
+.bleed { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.bleed.right { left: 260px; }
+.bleed.far { left: 640px; }
+.fogwash { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(232,237,241,.98) 0%, rgba(232,237,241,.95) 34%, rgba(232,237,241,.55) 50%, rgba(232,237,241,0) 64%); }
+.fogwash.floor { background: linear-gradient(0deg, rgba(232,237,241,.97) 0, rgba(232,237,241,.9) 120px, rgba(232,237,241,0) 210px), linear-gradient(90deg, rgba(232,237,241,.98) 0%, rgba(232,237,241,.95) 34%, rgba(232,237,241,.55) 50%, rgba(232,237,241,0) 64%); }
+.frame { display: block; border-radius: 12px; box-shadow: 0 0 0 1.5px rgba(18,34,58,.14); object-fit: cover; }
+
+/* 1 · Title */
+.title-copy { position: absolute; left: 112px; top: 210px; width: 860px; }
+.title-copy .sub { margin-top: 40px; font-size: 44px; line-height: 1.15; font-weight: 700; letter-spacing: -.015em; color: var(--ink); max-width: 20em; }
+.title-copy .lead { margin-top: 28px; max-width: 24em; }
+.title-foot { position: absolute; left: 112px; bottom: 84px; font-size: 22px; color: var(--ink2); }
+.title-foot b { font-weight: 700; }
+
+/* 2 · Appleyard */
+.apple { position: absolute; left: 0; top: 150px; width: 1060px; height: 700px; }
+.apple text { font-family: var(--f); }
+.apple .arc { fill: none; stroke: var(--tie); stroke-width: 2.6; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.slide.active .apple .arc { animation: draw .9s cubic-bezier(.3,.7,.2,1) forwards; animation-delay: var(--d, 0s); }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.side { position: absolute; right: 0; top: 168px; width: 560px; display: flex; flex-direction: column; gap: 26px; }
+.side .stat { padding-top: 24px; border-top: 1.5px solid var(--rule); }
+
+/* 3 · Community */
+.community { position: absolute; left: 0; right: 0; top: 270px; display: grid; grid-template-columns: 920px 1fr; gap: 96px; }
+.community .lead { font-size: 34px; max-width: none; }
+.asks { margin: 48px 0 0; padding: 0; list-style: none; display: grid; gap: 22px; }
+.asks li { font-size: 36px; font-weight: 700; line-height: 1.25; padding-left: 38px; position: relative; }
+.asks li::before { content: ""; position: absolute; left: 0; top: .42em; width: 14px; height: 14px; border-radius: 50%; background: var(--walk); }
+.quote { align-self: start; border: 2.5px dashed var(--edit); border-radius: 14px; padding: 40px 44px; background: rgba(143,85,232,.05); }
+.quote p { font-size: 40px; line-height: 1.3; font-weight: 600; letter-spacing: -.01em; }
+.quote .who { margin-top: 22px; font-size: 22px; color: var(--ink2); }
+.quote.todo p, .quote.todo .who { color: var(--edit); }
+.quote.filled { border: 0; border-left: 6px solid var(--tie); border-radius: 0; background: none; padding: 6px 0 6px 40px; }
+
+/* 4 · City */
+.city-copy { position: absolute; left: 112px; top: 120px; width: 780px; }
+.facts { margin: 40px 0 0; padding: 0; list-style: none; display: grid; gap: 22px; }
+.facts li { font-size: 26px; line-height: 1.4; color: var(--ink2); padding-left: 30px; position: relative; }
+.facts li::before { content: ""; position: absolute; left: 0; top: .5em; width: 12px; height: 12px; border-radius: 50%; background: var(--k, var(--ink)); }
+.city-copy .cap { margin-top: 40px; max-width: 36em; }
+
+/* 5 · Demo outline */
+.steps6 { position: absolute; left: 0; right: 0; top: 270px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 110px 72px; }
+.step { position: relative; padding-top: 70px; }
+.step .num { position: absolute; top: 0; left: 0; width: 48px; height: 48px; border-radius: 50%; border: 5px solid var(--ink); display: grid; place-items: center; font-size: 22px; font-weight: 800; }
+.step h3 { margin-bottom: 10px; }
+.step .small { max-width: 22em; }
+.steps6 .step h3 { font-size: 38px; margin-bottom: 14px; }
+.steps6 .step .small { font-size: 25px; }
+.steps6 .step::after { content: ""; position: absolute; top: 22px; left: 60px; right: -60px; height: 4px; background: var(--ink); border-radius: 2px; }
+.steps6 .step:nth-child(3n)::after { display: none; }
+
+/* 6 · Results */
+.results { position: absolute; left: 0; right: 0; top: 150px; display: grid; grid-template-columns: 900px 1fr; gap: 64px; }
+.results .frame { width: 900px; height: 506px; }
+.delta { list-style: none; margin: 0; padding: 0; }
+.delta h4 { margin: 0 0 8px; font-size: 19px; font-weight: 600; color: var(--ink3); }
+.delta li { display: grid; grid-template-columns: 190px 1fr; align-items: baseline; gap: 18px; padding: 9px 0; border-top: 1.5px solid var(--rule); }
+.delta li:last-child { border-bottom: 1.5px solid var(--rule); }
+.delta .v { font-size: 34px; font-weight: 800; letter-spacing: -.02em; }
+.delta .t { font-size: 21px; line-height: 1.35; color: var(--ink2); }
+.delta + h4 { margin-top: 22px; }
+.valuebar { position: absolute; left: 0; right: 0; top: 700px; }
+.valuebar .row { display: flex; align-items: baseline; gap: 22px; }
+.valuebar .total { font-size: 52px; font-weight: 900; letter-spacing: -.03em; color: var(--gain); }
+.valuebar .bar { display: flex; height: 22px; margin-top: 16px; border-radius: 4px; overflow: hidden; gap: 3px; }
+.valuebar .bar i { display: block; height: 100%; }
+.legend { display: flex; gap: 40px; margin-top: 14px; font-size: 21px; color: var(--ink2); }
+.legend span::before { content: ""; display: inline-block; width: 14px; height: 14px; border-radius: 3px; margin-right: 10px; background: var(--k); vertical-align: -1px; }
+
+/* 7 · Connections */
+.conn { position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: grid; grid-template-columns: 600px 1fr; gap: 64px; }
+.conn .frame { width: 100%; height: 788px; object-position: 35% 50%; }
+.how { display: grid; gap: 24px; margin-top: 40px; }
+.how p { font-size: 23px; line-height: 1.42; color: var(--ink2); }
+.how p b::after { content: " "; }
+
+/* 8 · AI architecture */
+.arch { position: absolute; left: 0; right: 0; top: 210px; height: 640px; }
+.arch svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.arch svg line { stroke: var(--ink3); stroke-width: 2; stroke-dasharray: 2 7; stroke-linecap: round; }
+.arch svg text { font-family: var(--mono); font-size: 17px; fill: var(--ink2); }
+.node { position: absolute; background: var(--paper); border: 1.5px solid var(--rule); border-radius: 12px; padding: 22px 26px; }
+.node .who { font-size: 18px; color: var(--ink3); font-weight: 600; }
+.node h3 { font-size: 28px; margin: 4px 0 8px; }
+.node p { font-size: 20px; line-height: 1.4; color: var(--ink2); }
+.node.engine { background: var(--ink); border-color: var(--ink); color: #fff; padding: 34px 36px; }
+.node.engine h3 { font-size: 36px; font-weight: 800; color: #fff; }
+.node.engine p { color: #C9D4E2; font-size: 22px; }
+.rule-line { position: absolute; left: 0; right: 0; bottom: 0; font-size: 26px; font-weight: 700; }
+
+/* 9 · Droid */
+.pipe { position: absolute; left: 0; right: 0; top: 210px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 0 24px; }
+.pipe .step { padding-top: 66px; }
+.pipe .step::after { content: ""; position: absolute; top: 22px; left: 56px; right: -20px; height: 4px; background: var(--ink); border-radius: 2px; }
+.pipe .step:last-child::after { display: none; }
+.pipe .step h3 { font-size: 26px; margin-bottom: 6px; }
+.pipe .step p { font-size: 19px; line-height: 1.4; color: var(--ink2); }
+.pipe .step.human .num { border-color: var(--tie); color: var(--tie); }
+.below { position: absolute; left: 0; right: 0; top: 560px; display: grid; grid-template-columns: 1fr 1fr; gap: 72px; }
+.below h4, .fetch-facts h4, .tools h4 { margin: 0 0 14px; font-size: 22px; font-weight: 700; color: var(--ink); }
+.ticks { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.ticks li { font-size: 21px; line-height: 1.4; color: var(--ink2); padding-left: 26px; position: relative; }
+.ticks li::before { content: ""; position: absolute; left: 0; top: .52em; width: 10px; height: 10px; border-radius: 2px; background: var(--ink2); }
+.measured { background: var(--paper); border: 1.5px solid var(--rule); border-radius: 12px; padding: 24px 28px; }
+.measured .nums { display: flex; gap: 40px; margin-top: 16px; }
+.measured .nums div { font-size: 19px; color: var(--ink2); }
+.measured .nums b { display: block; font-size: 38px; font-weight: 800; letter-spacing: -.02em; }
+
+/* 10 · Fetch */
+.flow { position: absolute; left: 0; right: 0; top: 200px; height: 400px; }
+.flow svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.flow svg path { fill: none; stroke: var(--ink3); stroke-width: 2.5; }
+.chat { position: absolute; left: 0; top: 60px; width: 430px; background: var(--paper); border: 1.5px solid var(--rule); border-radius: 12px; padding: 22px 24px; }
+.chat .who { font-size: 18px; color: var(--ink3); font-weight: 600; margin-bottom: 12px; }
+.bubble { background: var(--ink); color: #fff; font-size: 22px; line-height: 1.35; padding: 14px 18px; border-radius: 14px 14px 4px 14px; margin-left: 30px; }
+.bubble.reply { background: #fff; color: var(--ink2); border: 1.5px solid var(--rule); border-radius: 14px 14px 14px 4px; margin: 12px 30px 0 0; font-size: 19px; }
+.fetch-facts { position: absolute; left: 0; right: 0; top: 640px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 56px; }
+.fetch-facts p { font-size: 21px; line-height: 1.42; color: var(--ink2); }
+
+/* 11 · Responsible design */
+.risks { position: absolute; left: 0; right: 0; top: 210px; border-collapse: collapse; width: 100%; }
+.risks th { text-align: left; font-size: 19px; font-weight: 600; color: var(--ink3); padding: 0 0 12px; }
+.risks td { padding: 24px 0; border-top: 1.5px solid var(--rule); vertical-align: top; font-size: 27px; line-height: 1.4; color: var(--ink2); }
+.risks tr:last-child td { border-bottom: 1.5px solid var(--rule); }
+.risks td:first-child { width: 600px; padding-right: 48px; font-weight: 700; color: var(--ink); font-size: 30px; line-height: 1.25; }
+
+/* 12 · Validation */
+.inputs { position: absolute; left: 0; top: 200px; max-width: 1500px; }
+.valid { position: absolute; left: 0; right: 0; top: 330px; border-collapse: collapse; width: 100%; }
+.valid th { text-align: left; font-size: 19px; font-weight: 600; color: var(--ink3); padding: 0 0 12px; }
+.valid th.n, .valid td.n { text-align: right; }
+.valid td { padding: 15px 0; border-top: 1.5px solid var(--rule); font-size: 24px; color: var(--ink2); }
+.valid td.n { font-weight: 800; color: var(--ink); font-size: 28px; width: 220px; }
+.valid td.src { width: 300px; padding-left: 60px; font-size: 20px; color: var(--ink3); }
+.valid tr.off td { color: var(--cost); border-bottom: 1.5px solid var(--rule); }
+.valid tr.off td.n { color: var(--cost); }
+
+/* 13 · Live layer */
+.live { position: absolute; left: 0; right: 0; top: 230px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 0 24px; }
+.live .step { padding-top: 66px; }
+.live .step::after { content: ""; position: absolute; top: 22px; left: 56px; right: -20px; height: 4px; background: var(--ink); border-radius: 2px; }
+.live .step:last-child::after { display: none; }
+.live .step h3 { font-size: 26px; margin-bottom: 6px; }
+.live .step p { font-size: 20px; line-height: 1.4; color: var(--ink2); }
+.live-nums { position: absolute; left: 0; right: 0; top: 560px; display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 56px; }
+.big { font-size: 64px; font-weight: 900; letter-spacing: -.03em; line-height: 1; }
+
+/* 14 · Tools */
+.tools { position: absolute; left: 0; right: 0; top: 200px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 56px; }
+.tools .item { padding: 16px 0; border-top: 1.5px solid var(--rule); }
+.tools .item b { display: block; font-size: 27px; margin-bottom: 4px; }
+.tools .item span { font-size: 22px; line-height: 1.4; color: var(--ink2); display: block; }
+.helped { position: absolute; left: 0; right: 0; bottom: 0; font-size: 30px; line-height: 1.35; font-weight: 700; max-width: 1400px; padding-top: 22px; border-top: 4px solid var(--ink); }
+
+/* 15 · Close */
+.close-copy { position: absolute; left: 112px; top: 230px; width: 900px; }
+.close-copy h1 { font-size: 108px; text-wrap: balance; }
+.close-copy .lead { margin-top: 36px; }
+.close-copy .links { margin-top: 64px; font-size: 26px; line-height: 1.6; color: var(--ink2); }
+
+/* Notes overlay (N) and slide counter, kept off the recorded slide area */
+#notes { position: fixed; left: 0; right: 0; bottom: 0; max-height: 42vh; overflow: auto; background: rgba(14,24,40,.96); color: #E6ECF3; font: 17px/1.5 var(--f); padding: 18px 28px 22px; display: none; z-index: 10; }
+#notes.on { display: block; }
+#notes .meta { color: #8FA1B8; font-size: 14px; margin-bottom: 6px; }
+#notes p { margin: 0 0 8px; max-width: 70em; }
+.notes { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .apple .arc, .slide.active .apple .arc { animation: none; stroke-dashoffset: 0; }
+}
+@media print {
+  @page { size: 1920px 1080px; margin: 0; }
+  html, body { background: none; overflow: visible; height: auto; }
+  #deck { position: static; transform: none !important; width: auto; height: auto; }
+  .slide { position: relative; display: block; width: 1920px; height: 1080px; page-break-after: always; break-after: page; }
+  .apple .arc { animation: none !important; stroke-dashoffset: 0; }
+  #notes { display: none !important; }
+}
+</style>
+</head>
+<body>
+<div id="deck">
+
+<!-- ═════════ 1 · Title ═════════ -->
+<section class="slide" data-part="0">
+  <img class="bleed right" src="img/city.jpg" alt="The Human Project: 3D model of downtown San Francisco">
+  <div class="fogwash"></div>
+  <div class="title-copy">
+    <h1>The Human Project</h1>
+    <p class="sub">See who meets before a street changes.</p>
+    <p class="lead">A living model of downtown San Francisco: 270,942 people, one weekday, every trip. Change a street, and watch the city replan and new acquaintances form.</p>
+  </div>
+  <p class="title-foot"><b>Aziz Derbel, Maximilian Thiersch and Phi Linh Phan</b>, Cal Hacks 2026</p>
+  <aside class="notes" data-time="0:00–0:05">
+    <p>Cold open on this slide for about 3 seconds, no voiceover needed, or: “This is the Human Project.”</p>
+  </aside>
+</section>
+
+<!-- ═════════ 2 · Problem: Appleyard ═════════ -->
+<section class="slide" data-part="1">
+  <div class="pad">
+    <h2>Busy streets cost us our neighbors</h2>
+    <svg class="apple" id="appleyard" viewBox="0 0 1060 760" role="img" aria-label="Illustration of three streets: the more traffic, the fewer ties between neighbors"></svg>
+    <div class="side">
+      <p class="body">In 1969 Donald Appleyard mapped who knew whom on three parallel San Francisco streets that differed mainly in traffic: Franklin, Gough and Octavia.</p>
+      <p class="body">On the light street, residents had three times as many friends, and their ties crossed the street.</p>
+      <p class="body stat">Half of US adults report loneliness. The Surgeon General compares the health risk of disconnection to smoking up to 15 cigarettes a day.</p>
+      <p class="body"><b>When San Francisco debates a street change today, nobody can show who would meet.</b></p>
+      <p class="cap">Diagram after Appleyard &amp; Lintell (1972); friends per resident from the study. US Surgeon General advisory, 2023.</p>
+    </div>
+  </div>
+  <aside class="notes" data-time="0:05–0:25">
+    <p>“Fifty years ago, Donald Appleyard studied three streets right here in San Francisco. Same kind of houses, different traffic. On the quiet street, people had three times as many friends. On the busy one, neighbors barely knew each other.”</p>
+    <p>“Today half of Americans report loneliness, and yet when a city decides whether to close a street to cars, the hearing argues about parking. Nobody can show who would meet.”</p>
+  </aside>
+</section>
+
+<!-- ═════════ 3 · Community ═════════ -->
+<section class="slide" data-part="1">
+  <div class="pad">
+    <h2>For the people who have to take a side at the hearing</h2>
+    <div class="community">
+      <div>
+        <p class="lead">Before the SFMTA votes on a car-free block, merchants and neighbors on 2nd Street in SoMa have to decide whether to back it. They get a few minutes at the microphone and a traffic study that took months, and it says nothing about their customers or their neighbors.</p>
+        <ul class="asks">
+          <li>Will more people walk past my door?</li>
+          <li>Where do the cars go instead?</li>
+          <li>Who gains, and who pays?</li>
+        </ul>
+      </div>
+      <!-- TODO(team): put the real quote from a 2nd St merchant or neighbor here, then change class "quote todo" to "quote filled". Never record this slide with the placeholder. -->
+      <blockquote class="quote todo" id="community-quote">
+        <p>Placeholder: the real quote from a merchant or neighbor you talked to goes here.</p>
+        <p class="who">Name, role, business on 2nd Street</p>
+      </blockquote>
+    </div>
+  </div>
+  <aside class="notes" data-time="0:25–0:32">
+    <p>“We built it for the people who have to take a side: merchants and neighbors on 2nd Street in SoMa, before the SFMTA hearing on a car-free block.”</p>
+    <p>Read the real quote here. If you don't have one, cut this slide from the Meta video; keep it for the Anthropic submission.</p>
+  </aside>
+</section>
+
+<!-- ═════════ 4 · The living city ═════════ -->
+<section class="slide" data-part="2">
+  <img class="bleed right" src="img/city.jpg" alt="">
+  <div class="fogwash floor"></div>
+  <div class="city-copy">
+    <h2>A weekday in downtown San Francisco, one person at a time</h2>
+    <ul class="facts">
+      <li style="--k:var(--ink)">270,942 people in FiDi and SoMa, simulated as 14,140 agents with homes, jobs and schedules from Census data</li>
+      <li style="--k:var(--walk)">993,552 walking trips, 196,560 transit trips and 177,639 car trips a day</li>
+      <li style="--k:var(--edit)">Change a street, and every agent replans over five simulated days in under two seconds</li>
+      <li style="--k:var(--tie)">The engine counts where people cross paths, and which of those encounters become ties</li>
+    </ul>
+    <p class="cap">Built from OpenStreetMap, Census LODES and ACS, DataSF, BART station exits and Google Maps popular times collected with Apify.</p>
+  </div>
+  <aside class="notes" data-time="0:32–0:42">
+    <p>“The Human Project is a living model of downtown San Francisco. 270,000 people, built from Census and city data, each with a home, a job and a day to get through. Change a street, and the whole city replans.”</p>
+    <p>Cut to the demo after this slide.</p>
+  </aside>
+</section>
+
+<!-- ═════════ 5 · Demo outline ═════════ -->
+<section class="slide" data-part="2">
+  <div class="pad">
+    <h2>Demo: give 2nd Street to people</h2>
+    <div class="steps6">
+      <div class="step"><span class="num">1</span><h3>The morning rush</h3><p class="small">Commuters pour in from the Bay Bridge, US-101 and BART.</p></div>
+      <div class="step"><span class="num">2</span><h3>Paint 2nd Street car-free</h3><p class="small">Drag along the street. The engine replans the whole city.</p></div>
+      <div class="step"><span class="num">3</span><h3>Swipe: today vs the plan</h3><p class="small">Both run live, side by side, at the same moment.</p></div>
+      <div class="step"><span class="num">4</span><h3>Follow Maria</h3><p class="small">One commuter's day, then every new tie across the city.</p></div>
+      <div class="step"><span class="num">5</span><h3>Ask the AI planner</h3><p class="small">“Boost small business in SoMa without slowing Bay Bridge traffic.”</p></div>
+      <div class="step"><span class="num">6</span><h3>Pitch to the Board</h3><p class="small">Net value, who gains, who pays and the trade-offs.</p></div>
+    </div>
+  </div>
+  <aside class="notes" data-time="optional">
+    <p>Optional chapter card. The app's demo is now a one-minute reel that differs from these six steps: match this card to what you record, or skip it.</p>
+  </aside>
+</section>
+
+<!-- ═════════ 6 · Results ═════════ -->
+<section class="slide" data-part="2">
+  <div class="pad">
+    <h2>2nd Street car-free, Market to Folsom</h2>
+    <div class="results">
+      <img class="frame" src="img/car-free-2nd.jpg" alt="2nd Street car-free in the app, foot traffic view">
+      <div>
+        <h4 class="delta-h" style="margin:0 0 8px;font-size:19px;font-weight:600;color:var(--ink3)">Every weekday, versus today</h4>
+        <ul class="delta">
+          <li><span class="v gain">+84,500</span><span class="t">chance encounters in cafés, shops and on the street (+2.4%)</span></li>
+          <li><span class="v gain">+241</span><span class="t">new acquaintances among people who work or live here (+1.9%)</span></li>
+          <li><span class="v gain">+25%</span><span class="t">foot traffic on 2nd Street</span></li>
+          <li><span class="v gain">+$21K</span><span class="t">local business revenue</span></li>
+          <li><span class="v cost">+80 h</span><span class="t">vehicle delay, about 1.8 s per car trip, shown on purpose</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="valuebar">
+      <div class="row"><span class="total">+$1.79M a year</span><span class="small">net value to the city, from the engine, after the cost to drivers</span></div>
+      <div class="bar">
+        <i style="width:30.2%;background:var(--hatch)"></i>
+        <i style="width:4px;flex:none;background:var(--ink)"></i>
+        <i style="width:33.7%;background:var(--gain)"></i>
+        <i style="width:31.9%;background:var(--tie)"></i>
+        <i style="width:4.2%;background:var(--env)"></i>
+      </div>
+      <div class="legend">
+        <span style="--k:var(--hatch)">Mobility <b class="cost">−$1.36M</b></span>
+        <span style="--k:var(--gain)">Local economy $1.52M</span>
+        <span style="--k:var(--tie)">Street life $1.44M</span>
+        <span style="--k:var(--env)">Environment $0.19M</span>
+      </div>
+    </div>
+  </div>
+  <aside class="notes" data-time="1:45–1:55">
+    <p>“Making 2nd Street car-free adds about 84,000 chance encounters a day and 241 new acquaintances. Foot traffic is up a quarter, local shops earn $21,000 more a day, and drivers lose about two seconds a trip. We show that too: after the cost to drivers, the city still nets about $1.8 million a year.”</p>
+    <p>Source: engine snapshot plan-84731cbe0c91 (2nd St car-free) vs baseline.</p>
+  </aside>
+</section>
+
+<!-- ═════════ 7 · Connections ═════════ -->
+<section class="slide" data-part="2">
+  <div class="pad">
+    <div class="conn">
+      <div>
+        <h2 style="font-size:58px">Each pink arc is a new tie that only exists in the plan</h2>
+        <div class="how">
+          <p><b>Co-presence.</b>Two people in the same café, shop or plaza within 15 minutes notice each other.</p>
+          <p><b>Repetition.</b>Regulars who keep crossing paths can become acquaintances, as proximity studies of phones and campuses found.</p>
+          <p><b>Calm streets.</b>Residents of quieter streets know more neighbors, using Appleyard's numbers.</p>
+          <p><b>Lingering.</b>People stay on car-free streets, so encounters happen on the street itself.</p>
+        </div>
+        <p class="cap" style="margin-top:28px">Eagle, Pentland &amp; Lazer 2009; Hipp &amp; Perrin 2009; Appleyard &amp; Lintell 1972. Every rate is listed with its source in the app.</p>
+      </div>
+      <img class="frame" src="img/connections.jpg" alt="Connections view: pink arcs between the places where new ties formed">
+    </div>
+  </div>
+  <aside class="notes" data-time="1:55–2:02">
+    <p>“This is what we optimize for. Every pink arc is a new tie between two people that only happens because the street changed: they ate lunch at the same place, or walked the same car-free block.”</p>
+  </aside>
+</section>
+
+<!-- ═════════ 8 · How AI works ═════════ -->
+<section class="slide" data-part="3">
+  <div class="pad">
+    <h2>AI proposes and explains. The engine does the counting.</h2>
+    <div class="arch">
+      <svg viewBox="0 0 1696 640" preserveAspectRatio="none" aria-hidden="true">
+        <line x1="430" y1="125" x2="628" y2="220"/><text x="448" y="118">evaluate_plan</text>
+        <line x1="430" y1="410" x2="628" y2="330"/><text x="448" y="352">trip logs</text>
+        <line x1="1266" y1="125" x2="1068" y2="220"/><text x="1196" y="118">simq</text>
+        <line x1="1266" y1="410" x2="1068" y2="330"/><text x="1136" y="352">policy hooks</text>
+        <line x1="848" y1="436" x2="848" y2="500"/><text x="862" y="474">POST /scenario</text>
+      </svg>
+      <div class="node" style="left:0;top:0;width:430px;height:250px">
+        <div class="who">Claude Sonnet 5.5</div><h3>AI planner</h3>
+        <p>You type a goal. Claude lists streets and car inlets, runs each option through the engine and previews it on the map.</p>
+      </div>
+      <div class="node" style="left:0;top:300px;width:430px;height:220px">
+        <div class="who">Claude Haiku 5.5</div><h3>Citizen voices</h3>
+        <p>Posts and diaries written from each person's actual trips that day.</p>
+      </div>
+      <div class="node engine" style="left:628px;top:110px;width:440px;height:326px">
+        <h3>Simulation engine</h3>
+        <p style="margin-top:12px">Mode choice, congestion, destination choice, co-presence and valuation for 270,942 people.</p>
+        <p style="margin-top:16px;color:#fff;font-weight:700">Every number comes from here.</p>
+      </div>
+      <div class="node" style="left:1266px;top:0;width:430px;height:250px">
+        <div class="who">Factory Droid SDK</div><h3>Ask the city</h3>
+        <p>Read-only questions, answered from engine queries in about 8 seconds. The map flies to what it mentions.</p>
+      </div>
+      <div class="node" style="left:1266px;top:300px;width:430px;height:220px">
+        <div class="who">Factory Droid SDK</div><h3>Policy compiler</h3>
+        <p>Writes, tests and hands over new levers the engine doesn't have yet.</p>
+      </div>
+      <div class="node" style="left:628px;top:500px;width:440px;height:140px">
+        <div class="who">Fetch.ai uAgents on ASI:One</div><h3 style="margin-bottom:0">Four analyst agents in a chat</h3>
+      </div>
+    </div>
+  </div>
+  <aside class="notes" data-time="2:02–2:25">
+    <p>“AI is how people talk to the city. Claude is the planner: give it a goal like ‘boost small business without slowing Bay Bridge traffic’, and it searches plans by running each one through the engine. Factory Droid answers questions and even writes new policies. Fetch.ai agents bring the whole city into a chat.”</p>
+    <p>“The rule: AI proposes and explains, the engine counts. No model can invent a number. Every figure traces back to a tool call.”</p>
+  </aside>
+</section>
+
+<!-- ═════════ 9 · Factory Droid ═════════ -->
+<section class="slide" data-part="3">
+  <div class="pad">
+    <h2>When a planner asks for a lever that doesn't exist, Droid writes it</h2>
+    <div class="pipe">
+      <div class="step"><span class="num">1</span><h3>Request</h3><p>“A $5 charge only for through-traffic,” from the Droid panel or the AI planner</p></div>
+      <div class="step"><span class="num">2</span><h3>Plan</h3><p>Droid reads the policy interface and returns a plan: hooks, parameters, assumptions</p></div>
+      <div class="step"><span class="num">3</span><h3>Write</h3><p>One policy module and its test. Both paths are fixed after the plan</p></div>
+      <div class="step"><span class="num">4</span><h3>Gate</h3><p>Static scan, pytest with the engine suite, determinism and sanity bounds</p></div>
+      <div class="step human"><span class="num">5</span><h3>Approve</h3><p>A person clicks Apply. File hashes must match what passed the gate</p></div>
+      <div class="step"><span class="num">6</span><h3>Live</h3><p>Hot-loaded into the Policy Book, usable in the next scenario</p></div>
+    </div>
+    <div class="below">
+      <div>
+        <h4>What Droid can touch</h4>
+        <ul class="ticks">
+          <li>Writes two files in <span class="code">hp/policies/generated/</span>, nothing else</li>
+          <li>No network: Droid's command sandbox blocks connections, and <span class="code">.env</span> is unreadable</li>
+          <li>One allowed command, the gate. Anything else is cancelled and logged</li>
+          <li>Tool allowlist, a 10-minute limit and at most two fix rounds</li>
+          <li>The panel shows the plan, every tool call, each permission decision, the diff and test output</li>
+        </ul>
+      </div>
+      <div class="measured">
+        <h4>Measured run: “a $5 charge only for through-traffic”</h4>
+        <p class="small"><span class="code">through_charge.py</span> plus 21 tests. The gate passed on the first try, about 2.5 minutes end to end.</p>
+        <div class="nums">
+          <div><b>−2.2%</b>in-area vehicle miles</div>
+          <div><b>−3.6%</b>traffic delay</div>
+          <div><b class="gain">+$1.35M</b>a year</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes" data-time="optional · Factory">
+    <p>“When the planner asks for a policy we never built, Droid writes it: a module and its tests, inside a sandbox with no network, two writable files and one allowed command. It only goes live when a person approves it.”</p>
+    <p>Numbers: backend/droid/README.md, measured 2026-10-24, run record runs/1024-163322-8a6e.json.</p>
+  </aside>
+</section>
+
+<!-- ═════════ 10 · Fetch.ai ═════════ -->
+<section class="slide" data-part="3">
+  <div class="pad">
+    <h2>Ask ASI:One about a street. Four agents simulate it.</h2>
+    <div class="flow">
+      <svg viewBox="0 0 1696 400" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M430 200 H560"/>
+        <path d="M860 200 C910 200 910 60 960 60"/>
+        <path d="M860 200 H960"/>
+        <path d="M860 200 C910 200 910 340 960 340"/>
+        <path d="M1260 60 C1310 60 1310 200 1380 200"/>
+        <path d="M1260 200 H1380"/>
+        <path d="M1260 340 C1310 340 1310 200 1380 200"/>
+      </svg>
+      <div class="chat">
+        <div class="who">ASI:One chat</div>
+        <div class="bubble">Make 2nd St car-free between Market and Folsom</div>
+        <div class="bubble reply">Net value, where the cars go, which businesses win or lose, and who pays by income</div>
+      </div>
+      <div class="node" style="left:560px;top:120px;width:300px;height:160px"><div class="who">Orchestrator</div><h3>SF Street Analyst</h3><p>Parses the stretch, delegates, merges</p></div>
+      <div class="node" style="left:960px;top:4px;width:300px;height:112px;padding:18px 24px"><h3 style="margin:0">Mobility</h3><p>Trips, delay, diversion</p></div>
+      <div class="node" style="left:960px;top:144px;width:300px;height:112px;padding:18px 24px"><h3 style="margin:0">Local Economy</h3><p>Revenue, winners, losers</p></div>
+      <div class="node" style="left:960px;top:284px;width:300px;height:112px;padding:18px 24px"><h3 style="margin:0">Equity</h3><p>Income tiers, ties, rent</p></div>
+      <div class="node engine" style="left:1380px;top:120px;width:316px;height:160px;padding:26px 28px"><h3 style="font-size:30px">Engine</h3><p style="font-size:19px;margin-top:6px">Same edits, same edge ids, same numbers</p></div>
+    </div>
+    <div class="fetch-facts">
+      <div><h4>Chat Protocol and Interactive Cards</h4><p>Name only a street and the analyst asks which stretch, with a card listing the real cross streets in order.</p></div>
+      <div><h4>Payment Protocol</h4><p>2 FET buys a hearing brief, written only from the engine's facts, with every value line and assumption.</p></div>
+      <div><h4>Checked against the engine</h4><p>A scripted conversation compares the chat answer with a direct engine call, field by field. All 11 checks pass.</p></div>
+    </div>
+  </div>
+  <aside class="notes" data-time="optional · Fetch.ai">
+    <p>“The whole city also lives in ASI:One. Four agents on Agentverse: an orchestrator and three specialists, each running the scenario on our engine. No custom frontend, and the paid hearing brief uses the Payment Protocol.”</p>
+    <p>Note: the demo script in agents/fetch/README.md still quotes pre-valuation-change numbers ($6.4M, “mostly health”). Re-run before recording the Fetch video.</p>
+  </aside>
+</section>
+
+<!-- ═════════ 11 · Responsible design ═════════ -->
+<section class="slide" data-part="3">
+  <div class="pad">
+    <h2>Where this could mislead people, and what we built against it</h2>
+    <table class="risks">
+      <thead><tr><th>Risk</th><th>What we built</th></tr></thead>
+      <tbody>
+        <tr><td>A fluent story on top of a model</td><td>Claude and Droid may only quote engine numbers, and each answer lists the tool calls behind it.</td></tr>
+        <tr><td>Synthetic people carry bias</td><td>Agents are drawn from Census LODES and ACS. Results are split by income third, so the app shows who pays.</td></tr>
+        <tr><td>One dollar figure gets over-trusted</td><td>Every parameter is tagged data, literature or assumed, with its source. Costs, losers and the convergence gap stay on screen.</td></tr>
+        <tr><td>Social value is the softest number</td><td>A weak tie is valued at $1,100 a year, an assumption derived from the UK Social Value Bank, and labeled as one.</td></tr>
+        <tr><td>AI-written code in a running product</td><td>Droid works in a sandbox, behind a test gate, and nothing loads until a person approves it.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="notes" data-time="optional · Anthropic, Microsoft">
+    <p>“A persuasive story on top of a model can mislead a hearing. So no AI here can invent a number, every assumption is labeled with its source, and the people who lose out are always on screen.”</p>
+  </aside>
+</section>
+
+<!-- ═════════ 12 · Data and validation ═════════ -->
+<section class="slide" data-part="4">
+  <div class="pad">
+    <h2>Calibrated to the real city, and clear about where it isn't</h2>
+    <p class="small inputs">Inputs: OpenStreetMap streets and buildings, Census LODES jobs and ACS residents, DataSF land use and traffic counts, BART station exits, and Google Maps businesses with popular times, collected with Apify.</p>
+    <table class="valid">
+      <thead><tr><th>Check</th><th class="n">Model</th><th class="n">Real world</th><th style="padding-left:60px">Source</th></tr></thead>
+      <tbody>
+        <tr><td>Downtown commuters who drive</td><td class="n">35.1%</td><td class="n">34.4%</td><td class="src">Census ACS</td></tr>
+        <tr><td>Downtown commuters on transit</td><td class="n">49.7%</td><td class="n">48.4%</td><td class="src">Census ACS</td></tr>
+        <tr><td>Foot traffic on 2nd Street after it goes car-free</td><td class="n">+24.6%</td><td class="n">+29%</td><td class="src">SFMTA</td></tr>
+        <tr><td>Mission St slowdown after car-free Market St (2020)</td><td class="n">+4.8%</td><td class="n">+4.0%</td><td class="src">INRIX</td></tr>
+        <tr><td>Café visits by hour, correlation with Google popular times</td><td class="n">0.82</td><td class="n">0.80 target</td><td class="src">Google Maps via Apify</td></tr>
+        <tr class="off"><td>Where we're off: cycling on Market St after the closure</td><td class="n">+98%</td><td class="n">+25%</td><td class="src">SFMTA</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="notes" data-time="optional · Apify, Microsoft">
+    <p>“It's calibrated to the real city. Mode shares match the Census within two points, and the model's foot-traffic gain on 2nd Street is close to what the SFMTA measured. Where it's off, like cycling on Market Street, we say so.”</p>
+    <p>Source: research/validation/README.md (generated 2026-10-24 17:45).</p>
+  </aside>
+</section>
+
+<!-- ═════════ 13 · Live layer ═════════ -->
+<section class="slide" data-part="4">
+  <div class="pad">
+    <h2>One shared plan for everyone in the room</h2>
+    <div class="live">
+      <div class="step"><span class="num">1</span><h3>Someone edits</h3><p>Painting a street calls the <span class="code">set_pedestrian</span> reducer on SpacetimeDB</p></div>
+      <div class="step"><span class="num">2</span><h3>Debounce</h3><p>Each edit bumps the plan version and arms a 400 ms timer</p></div>
+      <div class="step"><span class="num">3</span><h3>Compute</h3><p>A scheduled procedure sends the plan to the engine</p></div>
+      <div class="step"><span class="num">4</span><h3>Write once</h3><p>The result lands in <span class="code">result_summary</span> in one transaction</p></div>
+      <div class="step"><span class="num">5</span><h3>Everyone sees it</h3><p>Every subscriber gets the same plan, numbers and cursors</p></div>
+    </div>
+    <div class="live-nums">
+      <div><div class="big">1.5 s</div><p class="small" style="margin-top:10px">from an edit to the pushed result, for a new plan</p></div>
+      <div><div class="big">0.4 s</div><p class="small" style="margin-top:10px">for a plan the engine has already computed</p></div>
+      <div><p class="small">Edits made during a compute are never lost: when the run finishes it sees the newer version and queues another. Tables: <span class="code">scenario</span>, <span class="code">street_edit</span>, <span class="code">block_edit</span>, <span class="code">player</span>, <span class="code">activity</span>, <span class="code">result_summary</span>.</p></div>
+    </div>
+  </div>
+  <aside class="notes" data-time="optional · SpacetimeDB">
+    <p>“Neighbors don't plan alone. SpacetimeDB holds one shared plan: anyone's edit triggers a recompute, and every phone and laptop gets the same result in about a second and a half.”</p>
+    <p>Measured locally (backend/live/README.md). The app's “Go live” button uses this layer (./run.sh --live); commit 55f85de measured about 3 s from an edit in one browser to the settled result in another.</p>
+  </aside>
+</section>
+
+<!-- ═════════ 14 · Tools, harnesses and models ═════════ -->
+<section class="slide" data-part="4">
+  <div class="pad">
+    <h2>Tools, harnesses and models</h2>
+    <div class="tools">
+      <div>
+        <h4>How we built it</h4>
+        <div class="item"><b>Claude Code with Claude Opus 5.5</b><span>Our pair programmer and research assistant: literature reviews, 16 case studies, a sourced parameter table, the engine and its tests, the 3D app and its design reviews.</span></div>
+        <div class="item"><b>Python, numpy, scipy, FastAPI</b><span>The simulation engine and its API.</span></div>
+        <div class="item"><b>three.js</b><span>The 3D city, info views and compare swipe.</span></div>
+      </div>
+      <div>
+        <h4>Models in the product</h4>
+        <div class="item"><b>Claude Sonnet 5.5</b><span>AI planner (tool use) and “why” explanations.</span></div>
+        <div class="item"><b>Claude Haiku 5.5</b><span>Citizen posts and diaries from real trip logs.</span></div>
+        <div class="item"><b>Factory Droid</b><span>Ask the city on Claude Sonnet 5.5; the policy compiler on Droid's default model.</span></div>
+        <div class="item"><b>ASI:One asi1-mini</b><span>Free-form street parsing for the Fetch.ai agents.</span></div>
+      </div>
+      <div>
+        <h4>Harnesses and platforms</h4>
+        <div class="item"><b>Factory Droid SDK</b><span>Sessions with tool allowlists, a permission handler and a sandbox.</span></div>
+        <div class="item"><b>Anthropic Messages API</b><span>A tool-use loop over the engine, with cached responses.</span></div>
+        <div class="item"><b>Fetch.ai uAgents and Agentverse</b><span>Chat, card and payment protocols.</span></div>
+        <div class="item"><b>SpacetimeDB and Apify</b><span>The shared live plan, and real business data.</span></div>
+      </div>
+    </div>
+    <p class="helped">Claude Code let three people do a research team's work in a weekend: the literature, the calibration and the code, with every parameter tagged by where it comes from.</p>
+  </div>
+  <aside class="notes" data-time="2:25–2:50">
+    <p>“We built this with Claude Code on Claude Opus 5.5, from the literature review to the engine to the 3D app. In the product, Claude Sonnet plans and explains, Claude Haiku writes the citizens' voices, Factory Droid answers questions and writes new policies in a sandbox, and Fetch.ai agents run it from ASI:One. Real business data comes from Apify, and SpacetimeDB keeps one shared plan in sync.”</p>
+  </aside>
+</section>
+
+<!-- ═════════ 15 · Close ═════════ -->
+<section class="slide" data-part="0">
+  <img class="bleed far" src="img/ties-wide.jpg" alt="">
+  <div class="fogwash" style="background:linear-gradient(90deg, rgba(232,237,241,.98) 0%, rgba(232,237,241,.96) 44%, rgba(232,237,241,.5) 58%, rgba(232,237,241,0) 70%)"></div>
+  <div class="close-copy">
+    <h1>Streets are where a city makes friends</h1>
+    <p class="lead">The Human Project lets a neighborhood see who meets before the street changes.</p>
+    <p class="links"><b>github.com/ma-xr/calhacks-2026</b><br>Aziz Derbel, Maximilian Thiersch and Phi Linh Phan<br>Cal Hacks 2026</p>
+  </div>
+  <aside class="notes" data-time="2:50–3:00">
+    <p>“Streets are where a city makes friends. The Human Project lets a neighborhood see who meets before the street changes.”</p>
+  </aside>
+</section>
+
+</div>
+<div id="notes" aria-live="polite"></div>
+
+<script>
+(() => {
+  const deck = document.getElementById('deck');
+  const slides = [...deck.querySelectorAll('.slide')];
+  const notes = document.getElementById('notes');
+  const PARTS = ['Problem', 'Demo', 'How AI works', 'How we built it'];
+  let i = 0;
+
+  // Route line on every slide that belongs to one of Meta's four video parts
+  for (const s of slides) {
+    const p = +s.dataset.part; if (!p) continue;
+    const r = document.createElement('div'); r.className = 'route'; r.setAttribute('aria-hidden', 'true');
+    let h = '';
+    for (let k = 0; k < 3; k++) h += `<span class="seg ${k + 1 < p ? 'done' : ''}" style="left:${k / 3 * 100}%;width:${100 / 3}%"></span>`;
+    PARTS.forEach((name, k) => {
+      const st = k + 1 < p ? 'done' : k + 1 === p ? 'here' : '';
+      const pos = `left:${k / 3 * 100}%`;
+      h += `<span class="stop ${st}" style="${pos}"></span><span class="lbl ${st === 'here' ? 'here' : ''} ${k === 0 ? 'first' : k === 3 ? 'last' : ''}" style="${pos}">${name}</span>`;
+    });
+    r.innerHTML = h; s.append(r);
+  }
+
+  // Appleyard diagram: three streets, ties between households scale with friends per resident
+  (function appleyard() {
+    const svg = document.getElementById('appleyard'); if (!svg) return;
+    let seed = 1972; const rnd = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+    const rows = [
+      { cars: '2,000', label: 'Light traffic', friends: 3.0, marks: 3, cross: .45 },
+      { cars: '8,000', label: 'Moderate traffic', friends: 1.3, marks: 10, cross: .18 },
+      { cars: '16,000', label: 'Heavy traffic', friends: 0.9, marks: 22, cross: 0 },
+    ];
+    const N = 10, X0 = 300, X1 = 860, gap = (X1 - X0) / (N - 1), RH = 252;
+    const ns = 'http://www.w3.org/2000/svg';
+    const el = (tag, a, txt) => { const e = document.createElementNS(ns, tag); for (const k in a) e.setAttribute(k, a[k]); if (txt != null) e.textContent = txt; svg.append(e); return e; };
+    rows.forEach((row, r) => {
+      const y = r * RH, top = y + 92, road = y + 116, roadH = 56, bot = road + roadH + 6;
+      el('text', { x: 0, y: road + 18, 'font-size': 44, 'font-weight': 800, fill: '#12223A' }, row.cars);
+      el('text', { x: 0, y: road + 48, 'font-size': 20, fill: '#46566E' }, 'cars a day');
+      el('rect', { x: X0 - 30, y: road, width: X1 - X0 + 60, height: roadH, rx: 4, fill: '#2A394D' });
+      el('line', { x1: X0 - 20, y1: road + roadH / 2, x2: X1 + 20, y2: road + roadH / 2, stroke: 'rgba(255,255,255,.35)', 'stroke-width': 2, 'stroke-dasharray': '14 12' });
+      const perLane = Math.ceil(row.marks / 2), span = (X1 - X0 + 20) / perLane;
+      for (let k = 0; k < row.marks; k++) {
+        const lane = k % 2, slot = Math.floor(k / 2);
+        el('rect', { x: X0 - 20 + slot * span + rnd() * span * .35, y: road + (lane ? 36 : 10), width: 24, height: 10, rx: 3, fill: '#169FD6' });
+      }
+      for (let k = 0; k < N; k++) {
+        el('rect', { x: X0 + k * gap - 9, y: top - 18, width: 18, height: 18, rx: 2, fill: '#46566E' });
+        el('rect', { x: X0 + k * gap - 9, y: bot, width: 18, height: 18, rx: 2, fill: '#46566E' });
+      }
+      el('text', { x: 920, y: road + 30, 'font-size': 64, 'font-weight': 900, fill: '#E3317F', 'letter-spacing': '-2' }, row.friends.toFixed(1));
+      el('text', { x: 922, y: road + 58, 'font-size': 18, fill: '#46566E' }, 'friends per');
+      el('text', { x: 922, y: road + 80, 'font-size': 18, fill: '#46566E' }, 'resident');
+      const ties = Math.round(row.friends * N * 2 / 2), seen = new Set(); let made = 0, guard = 0;
+      while (made < ties && guard++ < 500) {
+        const cross = rnd() < row.cross, a = Math.floor(rnd() * N);
+        let d = 1 + Math.floor(Math.pow(rnd(), 1.6) * 4); let b = a + (rnd() < .5 ? -d : d); if (b < 0 || b >= N) b = a - (b - a);
+        if (cross) b = Math.max(0, Math.min(N - 1, a + Math.round((rnd() - .5) * 4)));
+        const sideTop = rnd() < .5, key = (cross ? 'x' : sideTop ? 't' : 'b') + Math.min(a, b) + '-' + Math.max(a, b);
+        if (seen.has(key) || (!cross && a === b)) continue; seen.add(key);
+        const xa = X0 + a * gap, xb = X0 + b * gap; let dpath;
+        if (cross) { const m = road + roadH / 2; dpath = `M${xa} ${top} C${xa} ${m} ${xb} ${m} ${xb} ${bot}`; }
+        else if (sideTop) { const hgt = 16 + Math.abs(b - a) * 12; dpath = `M${xa} ${top - 18} Q${(xa + xb) / 2} ${top - 18 - hgt} ${xb} ${top - 18}`; }
+        else { const hgt = 16 + Math.abs(b - a) * 12; dpath = `M${xa} ${bot + 18} Q${(xa + xb) / 2} ${bot + 18 + hgt} ${xb} ${bot + 18}`; }
+        el('path', { d: dpath, class: 'arc', pathLength: 1, style: `--d:${(r * .55 + made * .035).toFixed(2)}s` });
+        made++;
+      }
+    });
+  })();
+
+  function fit() {
+    const s = Math.min(innerWidth / 1920, innerHeight / 1080);
+    deck.style.transform = `translate(-50%, -50%) scale(${s})`;
+  }
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, k) => s.classList.toggle('active', k === i));
+    const a = slides[i].querySelector('.notes');
+    notes.innerHTML = `<div class="meta">Slide ${i + 1} of ${slides.length}${a?.dataset.time ? ' · ' + a.dataset.time : ''}</div>` + (a ? a.innerHTML : '');
+    if (location.hash !== '#' + (i + 1)) history.replaceState(null, '', '#' + (i + 1));
+  }
+  addEventListener('resize', fit);
+  addEventListener('hashchange', () => { const n = parseInt(location.hash.slice(1), 10); if (n && n - 1 !== i) show(n - 1); });
+  addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const k = e.key;
+    if (k === 'ArrowRight' || k === 'ArrowDown' || k === 'PageDown' || k === ' ') { e.preventDefault(); show(i + 1); }
+    else if (k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp') { e.preventDefault(); show(i - 1); }
+    else if (k === 'Home') show(0);
+    else if (k === 'End') show(slides.length - 1);
+    else if (k === 'n' || k === 'N') notes.classList.toggle('on');
+    else if (k === 'f' || k === 'F') { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.(); }
+  });
+  deck.addEventListener('click', (e) => { if (e.target.closest('a')) return; show(i + (e.shiftKey ? -1 : 1)); });
+  fit();
+  show((parseInt(location.hash.slice(1), 10) || 1) - 1);
+})();
+</script>
+</body>
+</html>
