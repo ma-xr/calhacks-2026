@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CommonGround · Pick a design</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:#0e1116;color:#e8edf4;font:15px/1.55 Inter,system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;padding:56px 20px}
+h1{margin:0 0 6px;font-size:30px;letter-spacing:-.02em}
+p.lede{margin:0 0 34px;color:#97a3b6;max-width:640px;text-align:center}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,340px));gap:20px}
+a.opt{display:block;text-decoration:none;color:inherit;border-radius:18px;overflow:hidden;border:1px solid #232a35;background:#151a22;transition:transform .15s,border-color .15s}
+a.opt:hover{transform:translateY(-4px);border-color:#4a5568}
+.sw{height:170px;position:relative;padding:18px;display:flex;flex-direction:column;justify-content:flex-end}
+.sw b{font-size:24px;letter-spacing:-.02em}
+.body{padding:16px 18px 20px}
+.body h3{margin:0 0 4px;font-size:17px}
+.body p{margin:0;color:#97a3b6;font-size:13.5px}
+.tag{display:inline-block;margin-top:12px;font-size:11.5px;font-weight:600;color:#c3cede;background:#212835;border-radius:999px;padding:3px 10px}
+.studio{background:linear-gradient(135deg,#ffffff,#e9f0ff);color:#0f172a}
+.studio::before{content:"";position:absolute;left:18px;top:18px;width:70px;bottom:18px;border-radius:10px;background:#f1f3f6;border:1px solid #e2e6ee}
+.studio b{margin-left:84px;color:#2563eb}
+.skyline{background:radial-gradient(400px 200px at 80% 0,#1d3d6e,transparent),#07111f;color:#fff}
+.skyline b{background:linear-gradient(90deg,#7fd3ff,#4fdc7a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.board{background:#f5f0e6;color:#1f1a14;font-family:Georgia,serif}
+.board::before{content:"";position:absolute;left:18px;right:18px;top:18px;height:70px;background:repeating-linear-gradient(90deg,#e8e0d1 0 23%,transparent 23% 25.6%);border-radius:8px}
+.board b{font-style:italic;color:#c2410c}
+.note{margin-top:34px;color:#6b778a;font-size:13px;text-align:center;max-width:620px}
+.note code{background:#1b212b;padding:1px 6px;border-radius:5px;color:#c3cede}
+@media (max-width:1060px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<h1>Three ways the website could look</h1>
+<p class="lede">Same features in all three: home page, workspaces, invite links with roles, plans with a workflow stage, live presence and activity, and one click into the shared 3D simulation. Only the design differs.</p>
+<div class="grid">
+  <a class="opt" href="studio/"><div class="sw studio"><b>Studio</b></div><div class="body"><h3>1 · Studio</h3><p>A light, calm SaaS workspace in the style of Linear or Notion. A sidebar lists your workspaces; plans are cards with map thumbnails.</p><span class="tag">Light · sidebar · card grid</span></div></a>
+  <a class="opt" href="skyline/"><div class="sw skyline"><b>Skyline</b></div><div class="body"><h3>2 · Skyline</h3><p>Dark and cinematic, matching the 3D simulator. A big city-map hero, a “mission control” plan list with live presence, and full-bleed plan pages.</p><span class="tag">Dark · glass · matches the sim</span></div></a>
+  <a class="opt" href="board/"><div class="sw board"><b>Civic Board</b></div><div class="body"><h3>3 · Civic Board</h3><p>An editorial look: warm paper and serif headlines. Plans sit on a drag-and-drop board (Draft → In review → Approved) that organizes the team’s workflow.</p><span class="tag">Editorial · kanban workflow</span></div></a>
+</div>
+<p class="note">All three share one account and the same live data, so a workspace made in one shows up in the others. To try collaboration on one computer, use <b>Add another person</b> in the account menu: it opens a second tab as someone else.</p>
+</body>
+</html>
