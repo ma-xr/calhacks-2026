@@ -1,0 +1,122 @@
+{
+ "goal": "add a congestion charge of 10 dollars",
+ "options": [
+  {
+   "title": "$10 charge at all inlets",
+   "edits": {
+    "pedestrianized": [],
+    "blocks": {},
+    "policies": [
+     {
+      "kind": "congestion_charge",
+      "target": "",
+      "amount": 10.0
+     }
+    ]
+   },
+   "rationale": "The model shows 14,322 fewer car commuters, 12,054 more transit commuters, 904 fewer delay hours, and 156 fewer tonnes of CO2. Its total value is still about -$108.5M per year because mobility costs (-$204.7M) outweigh the economy gain (+$89.0M). Reported revenue is only $142,720, and the rent pressure index rises by 0.25.",
+   "result_id": "0417fff38646",
+   "value_total": -108479806.39,
+   "deltas": {
+    "commuters": {
+     "car": -14322,
+     "transit": 12054,
+     "walk": 945,
+     "bike": 1323,
+     "gone": 0
+    },
+    "delay_hours_total": -904.26,
+    "revenue": 142720.03,
+    "new_ties": 40.56,
+    "co2_tonnes": -156.16,
+    "rent_pressure_index": 0.25
+   }
+  },
+  {
+   "title": "$10 charge plus car-free Clementina and Sutter Streets",
+   "edits": {
+    "pedestrianized": [
+     88,
+     89,
+     90,
+     175,
+     176,
+     346,
+     348,
+     510,
+     720,
+     727,
+     740,
+     906,
+     1017,
+     1059,
+     1074,
+     1125,
+     1126,
+     1139,
+     1179,
+     1241,
+     1258
+    ],
+    "blocks": {},
+    "policies": [
+     {
+      "kind": "congestion_charge",
+      "target": "",
+      "amount": 10.0
+     }
+    ]
+   },
+   "rationale": "Adding two car-free streets to the citywide charge gives a better total than the charge alone, about -$92.6M per year against -$108.5M. It also gives 378 new social ties against 41, 1,512 more walkers, revenue of $349,037, and 912 fewer delay hours. The total is still negative because mobility costs (-$204.8M) remain, and the rent pressure index is higher at 0.28, with 21 street edges closed.",
+   "result_id": "5c0b5cd2b6af",
+   "value_total": -92647706.16,
+   "deltas": {
+    "commuters": {
+     "car": -14700,
+     "transit": 12180,
+     "walk": 1512,
+     "bike": 1008,
+     "gone": 0
+    },
+    "delay_hours_total": -912.61,
+    "revenue": 349037.09,
+    "new_ties": 378.42,
+    "co2_tonnes": -159.14,
+    "rent_pressure_index": 0.28
+   }
+  },
+  {
+   "title": "$10 charge at the Folsom \u00b7 6th St inlet only",
+   "edits": {
+    "pedestrianized": [],
+    "blocks": {},
+    "policies": [
+     {
+      "kind": "congestion_charge",
+      "target": "fol",
+      "amount": 10.0
+     }
+    ]
+   },
+   "rationale": "Charging only this one inlet has a small effect and a negative total of about -$0.95M per year. It removes 147 car commuters, 126 of whom the model counts as 'gone', meaning they stop making the trip. Delay rises by 9 hours and revenue is -$3,363, so it is a weak option that mostly costs people access.",
+   "result_id": "b1fc7edbba1f",
+   "value_total": -947379.17,
+   "deltas": {
+    "commuters": {
+     "car": -147,
+     "transit": 21,
+     "walk": 0,
+     "bike": 0,
+     "gone": 126
+    },
+    "delay_hours_total": 9.12,
+    "revenue": -3362.96,
+    "new_ties": -6.08,
+    "co2_tonnes": -3.6,
+    "rent_pressure_index": -0.0
+   }
+  }
+ ],
+ "evaluated": 3,
+ "model": "claude-sonnet-5-5"
+}
