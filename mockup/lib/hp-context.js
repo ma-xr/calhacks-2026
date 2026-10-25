@@ -28,6 +28,7 @@
       fadeColor: 0xdfe6ec, buildingColor: 0xd6d3cc, roadColor: 0xa9adb3, landColor: 0xcdc8bf, parkColor: 0xa9c29a, waterColor: 0x9cc3da,
       accent: 0x39d5ff, outline: 0xffffff,
       inside: false,   // true: also draw the real land / water / parks inside the simulation box (cities without a hand-made shoreline)
+      skip: null,      // optional (x, z) => true where the page models the city itself (e.g. a bridge): no context streets or buildings there
       inletRoads: ['Market Street', 'Mission Street', 'Folsom Street', 'Howard Street', 'Harrison Street', 'Bryant Street', 'Broadway',
         'Columbus Avenue', 'The Embarcadero', 'King Street', '3rd Street', '4th Street', '5th Street', 'Fremont Street', 'Van Ness Avenue', 'Franklin Street', 'Gough Street', 'Octavia Boulevard'],
       ...opt,
@@ -81,7 +82,9 @@
       for (let i = 2; i < r.length; i += 2) pts.push([r[i], r[i + 1]]);
       let along = 0;
       for (let i = 0; i < pts.length - 1; i++) {
-        const [x1, z1] = pts[i], [x2, z2] = pts[i + 1]; const L = Math.hypot(x2 - x1, z2 - z1) || 1; const nx = -(z2 - z1) / L * w / 2, nz = (x2 - x1) / L * w / 2;
+        const [x1, z1] = pts[i], [x2, z2] = pts[i + 1];
+        if (o.skip && (o.skip(x1, z1) || o.skip(x2, z2) || o.skip((x1 + x2) / 2, (z1 + z2) / 2))) { along += Math.hypot(x2 - x1, z2 - z1); continue; }
+        const L = Math.hypot(x2 - x1, z2 - z1) || 1; const nx = -(z2 - z1) / L * w / 2, nz = (x2 - x1) / L * w / 2;
         roadPos.push(x1 + nx, 0.3, z1 + nz, x2 + nx, 0.3, z2 + nz, x1 - nx, 0.3, z1 - nz, x1 - nx, 0.3, z1 - nz, x2 + nx, 0.3, z2 + nz, x2 - nx, 0.3, z2 - nz);
         if (cls <= 1 || hiNames.has(name)) {
           const k = cls <= 1 ? 0.55 : 0.4, hx = nx * k, hz = nz * k;
@@ -119,6 +122,7 @@
       if (P.length < 3) continue;
       const tone = 0.9 + ((P[0][0] * 7 + P[0][1] * 13) % 17) / 17 * 0.1;
       let cx = 0, cz = 0; for (const p of P) { cx += p[0]; cz += p[1]; } cx /= P.length; cz /= P.length;
+      if (o.skip && o.skip(cx, cz)) continue;   // e.g. OSM's own bridge towers/piers, which the page models itself
       let tris; try { tris = THREE.ShapeUtils.triangulateShape(P.map(p => v2(p[0], p[1])), []); } catch (_) { continue; }
       for (const t of tris) for (const k of t) { pos.push(P[k][0], h, P[k][1]); shade.push(tone); }
       for (let i = 0; i < P.length; i++) {

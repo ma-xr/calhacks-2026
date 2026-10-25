@@ -1422,9 +1422,9 @@ const water = new THREE.Mesh(new THREE.PlaneGeometry(30000, 30000), new THREE.Sh
 water.rotation.x = -Math.PI / 2; water.position.y = -1.5; scene.add(water);
 // The rest of San Francisco: real OSM context that sinks and fades into haze away from the simulated blocks.
 const CTX_LAND = new THREE.Color(0xe2d5b8), CTX_FADE = new THREE.Color();
-const CTX = window.HPContext?.add(THREE, scene, { fadeColor: 0xdfe6e4, buildingColor: 0xe9e2d6, roadColor: 0xc3bdb2, landColor: 0xe2d5b8, parkColor: 0x9fcf7e, waterColor: 0x5fb0de, accent: 0x39d5ff, outline: 0xffffff, fadeStart: 0, fadeEnd: 1700, inside: !IS_SF });
 // Bay Bridge (west span), decorative, SF only. Cars on I-80 drive up on its deck (BRIDGE.yAt).
 const BRIDGE = IS_SF && window.HPBridge ? window.HPBridge.add(THREE, scene, { a: [731, 244], b: [2764, -2141] }) : null;
+const CTX = window.HPContext?.add(THREE, scene, { skip: BRIDGE ? (x, z) => BRIDGE.yAt(x, z) > 0 : null, fadeColor: 0xdfe6e4, buildingColor: 0xe9e2d6, roadColor: 0xc3bdb2, landColor: 0xe2d5b8, parkColor: 0x9fcf7e, waterColor: 0x5fb0de, accent: 0x39d5ff, outline: 0xffffff, fadeStart: 0, fadeEnd: 1700, inside: !IS_SF });
 // HPContext skips its water polygons when a city has no coastline land (e.g. Chicago's river and lake): draw them here.
 const CTX_WATER = (!IS_SF && window.HPContext?.data && !(window.HPContext.data.land || []).length && (window.HPContext.data.water || []).length) ? (() => {
   const shapes = window.HPContext.data.water.map(f => { const sh = new THREE.Shape(); for (let i = 0; i < f.length; i += 2) (i ? sh.lineTo(f[i], -f[i + 1]) : sh.moveTo(f[i], -f[i + 1])); return sh; });
@@ -2844,10 +2844,10 @@ function srcBanner(s, i, n, dur) {
   <div class="sb-body"><div class="sb-eye"><span><b>${String(i + 1).padStart(2, '0')}</b> / ${String(n).padStart(2, '0')} · DATA SOURCE</span><span>${s.vint}</span></div><div class="sb-title">${s.title}</div>
   <div class="sb-stats">${s.stats.map(([v, l, d]) => `<div><b data-v="${v}" data-d="${d || 0}">0</b><span>${l}</span></div>`).join('')}</div><div class="sb-feeds"><i>→</i> feeds ${s.feeds}</div></div><div class="sb-bar"></div>`;
   void el.offsetWidth; el.classList.add('in');
-  el.querySelectorAll('.sb-stats b').forEach((b, k) => setTimeout(() => countEl(b, +b.dataset.v, +b.dataset.d, 1500), 250 + k * 160));
+  el.querySelectorAll('.sb-stats b').forEach((b, k) => setTimeout(() => countEl(b, +b.dataset.v, +b.dataset.d, 1100), 200 + k * 120));
 }
 async function playSources(tok) {
-  const list = reelSources(), rail = $('#srcrail'), el = $('#srcbanner'), DUR = 3700; document.body.classList.add('reel-src'); rail.hidden = false; rail.classList.remove('out'); rail.innerHTML = '';
+  const list = reelSources(), rail = $('#srcrail'), el = $('#srcbanner'), DUR = 2700; document.body.classList.add('reel-src'); rail.hidden = false; rail.classList.remove('out'); rail.innerHTML = '';
   for (const [i, s] of list.entries()) {
     jumpTo(Math.max(ui.time, (5 * 60 + 5 + i * 22) * 60));   // night → dawn across the sources, so each data layer is readable
     srcBanner(s, i, list.length, DUR); let iv = null; try { iv = s.fx?.(); } catch (e) { console.warn(e); }
@@ -2859,9 +2859,9 @@ async function playSources(tok) {
   highlight([]); setInfo(null); resetSparks(); document.body.classList.remove('reel-src');
   const m = B.baseline?.metrics || {};
   srcBanner({ mark: 'hp', wm: 'The Human Project', pub: `${list.length} sources fused · calibrated to observed mode split`, vint: 'synthetic weekday', b: 'linear-gradient(135deg,#1d5fd6,#3b9cff)', b2: '#7fd3ff',
-    title: 'Fused into one synthetic weekday', stats: [[m.people || 0, 'people'], [m.agents || 0, 'agents'], [EW?.inlets?.length || INLETS.length, 'entry points'], [5, 'replanning days']], feeds: 'activity demand · logit mode choice · BPR assignment' }, list.length - 1, list.length, 4200);
+    title: 'Fused into one synthetic weekday', stats: [[m.people || 0, 'people'], [m.agents || 0, 'agents'], [EW?.inlets?.length || INLETS.length, 'entry points'], [5, 'replanning days']], feeds: 'activity demand · logit mode choice · BPR assignment' }, list.length - 1, list.length, 3200);
   $('#srcbanner .sb-eye span').innerHTML = '<b>ENGINE</b> · ALL SOURCES';
-  await wait(4200, tok); el.classList.remove('in'); el.classList.add('out'); rail.classList.add('out'); await wait(400, tok); el.hidden = true; rail.hidden = true;
+  await wait(3200, tok); el.classList.remove('in'); el.classList.add('out'); rail.classList.add('out'); await wait(400, tok); el.hidden = true; rail.hidden = true;
 }
 const within = (p, ms) => Promise.race([p, sleep(ms).then(() => undefined)]);
 async function demoReset() {
@@ -2884,17 +2884,17 @@ async function runReel() {
   try {
     // 1 · Boot: night → dawn over the skyline while each data source arrives in its own banner; the HUD counts up as they land.
     await beat(async () => {
-      log('boot'); jumpTo(4 * 3600 + 50 * 60); togglePlay(true); setRate(1500);
+      log('boot'); jumpTo(4 * 3600 + 50 * 60); togglePlay(true); setRate(30);   // 1× throughout: the clock moves by cuts, not fast-forward
       setCam({ x: CAMS.fidi.x + 60, z: CAMS.fidi.z + 80, d: 820, az: CAMS.fidi.az - .9, el: .3 }); flyTo({ x: CAMS.fidi.x + 80, z: CAMS.fidi.z + 160, d: 2100, az: CAMS.fidi.az + .15, el: .62 }, 7);
       await wait(500, tok); reveal('top', 'brand'); lt('San Francisco · Financial District + SoMa', 'one simulated weekday, built from real data');
-      await wait(1200, tok); (async () => { await wait(1500, tok); reveal('hud'); await countUp(27000, tok); })().catch(() => {});
+      await wait(1200, tok); (async () => { await wait(1500, tok); reveal('hud'); await countUp(20000, tok); })().catch(() => {});
       setTimeout(() => { if (reel.on) reel.drift = .03; }, 6000);
       await playSources(tok); reel.k = 1; reel.drift = 0;
     }, async () => { $('#srcbanner').hidden = true; $('#srcrail').hidden = true; highlight([]); setInfo(null); resetSparks(); reel.k = 1; reel.drift = 0; });
     // 2 · The swarm: rush hour at the Bay Bridge inlet, low and fast, then pull up over the whole flow.
     await beat(async () => {
-      // Frame dt is capped, so the time-lapse alone doesn't reach rush hour: cut to it.
-      log('swarm'); $('#ticker').hidden = true; if (ui.time < 7 * 3600 + 40 * 60) jumpTo(7 * 3600 + 40 * 60); setRate(110); reveal('clock', 'stats', 'legends');
+      // Cut to rush hour.
+      log('swarm'); $('#ticker').hidden = true; if (ui.time < 7 * 3600 + 40 * 60) jumpTo(7 * 3600 + 40 * 60); setRate(30); reveal('clock', 'stats', 'legends');
       await flyWait({ x: ip[0], z: ip[1], d: 430, az: CAMS.fidi.az + .5, el: .3 }, 2.2, tok);
       lt(`Rush hour · ${hms(ui.time).slice(0, 5)}`, `${num(stNum('car'), false)} cars and ${num(stNum('walk'), false)} people on foot right now`);
       flyTo({ x: ip[0] - 250, z: ip[1] - 150, d: 1900, az: CAMS.fidi.az + .9, el: .72 }, 4.6); await wait(4800, tok);
@@ -2931,7 +2931,7 @@ async function runReel() {
       log('xray'); setInfo(null);
       if (isEng()) {
         const hv = await loadHeroView(S.plan.id); const mid = EW.hero.agent_id; const pt = hv ? hv.plan.trips : []; const lunch = pt.find(t => t.purpose === 'lunch') || pt.find(t => t.mode === 'ped');
-        if (lunch) jumpTo(lunch.t_start - 40); setRate(40); followPerson(mid); renderXray(hv); lt(`Agent ${mid} · ${EW.hero.name}`, hv ? `${hv.baseline.mode} → ${hv.plan.mode} · ${hv.region}` : '');
+        if (lunch) jumpTo(lunch.t_start - 3); setRate(30); followPerson(mid);   // at 1× she must already be on her way renderXray(hv); lt(`Agent ${mid} · ${EW.hero.name}`, hv ? `${hv.baseline.mode} → ${hv.plan.mode} · ${hv.region}` : '');
         const lp = lunch && ENG_POI_BY.get(lunch.poi); const wb = hv && hv.work_building >= 0 ? BLD[hv.work_building].c : lp ? [lp.x, lp.z] : [hm.mx, hm.mz]; await flyWait({ x: wb[0], z: wb[1], d: 520, az: .6, el: .8 }, 1.4, tok);
         await wait(4600, tok);
       }
@@ -2967,7 +2967,7 @@ async function runReel() {
     }, async () => { reel.holdAsk = false; MODS.ask?.close?.(); $('#ask-dock').classList.remove('on'); });
     // 10 · Dusk: the skyline lights up; pull back; end card with the numbers.
     await beat(async () => {
-      log('dusk'); clearGhost(); setInfo(null); reveal('cams', 'end'); $('#lt').hidden = true; jumpTo(19 * 3600 + 35 * 60); setRate(150); reel.drift = .06;
+      log('dusk'); clearGhost(); setInfo(null); reveal('cams', 'end'); $('#lt').hidden = true; jumpTo(19 * 3600 + 35 * 60); setRate(30); reel.drift = .06;
       flyTo({ x: CAMS.fidi.x + 120, z: CAMS.fidi.z + 200, d: 2300, az: CAMS.fidi.az + 2.4, el: .4 }, 3.4); await wait(2600, tok);
       const m = B.baseline?.metrics || {}; const v = S.plan.value || {}; const ec = $('#endcard');
       ec.innerHTML = `<div class="ec"><div class="lg">${svgIc('logo')}</div><h1>The Human Project</h1><p>Change a street. Watch a city of people replan.</p><div class="nums"><div><b>${num(m.people || 0, false)}</b><span>people</span></div><div><b>${num(m.agents || 0, false)}</b><span>agents</span></div><div><b>${num(EW?.pois?.length || 0, false)}</b><span>real places</span></div><div><b>6</b><span>data sources</span></div><div><b>5-day</b><span>equilibrium</span></div>${isEng() ? `<div><b class="up">${money(v.total || 0)}</b><span>plan value / yr</span></div>` : ''}</div></div>`;

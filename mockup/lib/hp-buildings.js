@@ -35,8 +35,13 @@
   const MAT = { glass: { glass: true, col: null }, brick: { glass: false, col: [0.55, 0.27, 0.19] }, concrete: { glass: false, col: [0.74, 0.73, 0.70] },
     stone: { glass: false, col: [0.82, 0.76, 0.64] }, metal: { glass: true, col: [0.70, 0.73, 0.76] }, plaster: { glass: false, col: [0.90, 0.86, 0.78] } };
 
+  // The hand-built landmarks and colours are San Francisco's. Other cities can share names (NYC has its own
+  // "Salesforce Tower"), so they apply only on the SF page (read from the page's #city config, default SF).
+  let SF_ONLY = null;
+  const isSF = () => { if (SF_ONLY === null) { try { SF_ONLY = JSON.parse(document.getElementById('city').textContent).id === 'sf'; } catch (_) { SF_ONLY = true; } } return SF_ONLY; };
+
   function style(b, i) {
-    const look = LOOK[b.n]; if (look) return look;
+    const look = isSF() ? LOOK[b.n] : null; if (look) return look;
     const parts = PARTS[i]; const t = TAGS[i] || (parts && parts[0]) || {};
     const m = MAT[t.mat]; const c = hex(t.col);
     if (m || c) return { col: c || m?.col || null, glass: m ? m.glass : null };
@@ -74,7 +79,11 @@
       if (cap) this.cap(P1, y1, crown);
     }
     cap(P, y, crown = 0) {
-      let tris; try { tris = THREE_.ShapeUtils.triangulateShape(P.map(p => new THREE_.Vector2(p[0], p[1])), []); } catch (_) { return; }
+      let tris = null; try { tris = THREE_.ShapeUtils.triangulateShape(P.map(p => new THREE_.Vector2(p[0], p[1])), []); } catch (_) { tris = null; }
+      if (!tris || !tris.length) {   // triangulation failed (self-touching outline): close the roof with a fan rather than leave it open
+        const c = centroid(P); for (let i = 0; i < P.length; i++) { const j = (i + 1) % P.length; this.tri([c[0], y, c[1]], [P[i][0], y, P[i][1]], [P[j][0], y, P[j][1]], [0, 1, 0], crown); }
+        return;
+      }
       for (const [a, b, c] of tris) this.tri([P[a][0], y, P[a][1]], [P[b][0], y, P[b][1]], [P[c][0], y, P[c][1]], [0, 1, 0], crown);
     }
     apex(P, y0, top, crown = 0) {   // pyramid from polygon at y0 to a single point
@@ -159,14 +168,19 @@
 
   function geometry(THREE, b, i) {
     THREE_ = THREE; const m = new Mesh();
-    const lm = LANDMARKS[b.n];
+    const lm = isSF() ? LANDMARKS[b.n] : null;
     if (lm) { lm(m, b); return m.geometry(); }
     const parts = PARTS[i];
     if (parts && parts.length) {
-      for (const pt of parts) { const P = []; for (let k = 0; k < pt.p.length; k += 2) P.push([pt.p[k], pt.p[k + 1]]); m.prism(P, pt.mh || 0, pt.h, pt.roof, pt.rh); }
-      // Keep the outline as a podium if the parts don't reach the whole footprint.
+      const polys = parts.map(pt => { const P = []; for (let k = 0; k < pt.p.length; k += 2) P.push([pt.p[k], pt.p[k + 1]]); return P; });
+      polys.forEach((P, k) => m.prism(P, parts[k].mh || 0, parts[k].h, parts[k].roof, parts[k].rh));
+      // Many OSM buildings map only some parts (e.g. a one-storey ground floor). Trust the parts alone only when
+      // they reach the building's height and cover most of its footprint; otherwise keep the full body too.
+      const foot = Math.abs(area2(b.p)) / 2, covered = polys.reduce((a, P) => a + Math.abs(area2(P)) / 2, 0);
+      const tallest = Math.max(...parts.map(p => p.h));
+      const complete = tallest >= b.h * 0.85 && covered >= foot * 0.7;
       const top = Math.min(...parts.map(p => p.h));
-      m.prism(b.p, 0, Math.min(b.h, Math.max(4, top * 0.999)), 'flat');
+      m.prism(b.p, 0, complete ? Math.min(b.h, Math.max(4, top * 0.999)) : b.h, 'flat');
       return m.geometry();
     }
     const t = TAGS[i]; const P = b.p; const h = b.h;
@@ -175,8 +189,8 @@
     if (h >= 110) {
       // Tall towers: a crown setback and a mechanical penthouse.
       const sh = h * 0.93; const Q = P.map(([x, z]) => [c[0] + (x - c[0]) * 0.84, c[1] + (z - c[1]) * 0.84]);
-      m.prism(P, 0, sh, 'flat'); m.prism(Q, sh, h, 'flat', 0, 1);
-      const Rr = P.map(([x, z]) => [c[0] + (x - c[0]) * 0.36, c[1] + (z - c[1]) * 0.36]); m.prism(Rr, h, h + 6, 'flat', 0, 1);
+      m.prism(P, 0, sh, 'flat'); m.prism(Q, sh, h, 'flat', 0, 0);   // generic crowns don't glow: only landmark crowns do
+      const Rr = P.map(([x, z]) => [c[0] + (x - c[0]) * 0.36, c[1] + (z - c[1]) * 0.36]); m.prism(Rr, h, h + 6, 'flat', 0, 0);
       return m.geometry();
     }
     m.prism(P, 0, h, 'flat');
