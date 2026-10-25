@@ -27,6 +27,7 @@
       fadeStart: 40, fadeEnd: 1300,
       fadeColor: 0xdfe6ec, buildingColor: 0xd6d3cc, roadColor: 0xa9adb3, landColor: 0xcdc8bf, parkColor: 0xa9c29a, waterColor: 0x9cc3da,
       accent: 0x39d5ff, outline: 0xffffff,
+      inside: false,   // true: also draw the real land / water / parks inside the simulation box (cities without a hand-made shoreline)
       inletRoads: ['Market Street', 'Mission Street', 'Folsom Street', 'Howard Street', 'Harrison Street', 'Bryant Street', 'Broadway',
         'Columbus Avenue', 'The Embarcadero', 'King Street', '3rd Street', '4th Street', '5th Street', 'Fremont Street', 'Van Ness Avenue', 'Franklin Street', 'Gough Street', 'Octavia Boulevard'],
       ...opt,
@@ -52,9 +53,9 @@
     // Masked flat layers (land, water, parks) that only show outside the box, under the haze.
     const flatMat = (c) => new THREE.ShaderMaterial({
       transparent: true, depthWrite: false, fog: false, side: THREE.DoubleSide,
-      uniforms: { ...U, uCol: { value: col(c) } },
+      uniforms: { ...U, uCol: { value: col(c) }, uInside: { value: o.inside ? 1 : 0 } },
       vertexShader: 'varying vec2 vP; void main(){ vec4 w = modelMatrix*vec4(position,1.0); vP = w.xz; gl_Position = projectionMatrix*viewMatrix*w; }',
-      fragmentShader: GLSL_BOX + 'uniform vec3 uCol; varying vec2 vP; void main(){ float d = boxDist(vP); float a = smoothstep(0.0, 90.0, d); if (a <= 0.0) discard; gl_FragColor = vec4(uCol, a); }',
+      fragmentShader: GLSL_BOX + 'uniform vec3 uCol; uniform float uInside; varying vec2 vP; void main(){ float d = boxDist(vP); float a = max(uInside, smoothstep(0.0, 90.0, d)); if (a <= 0.0) discard; gl_FragColor = vec4(uCol, a); }',
     });
     const polyMesh = (flatPolys, c, y, holes) => {
       const shapes = flatPolys.map(f => { const s = new THREE.Shape(); for (let i = 0; i < f.length; i += 2) (i ? s.lineTo(f[i], -f[i + 1]) : s.moveTo(f[i], -f[i + 1])); return s; });
@@ -69,7 +70,7 @@
       mats.land = polyMesh(DATA.land, o.landColor, 0.12).material;
     }
     if (DATA.parks?.length) { mats.park = polyMesh(DATA.parks, o.parkColor, 0.2).material; }
-    if (DATA.water?.length && mats.water) polyMesh(DATA.water, o.waterColor, 0.16);
+    if (DATA.water?.length) { const m = polyMesh(DATA.water, o.waterColor, 0.16); if (!mats.water) mats.water = m.material; }   // rivers / lakes, with or without a coastline
 
     // Streets outside the box: flat ribbons under the haze.
     const W = [16, 13, 12, 10, 8, 7, 5];

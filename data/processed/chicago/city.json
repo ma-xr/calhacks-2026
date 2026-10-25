@@ -1,0 +1,303 @@
+{
+ "id": "chicago",
+ "name": "Chicago",
+ "area": "The Loop",
+ "center": [
+  41.8805,
+  -87.629
+ ],
+ "box": {
+  "x0": -944.9,
+  "x1": 944.9,
+  "z0": -972.8,
+  "z1": 961.7
+ },
+ "districts": [
+  {
+   "label": "THE LOOP",
+   "x": 0,
+   "z": 80
+  },
+  {
+   "label": "RIVER NORTH",
+   "x": -60,
+   "z": -880
+  },
+  {
+   "label": "GRANT PARK",
+   "x": 860,
+   "z": 420
+  }
+ ],
+ "landmarks": [
+  {
+   "name": "Willis Tower",
+   "id": 608,
+   "x": -575.3,
+   "z": 201.2,
+   "h": 527.0
+  },
+  {
+   "name": "Chicago Board of Trade Building",
+   "id": 4,
+   "x": -253.4,
+   "z": 355.0,
+   "h": 184.0
+  },
+  {
+   "name": "Marina City 2",
+   "id": 598,
+   "x": 42.4,
+   "z": -852.2,
+   "h": 179.2
+  },
+  {
+   "name": "Aon Center",
+   "id": 9,
+   "x": 617.7,
+   "z": -528.6,
+   "h": 346.0
+  },
+  {
+   "name": "Chicago Theatre",
+   "id": 140,
+   "x": 135.5,
+   "z": -540.8,
+   "h": 21.6
+  },
+  {
+   "name": "The Rookery",
+   "id": 44,
+   "x": -234.6,
+   "z": 156.7,
+   "h": 55.0
+  },
+  {
+   "name": "Chicago Union Station",
+   "id": 534,
+   "x": -945.5,
+   "z": 202.6,
+   "h": 28.8
+  },
+  {
+   "name": "Trump International Hotel & Tower Chicago",
+   "id": 19,
+   "x": 210.8,
+   "z": -925.5,
+   "h": 423.0
+  }
+ ],
+ "stations": [
+  {
+   "name": "Monroe",
+   "x": 36.2,
+   "z": -28.2,
+   "entrances": 15
+  },
+  {
+   "name": "Jackson",
+   "x": 41.4,
+   "z": 253.6,
+   "entrances": 14
+  },
+  {
+   "name": "Lake",
+   "x": 91.4,
+   "z": -445.1,
+   "entrances": 9
+  },
+  {
+   "name": "Harold Washington Library-State/Van Buren",
+   "x": 4.7,
+   "z": 396.2,
+   "entrances": 8
+  },
+  {
+   "name": "Washington/Wabash",
+   "x": 231.1,
+   "z": -222.4,
+   "entrances": 8
+  },
+  {
+   "name": "Washington",
+   "x": -38.2,
+   "z": -304.2,
+   "entrances": 7
+  },
+  {
+   "name": "Washington/Wells",
+   "x": -402.1,
+   "z": -211.1,
+   "entrances": 6
+  },
+  {
+   "name": "Quincy",
+   "x": -394.4,
+   "z": 194.3,
+   "entrances": 6
+  },
+  {
+   "name": "Clark/Lake",
+   "x": -253.4,
+   "z": -580.2,
+   "entrances": 5
+  },
+  {
+   "name": "LaSalle/Van Buren",
+   "x": -198.1,
+   "z": 399.9,
+   "entrances": 4
+  },
+  {
+   "name": "Adams/Wabash",
+   "x": 238.8,
+   "z": 96.5,
+   "entrances": 4
+  },
+  {
+   "name": "LaSalle",
+   "x": -185.7,
+   "z": 540.0,
+   "entrances": 4
+  },
+  {
+   "name": "Van Buren Street",
+   "x": 503.8,
+   "z": 394.8,
+   "entrances": 4
+  },
+  {
+   "name": "Harrison",
+   "x": 119.7,
+   "z": 816.6,
+   "entrances": 3
+  },
+  {
+   "name": "Millennium Station",
+   "x": 440.1,
+   "z": -432.1,
+   "entrances": 2
+  },
+  {
+   "name": "Shoreline Sightseeing",
+   "x": 537.3,
+   "z": -955.6,
+   "entrances": 1
+  },
+  {
+   "name": "Union Station/Willis Tower",
+   "x": -724.4,
+   "z": 159.0,
+   "entrances": 1
+  },
+  {
+   "name": "Chicago Union Station",
+   "x": -836.5,
+   "z": 205.5,
+   "entrances": 1
+  },
+  {
+   "name": "Merchandise Mart",
+   "x": -414.7,
+   "z": -922.1,
+   "entrances": 1
+  },
+  {
+   "name": "Michigan Avenue",
+   "x": 402.9,
+   "z": -967.0,
+   "entrances": 1
+  },
+  {
+   "name": "Chicago's First Lady 2",
+   "x": 505.3,
+   "z": -887.6,
+   "entrances": 1
+  },
+  {
+   "name": "Chicago's First Lady 1",
+   "x": 458.3,
+   "z": -886.6,
+   "entrances": 1
+  },
+  {
+   "name": "Mercury Tours 1",
+   "x": 584.9,
+   "z": -879.6,
+   "entrances": 1
+  },
+  {
+   "name": "LaSalle Street Station",
+   "x": -266.7,
+   "z": 573.2,
+   "entrances": 1
+  },
+  {
+   "name": "Floating Tiki Bar",
+   "x": 742.3,
+   "z": -859.6,
+   "entrances": 1
+  },
+  {
+   "name": "Tiki Pontoons",
+   "x": 767.1,
+   "z": -855.7,
+   "entrances": 1
+  },
+  {
+   "name": "Chicago's First Lady 3",
+   "x": 544.6,
+   "z": -884.4,
+   "entrances": 1
+  },
+  {
+   "name": "Mercury Tours 2",
+   "x": 662.5,
+   "z": -870.2,
+   "entrances": 1
+  },
+  {
+   "name": "Wendella Tours - Dock 3",
+   "x": 280.8,
+   "z": -953.1,
+   "entrances": 1
+  },
+  {
+   "name": "Wendella Tours - Dock 4",
+   "x": 253.7,
+   "z": -932.0,
+   "entrances": 1
+  },
+  {
+   "name": "Wendella Tours - Michigan Avenue",
+   "x": 361.4,
+   "z": -964.1,
+   "entrances": 1
+  },
+  {
+   "name": "Wndella Tours - Riverwalk",
+   "x": -249.0,
+   "z": -735.8,
+   "entrances": 1
+  },
+  {
+   "name": "Chicago Riverwalk",
+   "x": -221.2,
+   "z": -809.1,
+   "entrances": 1
+  },
+  {
+   "name": "Odyssey Chicago River",
+   "x": 610.9,
+   "z": -937.1,
+   "entrances": 1
+  },
+  {
+   "name": "Ogilvie / Union (West Loop)",
+   "x": -795.7,
+   "z": -213.1,
+   "entrances": 1
+  }
+ ],
+ "engine": false
+}

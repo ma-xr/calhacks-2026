@@ -9,6 +9,7 @@ import math
 import sys
 from collections import defaultdict
 
+CITY = "sf"
 LAT0, LON0 = 37.7887, -122.3987
 KX = math.cos(math.radians(LAT0)) * 111320.0
 KZ = 110540.0
@@ -19,6 +20,17 @@ CAR_CLASSES = {"motorway", "motorway_link", "trunk", "trunk_link", "primary", "p
                "unclassified", "living_street"}
 PED_CLASSES = (CAR_CLASSES - {"motorway", "motorway_link", "trunk", "trunk_link"}) | {"pedestrian"}
 ROAD_CLASSES = CAR_CLASSES | {"pedestrian"}
+
+
+def configure(city):
+    """Switch the module to another city's frame and simulation box (see scripts/cities.py)."""
+    global LAT0, LON0, KX, BBOX, CITY
+    from cities import CITIES
+    CITY = city
+    c = CITIES[city]
+    LAT0, LON0 = c["center"]
+    KX = math.cos(math.radians(LAT0)) * 111320.0
+    BBOX = tuple(c["bbox"])
 
 
 def xz(lat, lon):
@@ -77,6 +89,31 @@ def simplify(pts, tol=0.6):
     return out
 
 
+def outer_ring(rel):
+    """Largest closed ring assembled from a multipolygon relation's outer members (geometry as [{lat, lon}])."""
+    segs = [[(g["lat"], g["lon"]) for g in m["geometry"]] for m in rel["members"]
+            if m.get("role") in ("outer", "") and m.get("geometry")]
+    rings = []
+    while segs:
+        c = segs.pop(0)
+        grown = True
+        while grown and c[0] != c[-1]:
+            grown = False
+            for i, sg in enumerate(segs):
+                if sg[0] == c[-1]: c += sg[1:]
+                elif sg[-1] == c[-1]: c += sg[::-1][1:]
+                elif sg[-1] == c[0]: c = sg[:-1] + c
+                elif sg[0] == c[0]: c = sg[::-1][:-1] + c
+                else: continue
+                segs.pop(i); grown = True; break
+        if c[0] == c[-1] and len(c) >= 4:
+            rings.append(c)
+    if not rings:
+        return None
+    area = lambda r: abs(sum(a[1] * b[0] - b[1] * a[0] for a, b in zip(r, r[1:])))  # noqa: E731
+    return [{"lat": la, "lon": lo} for la, lo in max(rings, key=area)]
+
+
 def main(src, dst):
     els = json.load(open(src))["elements"]
     s, w, n, e = BBOX
@@ -86,6 +123,11 @@ def main(src, dst):
 
     for el in els:
         t = el.get("tags", {})
+        if el["type"] == "relation" and "building" in t and el.get("members"):
+            ring = outer_ring(el)          # multipolygon buildings (e.g. the Art Institute): use the largest outer ring
+            if not ring:
+                continue
+            el = {**el, "type": "way", "geometry": ring}
         if el["type"] == "way" and "building" in t and "geometry" in el:
             pts = simplify([xz(g["lat"], g["lon"]) for g in el["geometry"]])
             if len(pts) < 4:
@@ -99,7 +141,7 @@ def main(src, dst):
                      "civic": 16}.get(k, 14)
             cx = sum(p[0] for p in pts) / len(pts)
             cz = sum(p[1] for p in pts) / len(pts)
-            b = {"p": pts, "h": round(min(h, 330), 1), "k": k, "c": [round(cx, 1), round(cz, 1)]}
+            b = {"p": pts, "h": round(min(h, 560), 1), "k": k, "c": [round(cx, 1), round(cz, 1)]}
             if t.get("name"):
                 b["n"] = t["name"]
             buildings.append(b)
@@ -208,8 +250,10 @@ def main(src, dst):
         d = {"west": abs(p[0] - xs[0]), "east": abs(p[0] - xs[1]), "north": abs(p[1] - zs[0]), "south": abs(p[1] - zs[1])}
         return min(d, key=d.get)
 
-    def hw_label(x):
-        return "I-80 · Bay Bridge" if x > 1000 else "US-101 / I-80 West"
+    def hw_label(x, name=""):
+        if CITY == "sf":   # SF's two freeway gateways keep the names the engine and pages key on
+            return "I-80 · Bay Bridge" if x > 1000 else "US-101 / I-80 West"
+        return name or "Freeway"
 
     def boundary_point(pts):
         """Where a polyline first crosses the bbox boundary (linear interpolation on the crossing segment)."""
@@ -235,7 +279,7 @@ def main(src, dst):
                 continue
             inbound = ed["o"] == 0 or (ed["o"] == 1 and end == "a") or (ed["o"] == -1 and end == "b")
             outbound = ed["o"] == 0 or (ed["o"] == 1 and end == "b") or (ed["o"] == -1 and end == "a")
-            label = hw_label(x) if hw else names[ed["n"]]
+            label = hw_label(x, names[ed["n"]]) if hw else names[ed["n"]]
             gw.append({"node": v, "in": inbound, "out": outbound, "hw": hw, "name": label, "cls": ed["c"],
                        "src": "end", "side": side_of((x, z)), "lanes": ed.get("ln")})
 
@@ -256,7 +300,7 @@ def main(src, dst):
         hw = ed["c"].startswith("motorway")
         v = ed[out_end]
         bp = boundary_point(ed["p"])
-        label = hw_label(node_xyz[v][0]) if hw else (names[ed["n"]] or ed["c"].replace("_", " ").capitalize())
+        label = hw_label(node_xyz[v][0], names[ed["n"]]) if hw else (names[ed["n"]] or ed["c"].replace("_", " ").capitalize())
         gw.append({"node": v, "in": inbound, "out": outbound, "hw": hw, "name": label, "cls": ed["c"],
                    "src": "cross", "side": side_of(bp), "edge": ei, "at": bp, "lanes": ed.get("ln")})
 
@@ -283,4 +327,7 @@ def main(src, dst):
 
 
 if __name__ == "__main__":
+    sys.path.insert(0, __file__.rsplit("/", 1)[0])
+    if "--city" in sys.argv:
+        configure(sys.argv[sys.argv.index("--city") + 1])
     main(sys.argv[1], sys.argv[2])

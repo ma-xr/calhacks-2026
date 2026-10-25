@@ -78,7 +78,7 @@ Runs a plan against the cached baseline and returns the result (target ≤ 2 s).
 ```
 Response: a **ScenarioResult** (below) with `id` set. Query parameters on every result endpoint: `lite=1` drops the hourly arrays and trips, and `max_trips=N` sets the trip sample size (default 4000; 20000 ≈ 37% of trips, ≈ 5 MB raw, much less gzipped; 100000 = every trip). The same edits return the cached result immediately (`"cached": true`).
 
-**Streaming progress:** `POST /scenario?stream=1` returns Server-Sent Events. You get `event: progress` with `{ "day": k, "days": 5, "label": "Replanning day k/5" }`, then `event: result` with the full ScenarioResult.
+**Streaming progress:** `POST /scenario?stream=1` returns Server-Sent Events. You get `event: progress` with `{ "day": k, "days": 5, "gap": 0.04, "label": "Replanning day k/5" }` (`gap`: relative change in averaged car volumes that day), then `event: result` with the full ScenarioResult.
 
 ### `GET /scenario/{id}`
 Returns the stored ScenarioResult. `id` is `baseline` or the id from `POST`.
@@ -88,7 +88,7 @@ Data for the Follow view.
 ```jsonc
 { "agent_id": 913, "name": "Maria O.", "kind": "worker", "income_tier": 1, "region": "East Bay",
   "home": { "building": -1, "region": "East Bay" }, "work_building": 1532, "car_available": true,
-  "baseline": { "mode": "car", "trips": [Trip...], "diary": [DiaryEvent...] },
+  "baseline": { "mode": "car", "mode_probs": { "car": 0.52, "transit": 0.44, "walk": 0, "bike": 0.04 }, "trips": [Trip...], "diary": [DiaryEvent...] },
   "plan":     { "mode": "transit", "trips": [Trip...], "diary": [DiaryEvent...] },
   "ties": [{ "agent_id": 448, "name": "Dev P.", "where_poi": 87, "strength": 0.4, "new_in_plan": true }] }
 ```
@@ -107,7 +107,7 @@ These endpoints only narrate numbers the engine already produced. Every response
   "id": "baseline" | "<hash>",
   "name": "Plan A",
   "edits": { ... },                       // echo of the request
-  "settle": { "days": 5, "ms": 840, "converged": true, "gap": 0.012 },
+  "settle": { "days": 5, "ms": 840, "converged": true, "gap": 0.012, "gaps": [0.21, 0.08, 0.04, 0.02, 0.012] },
   "cached": false,
 
   "metrics": {

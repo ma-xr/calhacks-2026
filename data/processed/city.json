@@ -1,0 +1,116 @@
+{
+ "id": "sf",
+ "name": "San Francisco",
+ "area": "Financial District + SoMa",
+ "center": [
+  37.7887,
+  -122.3987
+ ],
+ "box": {
+  "x0": -950.1,
+  "x1": 941.3,
+  "z0": -972.8,
+  "z1": 961.7
+ },
+ "districts": [
+  {
+   "label": "FINANCIAL DISTRICT",
+   "x": -150,
+   "z": -480
+  },
+  {
+   "label": "SOMA",
+   "x": -120,
+   "z": 420
+  }
+ ],
+ "landmarks": [
+  {
+   "name": "Salesforce Tower",
+   "id": 1895,
+   "x": 162.1,
+   "z": -118.0,
+   "h": 326.0
+  },
+  {
+   "name": "Transamerica Pyramid",
+   "id": 0,
+   "x": -359.5,
+   "z": -714.8,
+   "h": 260.0
+  },
+  {
+   "name": "181 Fremont Tower",
+   "id": 1902,
+   "x": 301.5,
+   "z": -117.6,
+   "h": 244.4
+  },
+  {
+   "name": "555 California Street",
+   "id": 1753,
+   "x": -451.6,
+   "z": -374.8,
+   "h": 226.0
+  },
+  {
+   "name": "California Center",
+   "id": 1923,
+   "x": -154.5,
+   "z": -429.8,
+   "h": 212.0
+  },
+  {
+   "name": "Millennium Tower",
+   "id": 156,
+   "x": 218.3,
+   "z": -196.4,
+   "h": 197.0
+  }
+ ],
+ "stations": [
+  {
+   "name": "Powell Street",
+   "x": -747.0,
+   "z": 441.0,
+   "entrances": 10
+  },
+  {
+   "name": "Montgomery Street",
+   "x": -243.7,
+   "z": -58.2,
+   "entrances": 10
+  },
+  {
+   "name": "Embarcadero",
+   "x": 157.9,
+   "z": -459.8,
+   "entrances": 7
+  },
+  {
+   "name": "Union Square/Market Street",
+   "x": -681.8,
+   "z": 204.9,
+   "entrances": 4
+  },
+  {
+   "name": "Yerba Buena/Moscone",
+   "x": -266.6,
+   "z": 715.7,
+   "entrances": 3
+  },
+  {
+   "name": "Chinatown-Rose Pak",
+   "x": -824.4,
+   "z": -675.2,
+   "entrances": 2
+  },
+  {
+   "name": "Salesforce Transit Center",
+   "x": 168.6,
+   "z": -51.3,
+   "entrances": 1
+  }
+ ],
+ "engine": true
+}

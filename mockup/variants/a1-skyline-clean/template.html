@@ -2,9 +2,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Human Project · Skyline Clean</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<script>if (/[?&]reel\b/.test(location.search)) document.documentElement.classList.add('reel-boot');   // hide the chrome before the app loads</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
 <style>
 /* "Skyline Clean": the same sunny city, far less chrome. One slim top bar (brand, scenario, clock, live stats,
    City Value), a light dock at the bottom, one collapsible drawer on the right (Impact / Feed). */
@@ -63,6 +64,8 @@ svg.ic { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-wid
 /* ── 3D labels: inlets + three landmarks only ── */
 .lbl { position: absolute; transform: translate(-50%, -100%); white-space: nowrap; }
 .lbl.landmark { font-size: 10.5px; font-weight: 600; color: #fff; background: rgba(14, 28, 54, .62); padding: 2px 7px; border-radius: var(--r-xs); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.lbl.landmark em { font-style: normal; color: var(--dim); font-weight: 500; margin-left: 3px; }
+.lbl.district { transform: translate(-50%, -50%); font-weight: 700; font-size: 13px; letter-spacing: .3em; color: rgba(255,255,255,.85); text-shadow: 0 1px 3px rgba(10,30,60,.55); }
 .lbl.landmark::after { content: ""; position: absolute; left: 50%; top: 100%; width: 1px; height: 10px; background: rgba(14, 28, 54, .5); }
 .lbl.inlet { display: flex; align-items: center; gap: 5px; padding: 3px 8px 3px 3px; border-radius: var(--r-pill); font-size: 11px; font-weight: 600; color: var(--fg);
   background: var(--glass-strong); box-shadow: var(--sh-sm); pointer-events: auto; cursor: default; transition: padding .15s; }
@@ -100,6 +103,9 @@ svg.ic { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-wid
 .brand .logo { width: 28px; height: 28px; border-radius: var(--r-sm); background: var(--accent); display: grid; place-items: center; flex: none; }
 .brand .logo svg { width: 18px; height: 18px; stroke: #fff; }
 .brand b { font-weight: 700; font-size: 14px; letter-spacing: -.01em; white-space: nowrap; }
+.cityseg { display: flex; gap: 1px; padding: 2px; border-radius: var(--r-sm); background: var(--sunk); flex: none; }
+.cityseg a { height: 24px; line-height: 24px; padding: 0 8px; border-radius: var(--r-xs); color: var(--dim); font-size: 11.5px; font-weight: 600; text-decoration: none; }
+.cityseg a:hover { color: #fff; } .cityseg a.on { background: var(--fill-hi); color: #fff; }
 .vsep { width: 1px; height: 22px; background: var(--line-hi); flex: none; }
 .seg { display: flex; padding: 3px; gap: 2px; border-radius: var(--r-sm); background: var(--sunk); flex: none; }
 .seg button { height: 26px; padding: 0 12px; border-radius: var(--r-xs); font-weight: 600; color: var(--dim); font-size: 12.5px; transition: background .15s, color .15s; }
@@ -385,6 +391,7 @@ td:last-child { text-align: right; font-weight: 600; }
 .status i, .srcline i { width: 6px; height: 6px; border-radius: 50%; background: var(--mute); flex: none; }
 .status.live i, .srcline.live i { background: #4fdc7a; box-shadow: 0 0 6px #4fdc7a; }
 .status.snapshot i, .srcline.snapshot i { background: var(--hi); }
+.status.explore { background: rgba(127,211,255,.14); color: var(--hi); } .status.explore i, .srcline.explore i { background: var(--hi); }
 .status.est { background: rgba(255, 210, 58, .16); color: #ffd98a; } .status.est i, .srcline.est i { background: var(--warn); }
 .srcline { display: flex; gap: 7px; align-items: baseline; font-size: 11px; color: var(--mute); margin-top: 10px; line-height: 1.4; }
 .srcline.est { color: #ffd98a; }
@@ -416,8 +423,132 @@ td:last-child { text-align: right; font-weight: 600; }
 .lbl.cursor { transform: translate(-6px, -6px); display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: #fff; }
 .lbl.cursor i { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4); }
 .lbl.cursor span { padding: 1px 6px; border-radius: 6px; }
+/* ── 60 s tech demo ("reel"): chrome starts hidden, each beat reveals what it uses ── */
+#hud, #lt, #ticker, #xray, #codecard, #endcard .nums { font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace; }
+body.reel [data-rv] { transition: opacity .55s ease, transform .65s cubic-bezier(.2,.8,.2,1), max-width .6s cubic-bezier(.2,.8,.2,1), padding .6s, margin .6s; }
+body.reel .rv-off { opacity: 0 !important; pointer-events: none !important; }
+body.reel-init [data-rv] { transition: none !important; }
+.reel-boot #top, .reel-boot #right, .reel-boot #drawer-open, .reel-boot #dock, .reel-boot #legends, .reel-boot #cams, .reel-boot #camhint, .reel-boot #intro { opacity: 0 !important; pointer-events: none !important; }
+body.reel #top.rv-off { transform: translateY(-14px); }
+body.reel #dock.rv-off { transform: translate(-50%, 16px); }
+body.reel #right.rv-off { transform: translateX(36px); }
+body.reel #cams.rv-off, body.reel #modes.rv-off, body.reel #hud.rv-off { transform: translateY(10px); }
+body.reel #dock .dk, body.reel #dock .tools, body.reel #dock .dsep { max-width: 480px; }
+body.reel #dock .dk.rv-off, body.reel #dock .tools.rv-off, body.reel #dock .dsep.rv-off { max-width: 0; padding-left: 0; padding-right: 0; margin-left: -6px; overflow: hidden; }
+body.reel #chips, body.reel #toolhint, body.reel #camhint, body.reel #toast, body.reel #caption, body.reel #intro { display: none !important; }
+.rv-pop { animation: rvpop 1.3s ease-out; }
+@keyframes rvpop { 30% { box-shadow: 0 0 0 2px rgba(127,211,255,.75), 0 0 28px rgba(59,156,255,.55); } }
+#reelbar { position: absolute; left: 0; right: 0; top: 0; height: 2px; z-index: 30; pointer-events: none; }
+#reelbar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--hi)); box-shadow: 0 0 8px var(--hi); }
+.brand .crumb { display: flex; align-items: center; gap: 6px; color: var(--dim); font-weight: 500; font-size: 12.5px; white-space: nowrap; }
+.brand .crumb a { color: var(--dim); text-decoration: none; } .brand .crumb a:hover { color: #fff; }
+.brand .crumb i { font-style: normal; color: var(--mute); }
+#hud { width: 100%; padding: 10px 12px 8px; font-size: 11px; color: var(--dim); border-radius: var(--r-md); }
+#hud .hh { display: flex; align-items: center; gap: 7px; color: #fff; font-weight: 600; letter-spacing: .08em; font-size: 10.5px; margin-bottom: 6px; }
+#hud .hh i { width: 7px; height: 7px; border-radius: 50%; background: var(--good); box-shadow: 0 0 8px var(--good); animation: hblink 1.6s infinite; }
+#hud .hh span { margin-left: auto; color: var(--mute); font-weight: 500; letter-spacing: 0; }
+#hud .hr { display: flex; align-items: baseline; gap: 8px; line-height: 1.75; }
+#hud .hr span { flex: 1; color: var(--mute); }
+#hud .hr b { color: #fff; font-weight: 600; }
+#hud .hr em { font-style: normal; color: var(--hi); min-width: 54px; text-align: right; }
+#hud .spark { display: block; width: 100%; margin-top: 6px; }
+#hud .spark polyline { fill: none; stroke: var(--hi); stroke-width: 1.6; }
+#hud .spark circle { fill: var(--hi); }
+#hud .spark .thr { stroke: var(--good); stroke-dasharray: 3 3; opacity: .6; }
+#hud .spark text { fill: var(--mute); font-size: 8.5px; font-family: inherit; }
+@keyframes hblink { 50% { opacity: .35; } }
+#lt { position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 9px 18px; background: rgba(8, 18, 38, .74); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: var(--r-sm); box-shadow: var(--sh-sm); text-align: center; }
+#lt::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--hi); box-shadow: 0 0 12px var(--hi); }
+#lt b { font-size: 13px; font-weight: 600; color: #fff; letter-spacing: .02em; }
+#lt span { font-size: 11px; color: var(--dim); }
+#lt.in { animation: ltin .45s cubic-bezier(.2,.8,.2,1); }
+@keyframes ltin { from { opacity: 0; transform: translateY(-6px); clip-path: inset(0 100% 0 0); } to { opacity: 1; transform: none; clip-path: inset(0 0 0 0); } }
+#ticker { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; transition: opacity .6s; }
+#ticker.out { opacity: 0; }
+#ticker .tk { display: flex; align-items: center; gap: 7px; height: 26px; padding: 0 10px; border-radius: var(--r-pill); background: rgba(8, 18, 38, .74); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); font-size: 10.5px; color: var(--dim); animation: tkin .35s cubic-bezier(.2,.8,.2,1); }
+#ticker .tk i { width: 6px; height: 6px; border-radius: 50%; background: var(--good); box-shadow: 0 0 6px var(--good); }
+#ticker .tk b { color: #fff; font-weight: 600; }
+@keyframes tkin { from { opacity: 0; transform: translateY(6px) scale(.96); } }
+#xray { position: absolute; right: 12px; top: 72px; width: 300px; z-index: 5; padding: 12px 14px; font-size: 11px; color: var(--dim); animation: xin .5s cubic-bezier(.2,.8,.2,1); }
+#xray .xh, #codecard .xh { display: flex; justify-content: space-between; gap: 10px; font-size: 10px; letter-spacing: .08em; color: var(--hi); font-weight: 600; }
+#xray .xh b, #codecard .xh b { color: var(--mute); font-weight: 500; letter-spacing: 0; }
+#xray h3 { margin: 6px 0 2px; font: 700 15px var(--f); color: #fff; }
+#xray .xs { font-size: 10.5px; color: var(--mute); }
+#xray .xsec { margin: 12px 0 6px; font-size: 10px; letter-spacing: .06em; color: var(--mute); }
+#xray .xr { display: grid; grid-template-columns: 78px 1fr 68px; align-items: center; gap: 8px; height: 20px; }
+#xray .xr span { color: var(--dim); }
+#xray .xr b { color: #fff; font-weight: 600; text-align: right; }
+#xray .bars { position: relative; height: 8px; border-radius: 4px; background: rgba(255, 255, 255, .06); overflow: hidden; }
+#xray .bars i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; }
+#xray .bars .b0 { background: rgba(255, 255, 255, .2); }
+#xray .bars .b1 { width: 0; top: 2px; bottom: 2px; transition: width 1.1s cubic-bezier(.2,.8,.2,1) .3s; }
+#xray .xd p { margin: 0; display: flex; gap: 10px; line-height: 1.7; color: #d3dfee; }
+#xray .xd span { color: var(--hi); flex: none; }
+@keyframes xin { from { opacity: 0; transform: translateX(20px); } }
+#codecard { position: absolute; left: 50%; bottom: 70px; transform: translateX(-50%); width: min(560px, calc(100% - 24px)); z-index: 7; padding: 12px 14px; font-size: 11px; color: var(--dim); animation: cin .5s cubic-bezier(.2,.8,.2,1); }
+@keyframes cin { from { opacity: 0; transform: translate(-50%, 14px); } }
+#codecard .cq { margin: 6px 0 8px; color: #fff; font: 600 13px var(--f); }
+#codecard .code { height: 150px; overflow: hidden; border-radius: var(--r-sm); background: rgba(2, 8, 20, .6); padding: 8px 10px; -webkit-mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent); mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent); }
+#codecard pre { margin: 0; font-family: inherit; font-size: 11px; line-height: 1.5; color: #bfe6c8; white-space: pre; animation: codescroll 6s linear forwards; }
+#codecard pre .k { color: #d6b1ff; } #codecard pre .c { color: var(--mute); }
+@keyframes codescroll { from { transform: translateY(40px); } to { transform: translateY(calc(-100% + 130px)); } }
+#codecard .gates { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+#codecard .gates span { padding: 2px 8px; border-radius: var(--r-pill); background: rgba(79, 220, 122, .14); color: #8ff0ae; opacity: 0; animation: gin .3s forwards; }
+#codecard .gates span.no { background: rgba(255, 93, 93, .14); color: #ffb0b0; }
+@keyframes gin { to { opacity: 1; } }
+#codecard .hot { margin-top: 8px; color: var(--hi); }
+/* Data-source banners (reel opening): one per dataset, in that publisher's colours, with its real record counts. */
+#srcbanner { position: absolute; left: 50%; bottom: 84px; z-index: 9; width: min(760px, calc(100% - 32px)); display: flex; border-radius: var(--r-lg); overflow: hidden; background: rgba(8, 16, 34, .86); backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3); box-shadow: 0 24px 60px rgba(0, 0, 0, .45), 0 0 0 1px rgba(255, 255, 255, .06); transform: translateX(-50%); }
+#srcbanner.in { animation: sbin .55s cubic-bezier(.2,.8,.2,1); }
+#srcbanner.out { animation: sbout .35s ease-in forwards; }
+@keyframes sbin { from { opacity: 0; transform: translate(-50%, 28px) scale(.98); } }
+@keyframes sbout { to { opacity: 0; transform: translate(-50%, -10px) scale(.99); } }
+#srcbanner .sb-brand { flex: none; width: 210px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; gap: 14px; background: var(--b); color: var(--bf, #fff); position: relative; overflow: hidden; }
+#srcbanner .sb-brand::after { content: ''; position: absolute; inset: 0; background: var(--bp, none); opacity: .18; pointer-events: none; }
+#srcbanner.in .sb-brand { animation: sbwipe .6s cubic-bezier(.2,.8,.2,1); }
+@keyframes sbwipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+#srcbanner .sb-logo { display: flex; align-items: center; gap: 10px; position: relative; z-index: 1; }
+#srcbanner .sb-logo svg { width: 38px; height: 38px; flex: none; }
+#srcbanner .sb-wm { font-weight: 800; font-size: 19px; line-height: 1.05; letter-spacing: -.02em; }
+#srcbanner .sb-wm small { display: block; font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; opacity: .85; margin-bottom: 3px; }
+#srcbanner .sb-pub { position: relative; z-index: 1; font-size: 10.5px; font-weight: 500; opacity: .85; line-height: 1.4; }
+#srcbanner .sb-body { flex: 1; min-width: 0; padding: 16px 20px 16px; }
+#srcbanner .sb-eye { display: flex; justify-content: space-between; gap: 10px; font: 500 10.5px "JetBrains Mono", monospace; color: var(--mute); letter-spacing: .04em; }
+#srcbanner .sb-eye b { color: var(--hi); font-weight: 600; }
+#srcbanner .sb-title { margin: 6px 0 12px; font-size: 19px; font-weight: 700; color: #fff; letter-spacing: -.015em; }
+#srcbanner .sb-stats { display: flex; gap: 22px; flex-wrap: wrap; }
+#srcbanner .sb-stats div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+#srcbanner .sb-stats b { font: 600 26px "JetBrains Mono", monospace; color: #fff; letter-spacing: -.02em; }
+#srcbanner .sb-stats span { font-size: 11px; color: var(--dim); }
+#srcbanner .sb-feeds { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); font: 500 11px "JetBrains Mono", monospace; color: var(--dim); }
+#srcbanner .sb-feeds i { font-style: normal; color: var(--b2, var(--hi)); }
+#srcbanner .sb-bar { position: absolute; left: 0; bottom: 0; height: 3px; width: 0; background: var(--b2, var(--b)); }
+#srcbanner.in .sb-bar { animation: sbbar var(--dur, 3.6s) linear forwards; }
+@keyframes sbbar { to { width: 100%; } }
+body.reel-src #ilegend { display: none !important; }
+#srcrail { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+#srcrail .sr { display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px 0 4px; border-radius: var(--r-pill); background: rgba(8, 16, 34, .8); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); font: 600 10.5px var(--f); color: #fff; animation: tkin .35s cubic-bezier(.2,.8,.2,1); }
+#srcrail .sr i { width: 16px; height: 16px; border-radius: 50%; background: var(--b); box-shadow: 0 0 8px var(--b); }
+#srcrail.out { transition: opacity .6s; opacity: 0; }
+@media (max-width: 700px) { #srcbanner { flex-direction: column; } #srcbanner .sb-brand { width: auto; flex-direction: row; align-items: center; } }
+#endcard { position: absolute; inset: 0; z-index: 25; display: grid; place-items: center; padding: 16px; background: radial-gradient(ellipse at center, rgba(6, 14, 32, .3), rgba(6, 14, 32, .82)); animation: ecin 1s ease; transition: opacity .8s; }
+#endcard.out { opacity: 0; }
+#endcard .ec { text-align: center; }
+#endcard .lg { width: 52px; height: 52px; margin: 0 auto 14px; border-radius: 14px; background: var(--accent); display: grid; place-items: center; box-shadow: 0 0 40px rgba(59, 156, 255, .6); }
+#endcard .lg svg { width: 30px; height: 30px; stroke: #fff; }
+#endcard h1 { margin: 0; font-size: 40px; letter-spacing: -.03em; }
+#endcard p { margin: 8px 0 0; color: var(--dim); font-size: 15px; }
+#endcard .nums { display: flex; flex-wrap: wrap; gap: 18px 30px; justify-content: center; margin-top: 26px; }
+#endcard .nums div { display: flex; flex-direction: column; gap: 3px; }
+#endcard .nums b { font-size: 22px; color: #fff; font-weight: 600; }
+#endcard .nums b.up { color: #8ff0ae; }
+#endcard .nums span { font-size: 10.5px; color: var(--mute); letter-spacing: .06em; text-transform: uppercase; }
+@keyframes ecin { from { opacity: 0; } }
 @media (max-width: 1340px) {
   #daypart { display: none; }
+}
+@media (max-width: 1440px) {
+  .brand b { display: none; }
 }
 @media (max-width: 1180px) {
   .brand b { display: none; }
@@ -438,7 +569,8 @@ td:last-child { text-align: right; font-weight: 600; }
   <div id="labels"></div>
 
   <header id="top" class="glass">
-    <div class="brand"><div class="logo"><svg class="ic" viewBox="0 0 24 24" data-ic="logo"></svg></div><b>The Human Project</b><span class="status" id="status"></span></div>
+    <div class="brand"><div class="logo"><svg class="ic" viewBox="0 0 24 24" data-ic="logo"></svg></div><b>The Human Project</b><span class="crumb" id="crumb" hidden></span><span class="status" id="status"></span></div>
+    <div class="cityseg" id="cityseg"><a data-city="sf" href="../../cities/sf/index.html" title="San Francisco">SF</a><a data-city="chicago" href="../../cities/chicago/index.html" title="Chicago">CHI</a><a data-city="nyc" href="../../cities/nyc/index.html" title="New York">NYC</a></div>
     <div class="seg" role="tablist" aria-label="Scenario">
       <button id="tab-base" role="tab" class="on" title="The city as it is today">Baseline</button>
       <button id="tab-plan" role="tab" title="The city with your changes">Plan A</button>
@@ -472,6 +604,7 @@ td:last-child { text-align: right; font-weight: 600; }
   </header>
 
   <div id="legends">
+  <div id="hud" class="glass" hidden></div>
   <div id="modes" class="glass">
     <span><i style="background:var(--car)"></i>Cars</span>
     <span><i style="background:var(--walk)"></i>Pedestrians</span>
@@ -507,8 +640,10 @@ td:last-child { text-align: right; font-weight: 600; }
   </aside>
   <button id="drawer-open" class="glass" hidden title="Show the Impact panel"><svg class="ic" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Impact <b id="cv3">$0</b></button>
 
-  <div id="ctop"><div id="caption" class="glass" hidden></div><div id="chips"></div></div>
+  <div id="ctop"><div id="lt" hidden></div><div id="srcrail" hidden></div><div id="ticker" hidden></div><div id="caption" class="glass" hidden></div><div id="chips"></div></div>
   <div id="inspector" class="glass" hidden></div>
+  <div id="xray" class="glass" hidden></div>
+  <div id="codecard" class="glass" hidden></div>
 
   <nav id="dock" class="glass" aria-label="Tools">
     <div class="tools" role="toolbar" aria-label="Edit tools">
@@ -553,19 +688,23 @@ td:last-child { text-align: right; font-weight: 600; }
   <div id="planspop" class="glass" hidden></div>
   <div id="modmount"></div>
 
+  <div id="srcbanner" hidden></div>
+  <div id="reelbar" hidden><i></i></div>
+  <div id="endcard" hidden></div>
   <div class="veil" id="intro">
     <div class="card glass intro">
       <div class="eyebrow"><span class="logo"><svg class="ic" viewBox="0 0 24 24" data-ic="logo"></svg></span>The Human Project</div>
       <h1>What if <em>2nd Street</em> belonged to people?</h1>
       <p>A simulated weekday in San Francisco, where every dot is a person: change a street or a block and watch the whole city replan.</p>
       <div class="row">
-        <button class="btn primary" id="intro-demo"><svg class="ic" viewBox="0 0 24 24" data-ic="playo"></svg>Play the 2-minute demo</button>
+        <button class="btn primary" id="intro-demo"><svg class="ic" viewBox="0 0 24 24" data-ic="playo"></svg>Play the 1-minute demo</button>
         <button class="btn" id="intro-free">Explore on my own</button>
       </div>
     </div>
   </div>
 </main>
 
+<script id="city" type="application/json">__CITY__</script>
 <script id="world" type="application/json">__WORLD__</script>
 <script>/*__HP_BACKEND__*/</script>
 <script>/*__HP_LIB:hp-ask__*/</script>
@@ -593,8 +732,10 @@ import { MapControls } from 'three/addons/controls/MapControls.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 // ───────────────────────── simulation engine connection ─────────────────────────
-let B = { mode: 'offline' };
-try { if (window.HPBackend) B = await window.HPBackend.connect(); } catch (e) { console.warn('engine connect failed, using in-browser estimates', e); B = { mode: 'offline' }; }
+let CITY; try { CITY = JSON.parse(document.getElementById('city').textContent); } catch (e) { CITY = { id: 'sf', name: 'San Francisco', area: 'Financial District + SoMa', engine: true, districts: [], landmarks: [], stations: [] }; }
+const IS_SF = CITY.id === 'sf';
+let B = { mode: CITY.engine ? 'offline' : 'explore' };
+try { if (window.HPBackend && CITY.engine) B = await window.HPBackend.connect(); } catch (e) { console.warn('engine connect failed, using in-browser estimates', e); B = { mode: 'offline' }; }
 const EW = B.world || null;
 const ENGINE_OK = !!(EW && B.baseline && B.baseline.trips && B.baseline.edges);
 const BASE_CF = new Set(ENGINE_OK ? EW.base_car_free_edges || [] : []);   // Market St: car-free in the 2026 baseline
@@ -729,7 +870,8 @@ BASE_POIS.forEach(p => { p.edges = poiEdges(p); });
 
 
 // ───────────────────────── inlets: the only places people enter and leave ─────────────────────────
-const STATIONS = W.stations.filter(s => ['Embarcadero', 'Montgomery Street', 'Powell Street'].includes(s.name)).map(s => ({ ...s, nodes: [...new Set(s.e.map(([x, z]) => nearestNode(x, z, isPed)))].filter(n => n >= 0) }));
+const STATION_NAMES = IS_SF ? ['Embarcadero', 'Montgomery Street', 'Powell Street'] : ((CITY.stations || []).slice().sort((a, b) => (b.entrances || 0) - (a.entrances || 0)).map(s => s.name).filter(n => W.stations.some(t => t.name === n)).slice(0, 3).concat(W.stations.slice().sort((a, b) => (b.e || []).length - (a.e || []).length).map(t => t.name))).filter((n, i, a) => a.indexOf(n) === i).slice(0, 3);
+const STATIONS = W.stations.filter(s => STATION_NAMES.includes(s.name) && s.e && s.e.length).map(s => ({ ...s, nodes: [...new Set(s.e.map(([x, z]) => nearestNode(x, z, isPed)))].filter(n => n >= 0) }));
 const stationBy = (n) => STATIONS.find(s => s.name === n) || STATIONS[0];
 const sinks = NODES.map((_, i) => i).filter(i => carIn[i].length && !carOut[i].length);
 // Only the original road-end gateways: world.json also lists every road crossing the edge ("cross"), which the engine uses.
@@ -739,7 +881,7 @@ function exitsFor(entries, names) {
   const out = []; for (const en of entries) { let best = -1, bd = Infinity; for (const s of sinks) { const d = Math.hypot(NODES[s][0] - NODES[en][0], NODES[s][1] - NODES[en][1]); if (d < bd) { bd = d; best = s; } } if (best >= 0 && bd < 900) out.push(best); }
   return out.length ? [...new Set(out)] : sinks.slice(0, 1);
 }
-const INLETS = [
+const SF_INLETS = [
   { key: 'emb', name: 'Embarcadero', short: 'Embarcadero', mode: 'ped', station: 'Embarcadero' },
   { key: 'mont', name: 'Montgomery', short: 'Montgomery', mode: 'ped', station: 'Montgomery Street' },
   { key: 'pow', name: 'Powell', short: 'Powell', mode: 'ped', station: 'Powell Street' },
@@ -748,16 +890,29 @@ const INLETS = [
   { key: 'mkt', name: 'Market St (west)', short: 'Market St', mode: 'car', gw: ['Market Street'] },
   { key: 'fol', name: 'Folsom · 6th St', short: 'Folsom · 6th', mode: 'car', gw: ['Folsom Street', '6th Street'] },
   { key: 'bwy', name: 'Broadway · Columbus', short: 'Broadway · Columbus', mode: 'car', gw: ['Broadway', 'Columbus Avenue'] },
-].map((g, i) => {
+];
+// Other cities: BART-like inlets from the busiest stations, car inlets from every named road-end gateway.
+function genericInlets() {
+  const out = STATIONS.map((st, k) => ({ key: 'st' + k, name: st.name, short: st.name.replace(/ (Station|Street)$/, ''), mode: 'ped', station: st.name }));
+  // City data may carry SF's highway labels on freeway gateways: name them from the road itself instead.
+  const SIDE_W = { north: 'north', south: 'south', east: 'east', west: 'west' };
+  const gwName = (g) => { if (!g.hw || !/I-80|US-101/.test(g.name || '')) return g.name; const e = EDGES.find(e => (e.a === g.node || e.b === g.node) && e.name && !/I-80|US-101/.test(e.name)); return e ? e.name : `Highway · ${SIDE_W[g.side] || 'edge'}`; };
+  const groups = new Map(); for (const g of W.gateways) { if (g.src === 'cross' || !g.in) continue; const n = gwName(g); if (!groups.has(n)) groups.set(n, []); groups.get(n).push({ ...g, name: n }); }
+  const outs = new Map(); for (const g of W.gateways) { if (g.src === 'cross' || !g.out) continue; const n = gwName(g); if (!outs.has(n)) outs.set(n, []); outs.get(n).push(g.node); }
+  [...groups].forEach(([n, gs], k) => out.push({ key: 'gw' + k, name: n, short: n.replace(' Street', ' St').replace(' Avenue', ' Ave'), mode: 'car', gw: [n], nodesIn: gs.map(g => g.node), nodesOut: outs.get(n) || [], hw: gs.some(g => g.hw), lanes: gs.reduce((a, g) => a + (g.lanes || 1), 0) }));
+  return out;
+}
+const INLETS = (IS_SF ? SF_INLETS : genericInlets()).map((g, i) => {
   const o = { ...g, i };
   if (g.mode === 'ped') { o.st = stationBy(g.station); o.pos = o.st.c; }
+  else if (g.nodesIn) { o.entries = g.nodesIn; o.exits = g.nodesOut.length ? g.nodesOut : exitsFor(o.entries, []); }
   else { o.entries = gwNodes(g.gw, 'in'); o.exits = exitsFor(o.entries, g.gw); }
   return o;
 });
 // Engine inlets (variable-length list from GET /world): append the ones this page doesn't know, keep position == i.
 const INLET_MAP = window.HPBackend && window.HPBackend.mergeInlets ? window.HPBackend.mergeInlets(INLETS, EW, B.baseline) : { toy: [], extra: [] };
 // Only the two freeways and the three BART stations get a marker; every other car inlet is summed per side of the box.
-const HIGHWAYS = ['i80', 'us101'];
+const HIGHWAYS = IS_SF ? ['i80', 'us101'] : INLETS.filter(g => g.mode === 'car' && g.hw && g.entries && g.entries.length).sort((a, b) => (b.lanes || 0) - (a.lanes || 0)).slice(0, 3).map(g => g.key);
 const MARKERS = INLETS.filter(g => HIGHWAYS.includes(g.key) || g.mode === 'ped');
 const SIDE_NAMES = { north: 'north side', east: 'east side', south: 'south side', west: 'west side' };
 function inletXZ(g) { if (g.pos) return g.pos; const e = EW && HPBackend.inletByKey ? HPBackend.inletByKey(EW, g.key) : null; if (e) return e.at || [e.x, e.z]; const n = (g.entries && g.entries[0]) ?? (g.exits && g.exits[0]); return n != null && NODES[n] ? NODES[n] : null; }
@@ -769,16 +924,23 @@ const toyInlet = (ei) => INLET_MAP.toy[ei] ?? ei;
 const NI = INLETS.length;
 const inletBy = (k) => INLETS.find(g => g.key === k);
 // Each region has exactly one car inlet and one BART inlet.
-const REGIONS = [
+const SF_REGIONS = [
   { name: 'East Bay', share: .34, car: 'i80', bart: 'emb', carBase: 30, trBase: 27 },
   { name: 'Peninsula', share: .22, car: 'us101', bart: 'mont', carBase: 36, trBase: 40 },
   { name: 'Western SF', share: .22, car: 'mkt', bart: 'pow', carBase: 20, trBase: 22 },
   { name: 'Mission', share: .13, car: 'fol', bart: 'pow', carBase: 17, trBase: 18 },
   { name: 'North Beach', share: .09, car: 'bwy', bart: 'mont', carBase: 14, trBase: 19 },
-].map(r => { const c = inletBy(r.car), b = inletBy(r.bart); return { ...r, entries: c.entries, exits: c.exits, gw: [c.name], st: b.st, carIn: c.i, bartIn: b.i }; }).filter(r => r.entries.length);
+];
+function genericRegions() {
+  const peds = INLETS.filter(g => g.mode === 'ped'); const cars = INLETS.filter(g => g.mode === 'car' && g.entries && g.entries.length);
+  const tot = cars.reduce((a, g) => a + (g.hw ? 4 : 1) * (g.lanes || 1), 0) || 1;
+  return cars.map(g => { const p0 = inletXZ(g) || [0, 0]; const near = peds.slice().sort((a, b) => Math.hypot(a.pos[0] - p0[0], a.pos[1] - p0[1]) - Math.hypot(b.pos[0] - p0[0], b.pos[1] - p0[1]))[0]; return { name: g.name, share: (g.hw ? 4 : 1) * (g.lanes || 1) / tot, car: g.key, bart: near ? near.key : peds[0]?.key, carBase: g.hw ? 28 : 18, trBase: g.hw ? 30 : 22 }; });
+}
+const REGIONS = (IS_SF ? SF_REGIONS : genericRegions()).filter(r => r.bart).map(r => { const c = inletBy(r.car), b = inletBy(r.bart); return { ...r, entries: c.entries, exits: c.exits, gw: [c.name], st: b.st, carIn: c.i, bartIn: b.i }; }).filter(r => r.entries.length);
 // Through-traffic origin/destination pairs between road inlets: [from, to, weight].
-const THROUGH_OD = [['mkt', 'i80', 4], ['i80', 'mkt', 4], ['fol', 'i80', 3.5], ['i80', 'fol', 3.5], ['bwy', 'i80', 2], ['i80', 'bwy', 2], ['us101', 'bwy', 1.5], ['bwy', 'us101', 1.5], ['mkt', 'us101', 1], ['us101', 'mkt', 1], ['fol', 'bwy', 1], ['bwy', 'fol', 1]];
-const THRU_N = 5200;
+const SF_THROUGH_OD = [['mkt', 'i80', 4], ['i80', 'mkt', 4], ['fol', 'i80', 3.5], ['i80', 'fol', 3.5], ['bwy', 'i80', 2], ['i80', 'bwy', 2], ['us101', 'bwy', 1.5], ['bwy', 'us101', 1.5], ['mkt', 'us101', 1], ['us101', 'mkt', 1], ['fol', 'bwy', 1], ['bwy', 'fol', 1]];
+const THROUGH_OD = IS_SF ? SF_THROUGH_OD : (() => { const cars = INLETS.filter(g => g.mode === 'car' && g.entries && g.entries.length && g.exits && g.exits.length); const big = cars.slice().sort((a, b) => (b.hw - a.hw) || ((b.lanes || 0) - (a.lanes || 0))).slice(0, 8); const od = []; for (const a of big) for (const b of big) if (a !== b) od.push([a.key, b.key, (a.hw ? 2 : 1) * (b.hw ? 2 : 1)]); return od; })();
+const THRU_N = IS_SF ? 5200 : 3000;
 
 // ───────────────────────── street blocks (for "per block" info views) ─────────────────────────
 // Union buildings whose centroids are within 70 m and not separated by a road.
@@ -1070,11 +1232,14 @@ function wrapTrip(t, w, hero) {
   const poi = t.poi >= 0 ? ENG_POI_BY.get(t.poi) || null : null;
   return { p: engPerson(t.agent_id), leg: LEG[t.purpose] || t.purpose, purpose: t.purpose, t0: t.t0, t1: t.t1, mode: t.mode, pts: t.pts, cum: t.cum, segE: t.segE, edges: [], len: t.len, v: t.v, dur: t.dur, poi, dwell: t.dwell || 0, side: t.side, sig: t.agent_id + ':' + t.purpose + ':' + Math.round(t.t0), gin: -1, gout: -1, w, copy: t.copy || 0, hero: !!hero, inlet_in: t.inlet_in, inlet_out: t.inlet_out };
 }
+// Visual density: each trip is drawn this many times (time-offset, other sidewalk). Numbers are unaffected.
+const VIS_DENSITY = (() => { const q = +new URLSearchParams(location.search).get('density'); return q > 0 && q <= 8 ? q : 3; })();
 function engTrips(r, extra) {
   // Copies are chosen by the connector (1 for live full-day results, more for the thinner snapshot sample).
   const share = r.trips?.sample_share || 1; const skip = new Set((extra || []).map(t => t.agent_id));
   const items = (r.trips?.items || []).filter(t => !skip.has(t.agent_id));
-  const ex = HPBackend.expandTrips({ trips: { items, sample_share: share } }, EDGES); let copies = 1; for (const t of ex) if (t.copy + 1 > copies) copies = t.copy + 1;
+  const autoCopies = share >= .6 ? 1 : share >= .3 ? 2 : 3;   // visual only: weights below divide by copies, so every count stays exact
+  const ex = HPBackend.expandTrips({ trips: { items, sample_share: share } }, EDGES, { copies: autoCopies * VIS_DENSITY }); let copies = 1; for (const t of ex) if (t.copy + 1 > copies) copies = t.copy + 1;
   const w = ENG_SCALE / (copies * share); const out = ex.map(t => wrapTrip(t, w));
   if (extra && extra.length) for (const t of HPBackend.expandTrips({ trips: { items: extra, sample_share: 1 } }, EDGES, { copies: 1 })) out.push(wrapTrip(t, 0, true));
   out.sort((a, b) => a.t0 - b.t0); return out;
@@ -1227,17 +1392,22 @@ sun.shadow.mapSize.set(4096, 4096); Object.assign(sun.shadow.camera, { left: -15
 scene.add(sun); scene.add(sun.target);
 
 // Land + water (shoreline follows the Embarcadero)
-const shore = EDGES.filter(e => e.name === 'The Embarcadero' || e.name === 'King Street').flatMap(e => e.p).sort((a, b) => a[1] - b[1]);
+const shore = IS_SF ? EDGES.filter(e => e.name === 'The Embarcadero' || e.name === 'King Street').flatMap(e => e.p).sort((a, b) => a[1] - b[1]) : [];
 const shoreline = []; for (const p of shore) { if (!shoreline.length || Math.abs(p[1] - shoreline[shoreline.length - 1][1]) > 40) shoreline.push([p[0] + 95, p[1]]); }
 const landShape = new THREE.Shape(); landShape.moveTo(-8000, -8000); landShape.lineTo(-8000, 8000);
-landShape.lineTo(shoreline[0][0] - 60, 8000);
-for (const [x, z] of shoreline) landShape.lineTo(x, -z);
-landShape.lineTo(shoreline[shoreline.length - 1][0] + 200, -8000);
-const landMat = desat(new THREE.MeshStandardMaterial({ color: 0xe2d5b8, roughness: 1 }));
+if (shoreline.length) { landShape.lineTo(shoreline[0][0] - 60, 8000); for (const [x, z] of shoreline) landShape.lineTo(x, -z); landShape.lineTo(shoreline[shoreline.length - 1][0] + 200, -8000); } else { landShape.lineTo(8000, 8000); landShape.lineTo(8000, -8000); }   // other cities: HPContext draws the real water inside the box
+function groundVariation(mat, amt = .07) {   // low-frequency tint so big flat areas don't look like plastic
+  const prev = mat.onBeforeCompile; mat.onBeforeCompile = (sh, r) => { prev && prev.call(mat, sh, r);
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vGW;').replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvGW = (modelMatrix * vec4(transformed, 1.0)).xz;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec2 vGW; float gn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f); float a = fract(sin(dot(i, vec2(127.1,311.7)))*43758.5), b = fract(sin(dot(i+vec2(1,0), vec2(127.1,311.7)))*43758.5), c = fract(sin(dot(i+vec2(0,1), vec2(127.1,311.7)))*43758.5), d = fract(sin(dot(i+vec2(1,1), vec2(127.1,311.7)))*43758.5); return mix(mix(a,b,f.x), mix(c,d,f.x), f.y); }')
+      .replace('#include <color_fragment>', `#include <color_fragment>\ndiffuseColor.rgb *= 1.0 - ${amt.toFixed(3)} + ${(2 * amt).toFixed(3)} * (0.65 * gn(vGW / 90.0) + 0.35 * gn(vGW / 23.0));`); };
+  return mat;
+}
+const landMat = desat(groundVariation(new THREE.MeshStandardMaterial({ color: 0xe2d5b8, roughness: 1 }), .06));
 const landMesh = new THREE.Mesh(new THREE.ShapeGeometry(landShape), landMat);
 landMesh.rotation.x = -Math.PI / 2; landMesh.receiveShadow = true; scene.add(landMesh);
 // A thin pale quay along the shoreline.
-{ const pts = shoreline.map(([x, z]) => [x - 6, z]); const pos = []; ribbonInto(pos, pts, 16, .12); const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.computeVertexNormals(); const m = new THREE.Mesh(g, desat(new THREE.MeshStandardMaterial({ color: 0xf4efe4, roughness: 1 }))); m.receiveShadow = true; scene.add(m); }
+if (shoreline.length) { const pts = shoreline.map(([x, z]) => [x - 6, z]); const pos = []; ribbonInto(pos, pts, 16, .12); const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.computeVertexNormals(); const m = new THREE.Mesh(g, desat(new THREE.MeshStandardMaterial({ color: 0xf4efe4, roughness: 1 }))); m.receiveShadow = true; scene.add(m); }
 const waterU = { uTime: { value: 0 }, uDeep: { value: new THREE.Color(0x3f97cf) }, uLite: { value: new THREE.Color(0x8fd0ee) }, uNight: { value: 0 }, uDesat: FX.uDesat };
 const water = new THREE.Mesh(new THREE.PlaneGeometry(30000, 30000), new THREE.ShaderMaterial({ uniforms: waterU, fog: false,
   vertexShader: 'varying vec3 vW; void main(){ vec4 w = modelMatrix*vec4(position,1.0); vW = w.xyz; gl_Position = projectionMatrix*viewMatrix*w; }',
@@ -1251,7 +1421,12 @@ const water = new THREE.Mesh(new THREE.PlaneGeometry(30000, 30000), new THREE.Sh
 water.rotation.x = -Math.PI / 2; water.position.y = -1.5; scene.add(water);
 // The rest of San Francisco: real OSM context that sinks and fades into haze away from the simulated blocks.
 const CTX_LAND = new THREE.Color(0xe2d5b8), CTX_FADE = new THREE.Color();
-const CTX = window.HPContext?.add(THREE, scene, { fadeColor: 0xdfe6e4, buildingColor: 0xe9e2d6, roadColor: 0xc3bdb2, landColor: 0xe2d5b8, parkColor: 0x9fcf7e, waterColor: 0x5fb0de, accent: 0x39d5ff, outline: 0xffffff, fadeStart: 40, fadeEnd: 1300 });
+const CTX = window.HPContext?.add(THREE, scene, { fadeColor: 0xdfe6e4, buildingColor: 0xe9e2d6, roadColor: 0xc3bdb2, landColor: 0xe2d5b8, parkColor: 0x9fcf7e, waterColor: 0x5fb0de, accent: 0x39d5ff, outline: 0xffffff, fadeStart: 40, fadeEnd: 1300, inside: !IS_SF });
+// HPContext skips its water polygons when a city has no coastline land (e.g. Chicago's river and lake): draw them here.
+const CTX_WATER = (!IS_SF && window.HPContext?.data && !(window.HPContext.data.land || []).length && (window.HPContext.data.water || []).length) ? (() => {
+  const shapes = window.HPContext.data.water.map(f => { const sh = new THREE.Shape(); for (let i = 0; i < f.length; i += 2) (i ? sh.lineTo(f[i], -f[i + 1]) : sh.moveTo(f[i], -f[i + 1])); return sh; });
+  const m = new THREE.Mesh(new THREE.ShapeGeometry(shapes).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x5fb0de, roughness: .35, metalness: .05, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }));
+  m.position.y = 0.3; m.receiveShadow = true; scene.add(m); return m; })() : null;
 // Parks and plazas
 const parkMat = desat(new THREE.MeshStandardMaterial({ color: 0x86c45e, roughness: 1 }));
 const plazaMat = desat(new THREE.MeshStandardMaterial({ color: 0xe2d6bf, roughness: 1 }));
@@ -1279,7 +1454,8 @@ function buildRoadLayer(widthAdd, yBase, withRanges) {
   return { g, ranges, count: v };
 }
 const walkL = buildRoadLayer(7, .4, false);
-const walkMat = desat(new THREE.MeshStandardMaterial({ color: 0xd6d2ca, roughness: 1 })); const walkMesh = new THREE.Mesh(walkL.g, walkMat); walkMesh.receiveShadow = true; scene.add(walkMesh);
+const walkMat = desat(groundVariation(new THREE.MeshStandardMaterial({ color: 0xd6d2ca, roughness: 1 }), .05)); const walkMesh = new THREE.Mesh(walkL.g, walkMat); walkMesh.receiveShadow = true; scene.add(walkMesh);
+{ const curbL = buildRoadLayer(1.5, .55, false); const m = new THREE.Mesh(curbL.g, desat(new THREE.MeshStandardMaterial({ color: 0xa29c91, roughness: 1 }))); m.receiveShadow = true; scene.add(m); }   // curb edge
 const asphaltL = buildRoadLayer(0, .7, true);
 const asphaltMat = desat(new THREE.MeshStandardMaterial({ color: 0x5b626b, roughness: .95 }), .5);
 const asphalt = new THREE.Mesh(asphaltL.g, asphaltMat); asphalt.receiveShadow = true; scene.add(asphalt);
@@ -1292,6 +1468,30 @@ const asphalt = new THREE.Mesh(asphaltL.g, asphaltMat); asphalt.receiveShadow = 
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.computeVertexNormals();
   scene.add(new THREE.Mesh(g, desat(new THREE.MeshStandardMaterial({ color: 0xf2f0e8, roughness: 1 }))));
 }
+
+// Crosswalks: zebra stripes across each street arm at intersections inside the box (one merged mesh).
+{
+  const pos = []; const deg = new Map(); for (const e of ROAD_EDGES) { if (!e.car || e.hw || e.c.includes('link')) continue; for (const n of [e.a, e.b]) deg.set(n, (deg.get(n) || 0) + 1); }
+  for (const e of ROAD_EDGES) { if (!e.car || e.hw || e.c.includes('link') || e.w < 7) continue;
+    for (const [n, pts] of [[e.a, e.p], [e.b, e.p.slice().reverse()]]) { if ((deg.get(n) || 0) < 3 || pts.length < 2) continue; const [x0, z0] = pts[0]; if (!inBox(x0, z0, -10)) continue;
+      const [x1, z1] = pts[1]; const L = Math.hypot(x1 - x0, z1 - z0); if (L < 14) continue; const dx = (x1 - x0) / L, dz = (z1 - z0) / L, nx = -dz, nz = dx;
+      const back = 6.5, len = 3.2, sw = .55, gap = 1.25, half = e.w / 2 - .6;
+      for (let o = -half + sw / 2; o <= half - sw / 2 + 1e-3; o += gap) { const cx = x0 + dx * back + nx * o, cz = z0 + dz * back + nz * o; const p1 = [cx - dx * len / 2 - nx * sw / 2, cz - dz * len / 2 - nz * sw / 2], p2 = [cx + dx * len / 2 - nx * sw / 2, cz + dz * len / 2 - nz * sw / 2], p3 = [cx + dx * len / 2 + nx * sw / 2, cz + dz * len / 2 + nz * sw / 2], p4 = [cx - dx * len / 2 + nx * sw / 2, cz - dz * len / 2 + nz * sw / 2]; const y = .8;
+        pos.push(p1[0], y, p1[1], p2[0], y, p2[1], p3[0], y, p3[1], p1[0], y, p1[1], p3[0], y, p3[1], p4[0], y, p4[1]); } } }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.computeVertexNormals();
+  const m = new THREE.Mesh(g, desat(new THREE.MeshStandardMaterial({ color: 0xeeece4, roughness: 1, side: THREE.DoubleSide, transparent: true, opacity: .85 }))); m.renderOrder = 1; scene.add(m);
+}
+// Street lights: warm glow points along the main streets, only visible at night.
+const streetLights = (() => {
+  const pos = []; for (const e of ROAD_EDGES) { if (!e.car || e.hw || !['primary', 'secondary', 'tertiary', 'trunk'].includes(e.c)) continue; const pts = clipPts(e.p); let acc = 0;
+    for (let j = 0; j < pts.length - 1; j++) { const [x1, z1] = pts[j], [x2, z2] = pts[j + 1]; const L = Math.hypot(x2 - x1, z2 - z1); if (!L) continue; const nx = -(z2 - z1) / L, nz = (x2 - x1) / L;
+      for (let t = 26 - acc; t < L; t += 26) { const side = (Math.floor((acc + t) / 26) % 2) ? 1 : -1; const off = e.w / 2 + 1.2; pos.push(x1 + (x2 - x1) * t / L + nx * off * side, 7, z1 + (z2 - z1) * t / L + nz * off * side); }
+      acc = (acc + L) % 26; } }
+  const cvs = document.createElement('canvas'); cvs.width = cvs.height = 64; const x = cvs.getContext('2d'); const gr = x.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,236,190,1)'); gr.addColorStop(.25, 'rgba(255,200,120,.55)'); gr.addColorStop(1, 'rgba(255,170,80,0)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64);
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  const p = new THREE.Points(g, new THREE.PointsMaterial({ size: 36, map: new THREE.CanvasTexture(cvs), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true, toneMapped: false }));
+  p.visible = false; p.renderOrder = 3; scene.add(p); return p;
+})();
 
 // Buildings: one merged mesh. Per-vertex attributes: plan height, facade colour, plan tint, highlight,
 // and two info-view colours (baseline / plan) mixed by uPlan so the Compare swipe works in info views.
@@ -1324,30 +1524,36 @@ const bRanges = []; let bGeo;
     const gl = st.glass === true || st.glass === false ? st.glass : glass;
     for (let v = s; v < s + c; v++) { aBase.set(base, v * 3); aTint.set(base, v * 3); aRand[v] = hash2(i, 2); aBid[v] = i; aGlass[v] = gl ? 1 : 0; }
   });
-  for (const [k, a, sz] of [['aScale', aScale, 1], ['aBase', aBase, 3], ['aTint', aTint, 3], ['aHL', aHL, 1], ['aRand', aRand, 1], ['aBid', aBid, 1], ['aGlass', aGlass, 1], ['aInfoB', aInfoB, 3], ['aInfoP', aInfoP, 3]]) bGeo.setAttribute(k, new THREE.BufferAttribute(a, sz));
+  const aTop = new Float32Array(n); { const P = bGeo.attributes.position.array; for (let i = 0; i < BLD.length; i++) { const [s0, c0] = bRanges[i]; let top = 0; for (let v = s0; v < s0 + c0; v++) top = Math.max(top, P[v * 3 + 1]); aTop.fill(top, s0, s0 + c0); } }
+  for (const [k, a, sz] of [['aTop', aTop, 1], ['aScale', aScale, 1], ['aBase', aBase, 3], ['aTint', aTint, 3], ['aHL', aHL, 1], ['aRand', aRand, 1], ['aBid', aBid, 1], ['aGlass', aGlass, 1], ['aInfoB', aInfoB, 3], ['aInfoP', aInfoP, 3]]) bGeo.setAttribute(k, new THREE.BufferAttribute(a, sz));
 }
 const bMat = new THREE.MeshStandardMaterial({ roughness: .78, metalness: 0 });
 bMat.onBeforeCompile = (sh) => {
   Object.assign(sh.uniforms, bU);
   sh.vertexShader = sh.vertexShader.replace('#include <common>', `#include <common>
-    attribute float aScale; attribute vec3 aBase; attribute vec3 aTint; attribute float aHL; attribute float aRand; attribute float aGlass; attribute vec3 aInfoB; attribute vec3 aInfoP; attribute float aCrown;
-    uniform float uPlan; varying vec3 vCol; varying vec3 vInfo; varying float vHL; varying float vRand; varying vec3 vWP; varying float vWall; varying float vGlass; varying float vCrown;`)
+    attribute float aScale; attribute vec3 aBase; attribute vec3 aTint; attribute float aHL; attribute float aRand; attribute float aGlass; attribute vec3 aInfoB; attribute vec3 aInfoP; attribute float aCrown; attribute float aTop;
+    uniform float uPlan; varying vec3 vCol; varying vec3 vInfo; varying float vHL; varying float vRand; varying vec3 vWP; varying float vWall; varying float vGlass; varying float vCrown; varying float vTop;`)
   .replace('#include <begin_vertex>', `#include <begin_vertex>
     transformed.y *= mix(1.0, aScale, uPlan);
-    vCol = mix(aBase, aTint, uPlan); vInfo = mix(aInfoB, aInfoP, uPlan); vHL = aHL; vRand = aRand; vWall = 1.0 - abs(normal.y); vGlass = aGlass; vCrown = aCrown;
+    vCol = mix(aBase, aTint, uPlan); vInfo = mix(aInfoB, aInfoP, uPlan); vHL = aHL; vRand = aRand; vWall = 1.0 - abs(normal.y); vGlass = aGlass; vCrown = aCrown; vTop = aTop * mix(1.0, aScale, uPlan);
     vWP = (modelMatrix * vec4(transformed, 1.0)).xyz;`);
   sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
-    uniform float uNight; uniform float uDesat; uniform float uInfo; varying vec3 vCol; varying vec3 vInfo; varying float vHL; varying float vRand; varying vec3 vWP; varying float vWall; varying float vGlass; varying float vCrown;
+    uniform float uNight; uniform float uDesat; uniform float uInfo; varying vec3 vCol; varying vec3 vInfo; varying float vHL; varying float vRand; varying vec3 vWP; varying float vWall; varying float vGlass; varying float vCrown; varying float vTop;
     float hsh(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,37.719)))*43758.5453); }`)
   .replace('#include <color_fragment>', `#include <color_fragment>
-    float fy = fract(vWP.y/4.2); float cu = fract((vWP.x+vWP.z)/6.5);
-    vec3 c = vCol * (0.7 + 0.3 * smoothstep(0.0, 40.0, vWP.y));
+    float flH = mix(3.5, 4.4, vRand); float fy = fract(vWP.y/flH); float cu = fract((vWP.x+vWP.z)/mix(4.6, 7.2, fract(vRand*7.3)));
+    vec3 c = vCol * (0.78 + 0.22 * smoothstep(0.0, 40.0, vWP.y));
     float wallF = step(0.6, vWall) * step(3.5, vWP.y);
     float band = step(0.22, fy) * step(fy, 0.86);
     float pane = band * step(0.16, cu) * step(cu, 0.84);
     c *= mix(1.0, mix(1.06, 0.80, band), wallF * vGlass);               // glass: ribbon windows
     c *= 1.0 - 0.2 * pane * wallF * (1.0 - vGlass);                       // masonry: punched windows
-    c = mix(c, c * 0.62 + vec3(0.12, 0.125, 0.13), step(vWall, 0.4));     // roofs darker and greyer
+    c = mix(c, c * 0.62 + vec3(0.12, 0.125, 0.13) + (fract(vRand*13.7) - 0.5) * 0.05, step(vWall, 0.4));     // roofs darker and greyer, slight variety
+    float isWall = step(0.6, vWall); float dTop = vTop - vWP.y;
+    c *= mix(1.0, mix(0.66, 1.0, smoothstep(0.0, 7.0, vWP.y)), isWall);          // ambient occlusion where walls meet the ground
+    c = mix(c, c * 1.14 + 0.03, isWall * step(dTop, 1.1) * step(-0.1, dTop));   // light parapet / cornice line at the roof edge
+    c *= 1.0 - 0.16 * isWall * step(1.1, dTop) * step(dTop, 1.7);               // its shadow just below
+
     float gy = dot(c, vec3(0.3, 0.59, 0.11));
     c = mix(c, vec3(0.80 + gy * 0.16), uDesat);
     vec3 info = vInfo * (0.8 + 0.2 * smoothstep(0.0, 40.0, vWP.y)) * (1.0 - 0.06 * step(vWall, 0.4));
@@ -1372,8 +1578,8 @@ const TREES = [];
   for (const pk of W.parks) { if (pk.p.length < 3) continue; const xs = pk.p.map(p => p[0]), zs = pk.p.map(p => p[1]); const step = isPlaza(pk) ? 19 : 12;
     for (let x = Math.min(...xs); x < Math.max(...xs); x += step) for (let z = Math.min(...zs); z < Math.max(...zs); z += step) { const jx = x + (hash2(x | 0, z | 0) - .5) * step * .7, jz = z + (hash2(z | 0, x | 0) - .5) * step * .7; if (!pip(jx, jz, pk.p)) continue; if (edgeAt(jx, jz, 3) >= 0) continue; TREES.push([jx, jz, .8 + hash2(jx | 0, 3) * .55]); } }
   // Market St splits FiDi (north) and SoMa (south).
-  const mk = EDGES.filter(e => e.name === 'Market Street').flatMap(e => e.p); const mA = mk.reduce((a, p) => p[0] < a[0] ? p : a), mB = mk.reduce((a, p) => p[0] > a[0] ? p : a);
-  const side = (x, z) => ((mB[0] - mA[0]) * (z - mA[1]) - (mB[1] - mA[1]) * (x - mA[0])) / Math.hypot(mB[0] - mA[0], mB[1] - mA[1]);
+  const mk = IS_SF ? EDGES.filter(e => e.name === 'Market Street').flatMap(e => e.p) : []; const mA = mk.length ? mk.reduce((a, p) => p[0] < a[0] ? p : a) : [0, 0], mB = mk.length ? mk.reduce((a, p) => p[0] > a[0] ? p : a) : [1, 0];
+  const side = (x, z) => IS_SF ? ((mB[0] - mA[0]) * (z - mA[1]) - (mB[1] - mA[1]) * (x - mA[0])) / Math.hypot(mB[0] - mA[0], mB[1] - mA[1]) : (hash2(Math.round(x), Math.round(z)) < .45 ? 100 : 0);
   for (const e of EDGES) {
     if (!e.car || e.hw || !['residential', 'tertiary', 'secondary', 'unclassified', 'living_street', 'primary'].includes(e.c)) continue;
     const soma = side(e.mx, e.mz) > 40; const fidiSmall = !soma && (e.c === 'residential' || e.c === 'living_street') && hash2(e.id, 4) < .35;
@@ -1427,7 +1633,7 @@ const inletGroup = new THREE.Group(); scene.add(inletGroup);
 }
 
 // ───────────────────────── per-scenario visual layer ─────────────────────────
-const MAX_CARS = 2400, MAX_PEDS = 5000, TRAIL = 4;
+const MAX_CARS = 7000, MAX_PEDS = 16000, TRAIL = 4;
 const carGeo = mergeGeometries([new THREE.BoxGeometry(16, 4.4, 7.6).translate(0, 3.0, 0), new THREE.BoxGeometry(8.5, 3.2, 6.6).translate(-.8, 6.6, 0)]);
 const CAR_PAINT = [0x27c4ff, 0x1fb0ee, 0x52d3ff, 0x169ee0, 0x7fe0ff].map(c => new THREE.Color(c));
 const BIKE_COL = [1.0, 1.0, 1.0], PED_COL = [1.0, 0.6, 0.06], PED_FOLLOW = [1.0, 0.92, 0.35], PED_SOCIAL = [1.0, 0.25, 0.62], CAR_TRAIL = [0.25, 0.8, 1.15];
@@ -1436,7 +1642,7 @@ const TIE_MAT = new LineMaterial({ color: 0xff3d9a, linewidth: 1.8, transparent:
 class Visual {
   constructor(scn) {
     this.s = scn; this.group = new THREE.Group(); scene.add(this.group);
-    this.cars = new THREE.InstancedMesh(carGeo, new THREE.MeshStandardMaterial({ roughness: .4, metalness: .1, emissive: 0x0a5a80, emissiveIntensity: 1 }), MAX_CARS * 2); this.cars.count = 0; this.cars.castShadow = false; this.cars.frustumCulled = false; this.group.add(this.cars);
+    this.cars = new THREE.InstancedMesh(carGeo, new THREE.MeshStandardMaterial({ roughness: .4, metalness: .1, emissive: 0x1a9ad6, emissiveIntensity: 1.25 }), MAX_CARS * 2); this.cars.count = 0; this.cars.castShadow = false; this.cars.frustumCulled = false; this.group.add(this.cars);
     for (let i = 0; i < MAX_CARS * 2; i++) this.cars.setColorAt(i, CAR_PAINT[i % CAR_PAINT.length]);
     const mk = (n) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3)); g.setAttribute('aColor', new THREE.BufferAttribute(new Float32Array(n * 3), 3)); g.setAttribute('aSize', new THREE.BufferAttribute(new Float32Array(n), 1)); g.setAttribute('aAlpha', new THREE.BufferAttribute(new Float32Array(n), 1)); g.setDrawRange(0, 0); const p = new THREE.Points(g, ptsMat()); p.frustumCulled = false; return p; };
     this.trails = mk(MAX_CARS * TRAIL); this.group.add(this.trails);
@@ -1508,12 +1714,13 @@ function resize() { const w = Math.max(200, stage.clientWidth), h = Math.max(200
 new ResizeObserver(resize).observe(stage); resize();
 
 // ───────────────────────── camera: free MapControls + presets + fly-to ─────────────────────────
-const CAMS = {
+const CAMS = IS_SF ? {
   overview: { x: 90, z: 60, d: 2750, az: .62, el: .9 },
   fidi: { x: -250, z: -420, d: 1250, az: .5, el: .7 },
   soma: { x: -150, z: 430, d: 1300, az: .95, el: .74 },
   top: { x: 0, z: 0, d: 2950, az: 0, el: 1.53 },
-};
+} : (() => { const L = (CITY.landmarks || []).slice().sort((a, b) => (b.h || 0) - (a.h || 0)); const a = L[0] || { x: -300, z: -300 }; const b = L.find(l => Math.hypot(l.x - a.x, l.z - a.z) > 500) || L[1] || { x: 300, z: 300 };
+  return { overview: { x: 0, z: 0, d: 2750, az: .62, el: .9 }, fidi: { x: a.x, z: a.z, d: Math.max(1500, (a.h || 200) * 4), az: .5, el: .42 }, soma: { x: b.x, z: b.z, d: Math.max(1500, (b.h || 200) * 4), az: .9, el: .45 }, top: { x: (BB.x0 + BB.x1) / 2, z: (BB.z0 + BB.z1) / 2, d: 2950, az: 0, el: 1.53 } }; })();
 const controls = new MapControls(camera, cv);
 Object.assign(controls, { enableDamping: true, dampingFactor: .09, zoomToCursor: true, minDistance: 160, maxDistance: 4800, minPolarAngle: .03, maxPolarAngle: Math.PI / 2 - .22, screenSpacePanning: false, zoomSpeed: 1.1, rotateSpeed: .6 });
 function setCam(p) { controls.target.set(p.x, 0, p.z); camera.position.set(p.x + p.d * Math.cos(p.el) * Math.sin(p.az), p.d * Math.sin(p.el), p.z + p.d * Math.cos(p.el) * Math.cos(p.az)); camera.lookAt(controls.target); }
@@ -1573,17 +1780,26 @@ function recountInlets(vis, time) {
   vis.ent.fill(0); vis.left.fill(0);
   for (const t of vis.s.trips) { if (t.t0 > time) break; if (t.gin >= 0) vis.ent[t.gin] += SCALE; if (t.gout >= 0 && time >= t.t0 + t.dur * 1.35) vis.left[t.gout] += SCALE; }
 }
+// In-browser (explore / offline) trips get their visual copies here, at spawn time only: clones carry no inlet,
+// so the entry counters and every metric keep reading the original trips.
+function visTrips(vis) {
+  const s = vis.s; if (s.engine || VIS_DENSITY <= 1) return s.trips;
+  if (s._vtSrc === s.trips) return s._vt;
+  const out = [];
+  for (const t of s.trips) { out.push(t); for (let k = 1; k < VIS_DENSITY; k++) { const u = hash2(t.p.id * 7 + k, Math.round(t.t0)); out.push({ ...t, t0: t.t0 + (u - .5) * 840, side: k % 2 ? -(t.side || 1) : (t.side || 1), gin: -1, gout: -1, copy: k, sig: t.sig + '#' + k }); } }
+  out.sort((a, b) => a.t0 - b.t0); s._vt = out; s._vtSrc = s.trips; return out;
+}
 function resetAgents(vis, time, carry) {
-  const trips = vis.s.trips; const old = new Map(); if (carry) for (const a of vis.active) old.set(a.t.p.id + a.t.leg, a);
+  const trips = visTrips(vis); const old = new Map(); if (carry) for (const a of vis.active) old.set(a.t.p.id + a.t.leg + '#' + (a.t.copy || 0), a);
   vis.active = []; let i = 0;
   const f = Math.min(ui.rate, AGENT_CAP) / Math.max(ui.rate, 1) / 1.15;  // agents' progress per sim-second at the current clock rate
-  for (; i < trips.length && trips[i].t0 <= time; i++) { const t = trips[i]; const prog = (time - t.t0) * t.v * (t.w !== undefined ? 1 : f); if (prog < t.len) { const prev = old.get(t.p.id + t.leg); const s = prev && prev.t.sig === t.sig ? prev.s : prog; vis.active.push({ t, s, born: prev && prev.t.sig === t.sig ? 1 : 0, hist: [], fade: 1 }); if (prev) old.delete(t.p.id + t.leg); } }
+  for (; i < trips.length && trips[i].t0 <= time; i++) { const t = trips[i]; const prog = (time - t.t0) * t.v * (t.w !== undefined ? 1 : f); if (prog < t.len) { const prev = old.get(t.p.id + t.leg + '#' + (t.copy || 0)); const s = prev && prev.t.sig === t.sig ? prev.s : prog; vis.active.push({ t, s, born: prev && prev.t.sig === t.sig ? 1 : 0, hist: [], fade: 1 }); if (prev) old.delete(t.p.id + t.leg + '#' + (t.copy || 0)); } }
   vis.ptr = i; recountInlets(vis, time);
   if (carry && vis === V.plan) { const q = {}; for (const [, a] of old) { if (a.t.mode === 'car' || Math.random() < .3) { posAt(a.t, a.s, q); puff(q.x, q.z); } } }
 }
 const tmp = {};
 function stepAgents(vis, dtSim, dtAgent) {
-  const trips = vis.s.trips;
+  const trips = visTrips(vis);
   while (vis.ptr < trips.length && trips[vis.ptr].t0 <= ui.time) { const t = trips[vis.ptr]; vis.active.push({ t, s: 0, born: 0, hist: [] }); if (t.gin >= 0) vis.ent[t.gin] += SCALE; vis.ptr++; }
   vis.edgeCars.fill(0); const hm = ui.time / 3600; const peak = Math.exp(-((hm - 8.4) ** 2) / .9) + .9 * Math.exp(-((hm - 17.6) ** 2) / 1.1) + .25;
   for (const a of vis.active) if (a.t.mode === 'car') { posAt(a.t, a.s, tmp); vis.edgeCars[tmp.e] += 1; }
@@ -1622,12 +1838,12 @@ function drawAgents(vis) {
       for (let k = 1; k < a.hist.length; k++) { if (nt >= MAX_CARS * TRAIL) break; tp.position.array.set(a.hist[k], nt * 3); tp.aColor.array.set(CAR_TRAIL, nt * 3); tp.aSize.array[nt] = 16 * (1 - k / TRAIL); tp.aAlpha.array[nt] = (1 - k / TRAIL) * (.12 + night * .5); nt++; }
     } else {
       if (np >= MAX_PEDS) continue; pp.position.array.set([tmp.x, 2.4, tmp.z], np * 3);
-      const c = isF ? PED_FOLLOW : a.t.mode === 'bike' ? BIKE_COL : social && a.t.leg.startsWith('lunch') ? PED_SOCIAL : PED_COL; pp.aColor.array.set(c, np * 3); pp.aSize.array[np] = isF ? 42 : a.t.mode === 'bike' ? 21 : 17; pp.aAlpha.array[np] = Math.min(1, a.born * 3); np++;
+      const c = isF ? PED_FOLLOW : a.t.mode === 'bike' ? BIKE_COL : social && a.t.leg.startsWith('lunch') ? PED_SOCIAL : PED_COL; pp.aColor.array.set(c, np * 3); pp.aSize.array[np] = isF ? 42 : a.t.mode === 'bike' ? 23 : 20; pp.aAlpha.array[np] = Math.min(1, a.born * 3); np++;
     }
   }
   vis.nCar = vis.active.reduce((n, a) => n + (a.t.mode === 'car'), 0); vis.nPed = np;
   vis.cars.count = nc; vis.cars.instanceMatrix.needsUpdate = true;
-  vis.cars.material.emissiveIntensity = .55 + night * 2.2;
+  vis.cars.material.emissiveIntensity = 1.0 + night * 2.0;   // cars read clearly as cyan against the asphalt by day too
   for (const k of ['position', 'aColor', 'aSize', 'aAlpha']) { pp[k].needsUpdate = true; tp[k].needsUpdate = true; }
   vis.peds.geometry.setDrawRange(0, np); vis.trails.geometry.setDrawRange(0, nt);
 }
@@ -1745,8 +1961,10 @@ function applyTime() {
   const night = clamp(1 - si / 1.2, 0, 1); bU.uNight.value = night; waterU.uNight.value = night;
   waterU.uDeep.value.setHex(0x3f97cf).lerp(cB.setHex(0x0b1a30), night); waterU.uLite.value.setHex(0x8fd0ee).lerp(cB.setHex(0x1a3050), night);
   hemi.color.setHex(0xe6f1ff).lerp(cB.setHex(0x5a6aa0), night);
+  if (CTX_WATER) CTX_WATER.material.color.copy(waterU.uDeep.value).lerp(waterU.uLite.value, .35);
   if (CTX) { CTX_FADE.copy(CTX_LAND).lerp(skyU.hor.value, .6); CTX.setColors({ fadeColor: CTX_FADE, waterColor: cA.copy(waterU.uDeep.value).lerp(waterU.uLite.value, .35), landColor: cB.setHex(0xe2d5b8).lerp(skyU.hor.value, night * .7), buildingColor: cB.setHex(0xe9e2d6).multiplyScalar(1 - night * .75), roadColor: cB.setHex(0xc3bdb2).multiplyScalar(1 - night * .7) }); }
   bloom.strength = .12 + night * .55;
+  streetLights.material.opacity = clamp(night * 1.4 - .2, 0, 1) * (1 - FX.uDesat.value); streetLights.visible = streetLights.material.opacity > .01;
   walkMat.emissive.setRGB(.16, .12, .07).multiplyScalar(night); asphaltMat.emissive.setRGB(.05, .045, .04).multiplyScalar(night); landMat.emissive.setRGB(.035, .035, .05).multiplyScalar(night);
   $('#daypart').textContent = m < 330 ? 'Night' : m < 400 ? 'Dawn' : m < 600 ? 'Rush hour' : m < 690 ? 'Morning' : m < 840 ? 'Lunch' : m < 990 ? 'Afternoon' : m < 1140 ? 'Rush hour' : m < 1260 ? 'Evening' : 'Night';
   const ni = night > .5; if (ni !== lastNightIcon) { lastNightIcon = ni; $('#sunic').innerHTML = svgIc(ni ? 'moon' : 'sun'); $('#sunic').style.color = ni ? '#cfe0ff' : 'var(--warn)'; }
@@ -1758,7 +1976,8 @@ function addLabel(html, cls, x, y, z, opts = {}) { const el = document.createEle
 const SIDE_LBL = {}; { const cx = (BB.x0 + BB.x1) / 2, cz = (BB.z0 + BB.z1) / 2, out = 170; const at = { north: [cx, BB.z0 - out], south: [cx, BB.z1 + out], west: [BB.x0 - out, cz], east: [BB.x1 + out, cz] };
   for (const k of Object.keys(SIDE_INLETS)) { if (!SIDE_INLETS[k].length) continue; SIDE_LBL[k] = addLabel(`<span class="mi">${svgIc('car')}</span><span class="ud">▲ 0</span><span class="ud o">▼ 0</span><span class="nm">${SIDE_NAMES[k]}</span>`, 'sidelbl', at[k][0], 4, at[k][1], { w: 190 }); SIDE_LBL[k].el.title = `People arriving by car ▲ / leaving ▼ on the ${SIDE_NAMES[k]} today, over ${SIDE_INLETS[k].length} streets (engine)`; } }
 for (const g of MARKERS) { g.lbl = addLabel(`<span class="arr">➤</span><span class="mi">${svgIc(g.mode === 'car' ? 'car' : 'train')}</span><span class="nm">${g.short}</span><span class="ud" title="entered">▲ 0</span><span class="ud o" title="left">▼ 0</span>`, 'inlet ' + g.mode, g.pos[0], 46, g.pos[1], { pin: true, w: 180 }); g.lbl.arr = g.lbl.el.querySelector('.arr'); g.lbl.el.title = `${g.name}: people entered ▲ / left ▼ today`; }
-for (const b of BLD) if (b.n && ['Salesforce Tower', 'Transamerica Pyramid', 'San Francisco Ferry Building'].includes(b.n)) addLabel(b.n.replace('San Francisco ', ''), 'landmark', b.c[0], b.h + 6, b.c[1]);
+if (!IS_SF) { for (const d of CITY.districts || []) addLabel(d.label, 'district', d.x, 2, d.z, { far: true }); for (const l of (CITY.landmarks || []).slice().sort((a, b) => (b.h || 0) - (a.h || 0)).slice(0, 4)) addLabel(`${l.name.replace(/ (International|Hotel & Tower|Building|Chicago|New York)\b.*$/, (m) => m.startsWith(' International') ? ' Tower' : '').slice(0, 26)}${l.h ? ` <em>${Math.round(l.h)} m</em>` : ''}`, 'landmark', l.x, (l.h || 60) + 6, l.z); }
+if (IS_SF) for (const b of BLD) if (b.n && ['Salesforce Tower', 'Transamerica Pyramid', 'San Francisco Ferry Building'].includes(b.n)) addLabel(b.n.replace('San Francisco ', ''), 'landmark', b.c[0], b.h + 6, b.c[1]);
 const streetLabel = addLabel('', 'street', 0, 6, 0, { hide: true, pin: true, w: 150 }); const spillLabel = addLabel('', 'spill', 0, 6, 0, { hide: true, pin: true, w: 240 });
 const followLabel = addLabel('', 'follow', 0, 14, 0, { hide: true, pin: true, w: 80 });
 function updateLabels() {
@@ -1833,7 +2052,7 @@ function setCV(tot) { const t = money(tot); for (const id of ['#cv', '#cv2', '#c
 function drawPillars() {
   const v = shown.val, f = (x) => `<b class="${Math.abs(x) < 1000 ? '' : x >= 0 ? 'up' : 'down'}">${Math.abs(x) < 1000 ? '$0' : money(x)}</b>`;
   if (ui.settling) { document.querySelectorAll('#pillars .pill').forEach(el => el.style.opacity = .45); return; } document.querySelectorAll('#pillars .pill').forEach(el => el.style.opacity = '');
-  if (!S.plan.ped.size && !S.plan.blocks.size && !planPolicies.length && Math.abs(v.total) < 500) { $('#pillars').innerHTML = ui.demo ? '<div class="empty">Waiting for the first change…</div>' : '<div class="empty">No changes yet. Make a street <b>car-free</b> or rezone a block, or press <b>Play demo</b>.</div>'; setCV(0); return; }
+  if (!S.plan.ped.size && !S.plan.blocks.size && !planPolicies.length && Math.abs(v.total) < 500) { $('#pillars').innerHTML = ui.demo ? '<div class="empty">Waiting for the first change…</div>' : (CITY.engine ? '<div class="empty">No changes yet. Make a street <b>car-free</b> or rezone a block, or press <b>Play demo</b>.</div>' : '<div class="empty">Explore mode. Make a street <b>car-free</b> or rezone a block to see a rough in-browser estimate. Engine results for this city are coming soon.</div>'); setCV(0); return; }
   if (ui.view === 'base' && !ui.compare) { const m = S.base.m; $('#pillars').innerHTML = `<div class="empty"><b>Baseline: the city today.</b> ${fmtK(m.people)} people, ${fmtK(m.trips?.car ?? m.carTrips ?? 0)} car trips and ${money(m.revenue, false)} of local business revenue per day. Switch to <b>Plan A</b> to see what your changes do.</div>`; setCV(0); return; }
   const b = S.base.m, p = S.plan.m; let sub;
   const ecoLine = (k) => { const L = (S.plan.value.lines || []).filter(l => l.pillar === k).sort((a, b) => Math.abs(b.usd_per_yr) - Math.abs(a.usd_per_yr))[0]; return L ? L.label.replace(/\s*\(.*?\)/g, '').slice(0, 30) + ' ' + money(L.usd_per_yr) : ''; };
@@ -2231,7 +2450,7 @@ function setTool(t) { if (TOOL_INFO[t] && !ui.demo) { if (!TOOL_INFO[ui.tool]) i
 const TOOL_HINT = { ped: '<b>Drag along a street</b> to make it car-free · click it again to reopen', density: '<b>Click a building</b> to make its block taller or shorter', zoning: '<b>Click a building</b> to change what its block is used for' };
 function showToolHint() { const h = $('#toolhint'); const txt = TOOL_HINT[ui.tool]; if (!txt) { h.hidden = true; return; } const btn = document.querySelector(`[data-tool="${ui.tool}"]`); h.innerHTML = txt; h.hidden = false; requestAnimationFrame(() => { const r = btn.getBoundingClientRect(); const w = h.offsetWidth; h.style.left = clamp(r.left + r.width / 2, w / 2 + 12, stage.clientWidth - w / 2 - 12) + 'px'; }); }
 document.querySelectorAll('[data-tool]').forEach(b => b.onclick = () => setTool(b.dataset.tool));
-addEventListener('keydown', (e) => { if (e.target.tagName === 'INPUT') return; const k = e.key.toLowerCase(); if (k === 'v') setTool('select'); if (k === 'p') setTool('ped'); if (k === 'd') setTool('density'); if (k === 'z') setTool('zoning'); if (k === 'i') toggleInfoPop(); if (k === 'c') setCompare(!ui.compare); if (k === 'a') toggleAI(); if (k >= '1' && k <= '8') setInfo(INFO_KEYS[+k - 1] === ui.info ? null : INFO_KEYS[+k - 1]); if (k === '0') setInfo(null); if (k === ' ') { e.preventDefault(); togglePlay(); } if (k === 'escape') { closeInspector(); toggleInfoPop(false); } });
+addEventListener('keydown', (e) => { if (e.target.tagName === 'INPUT') return; const k = e.key.toLowerCase(); if (k === 'v') setTool('select'); if (k === 'p') setTool('ped'); if (k === 'd') setTool('density'); if (k === 'z') setTool('zoning'); if (k === 'i') toggleInfoPop(); if (k === 'c') setCompare(!ui.compare); if (k === 'a' && CITY.engine) toggleAI(); if (k >= '1' && k <= '8') setInfo(INFO_KEYS[+k - 1] === ui.info ? null : INFO_KEYS[+k - 1]); if (k === '0') setInfo(null); if (k === ' ') { e.preventDefault(); togglePlay(); } if (k === 'escape') { if (ui.demo) { endDemo(); return; } closeInspector(); toggleInfoPop(false); } });
 function switchView(w) { ui.view = w; $('#tab-base').classList.toggle('on', w === 'base'); $('#tab-plan').classList.toggle('on', w === 'plan'); }
 $('#tab-base').onclick = () => switchView('base'); $('#tab-plan').onclick = () => switchView('plan');
 const PLAY_SVG = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>', PAUSE_SVG = '<svg viewBox="0 0 24 24"><rect x="6.5" y="5" width="4" height="14" rx="1.2"/><rect x="13.5" y="5" width="4" height="14" rx="1.2"/></svg>';
@@ -2406,14 +2625,12 @@ async function wait(ms, tok) { const end = performance.now() + ms; while (perfor
 async function flyWait(v, dur, tok) { const p = flyTo(v, dur); let done = false; p.then(() => done = true); const end = performance.now() + dur * 1000 + 600; while (!done && performance.now() < end) { if (tok !== demoToken) throw 'stop'; await sleep(50); } }
 async function beat(fn, commit) { try { await fn(); } catch (e) { if (e === 'stop') throw e; if (e !== 'skip') console.error(e); } skip = false; if (commit) await commit(); }
 function setDemoBtn(on) { $('#demo-btn').innerHTML = on ? svgIc('reset') + '<span>Stop demo</span>' : svgIc('playo') + '<span>Play demo</span>'; }
-function endDemo() { demoToken++; ui.demo = false; $('#ask-in').value = ''; $('#caption').hidden = true; $('#brush').hidden = true; setDemoBtn(false); streetLabel.hide = false; spillLabel.hide = true; }
+function endDemo() { demoToken++; ui.demo = false; endReel(); $('#ask-in').value = ''; $('#caption').hidden = true; $('#brush').hidden = true; setDemoBtn(false); streetLabel.hide = false; spillLabel.hide = true; }
 const heroMid = () => EDGES[HERO_EDGES[Math.floor(HERO_EDGES.length / 2)]] || EDGES[0];
-async function runDemo() {
+async function runDemoLong() {
   const tok = ++demoToken; ui.demo = true; setDemoBtn(true); setDrawer(true, 'impact'); $('#intro')?.remove(); closeInspector(); toggleAI(false); toggleInfoPop(false); $('#pitch')?.remove();
-  // Reset to a clean morning.
-  for (const e of [...S.plan.ped]) S.plan.ped.delete(e); for (const [bid] of S.plan.blocks) { setBuildingAttr('aTint', bid, BASE_COL[bid]); setBuildingAttr('aScale', bid, 1); } S.plan.blocks.clear(); S.plan.cache.clear(); planPolicies = []; if (ENG) { await loadHeroView(EW.hero.plan_id); fillEngine(ENG.base, B.baseline); fillEngine(ENG.plan, B.baseline); useWorld(true); resetAgents(V.base, ui.time, false); paintTies(V.base); } else S.plan.settle(baseCarRoutes(), 5); refreshTables(); refreshEditGlow(); recomputeTargets(); shown = { val: { ...target.val }, shape: target.shape.slice() }; drawPillars(); drawRadar(shown.shape); mariaMet = null; unfollow(); setCompare(false); switchView('plan'); setInfo(null); setTool('select'); showChips(''); ui.diversion = false; streetLabel.hide = true; spillLabel.hide = true; $('#toast').hidden = true; $('#settle-note').textContent = 'Plan A vs today'; resetAgents(V.plan, ui.time, false); paintTies(V.plan);
-  FEED.length = 0; renderFeed();
-  jumpTo(435 * 60); togglePlay(true); setRate(300); flyTo('overview', 1.2); post('The Human Project', ENG ? `A simulated weekday from the engine: ${fmtK(S.base.m.people)} people in FiDi and SoMa.` : 'A simulated weekday (in-browser estimate).', null, 'engine');
+  await demoReset();
+  jumpTo(435 * 60); togglePlay(true); setRate(300); flyTo('overview', 1.2); post('The Human Project', ENG ? `A simulated weekday from the engine: ${fmtK(S.base.m.people)} people in FiDi and SoMa.` : (CITY.engine ? 'A simulated weekday (in-browser estimate).' : `${CITY.name} · ${CITY.area}: placeholder traffic from the in-browser model. Engine data is coming soon.`), null, 'engine');
   const hm = heroMid(); let aiDone = false;
   // Each beat starts from a known state and "commits" its end state even when skipped with Next.
   const start = () => { setTimeout(() => { try { ambientPost(); } catch (e) {} }, 1800); skip = false; setTool('select'); setCompare(false); showChips(''); spillLabel.hide = true; $('#toast').hidden = true; $('#brush').hidden = true; clearGhost(); };
@@ -2477,22 +2694,314 @@ async function runDemo() {
     endDemo(); const pv = $('#pitch'); const msg = 'Demo finished. Everything is live now: try painting a street.'; if (pv) pv.dataset.after = msg; else toast(msg);
   } catch (e) { if (e !== 'stop') console.error(e); }
 }
+// ───────────────────────── 60 s tech demo ("reel") ─────────────────────────
+// Chrome starts hidden and each beat reveals the piece it uses; telemetry overlays show the engine's internals.
+// AI calls (planner, Ask, Droid lever, the plans each beat settles) are fired at t=0 so no beat waits on them.
+function runDemo() { return QS.get('demo') === 'long' ? runDemoLong() : runReel(); }
+const QS = new URLSearchParams(location.search);
+const FROM_HOME = QS.has('from');
+const qa = (s) => [...document.querySelectorAll(s)];
+const escH = (t) => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const pad2 = (n) => String(Math.floor(n)).padStart(2, '0');
+const hms = (s) => `${pad2(s / 3600 % 24)}:${pad2(s / 60 % 60)}:${pad2(s % 60)}`;
+const REEL_GOAL = 'Boost small business in SoMa without slowing Bay Bridge traffic';
+const REEL_ASK = 'Where did the cars from 2nd Street go?';
+const THRU = { kind: 'through_charge', params: { amount: 5 } };
+const RV = {
+  top: () => qa('#top'), brand: () => qa('#top .brand, #top .seg, #top .vsep'), clock: () => qa('#top .timec, #scrub'), stats: () => qa('#top .stats'), cv: () => qa('#cvbox'), end: () => qa('#pitch-btn, #demo-btn'),
+  hud: () => qa('#hud'), legends: () => qa('#modes'), dock: () => qa('#dock'), info: () => qa('#info-btn'), tools: () => [...qa('#dock .tools'), qa('#dock .dsep')[0]], compare: () => qa('#compare-btn'),
+  pol: () => [qa('#dock .dsep')[1], ...qa('#pol-dock')], ai: () => qa('#ai-btn'), ask: () => qa('#ask-dock'), drawer: () => qa('#right'), cams: () => qa('#cams'),
+};
+const reel = { on: false, t0: 0, k: 1, fps: 60, day: 0, gaps: null, drift: 0, holdAsk: false, held: [], warm: {}, iv: 0, wrapped: false };
+function reelHide() {
+  document.body.classList.add('reel', 'reel-init'); for (const [k, f] of Object.entries(RV)) for (const el of f()) if (el) { el.dataset.rv = k; el.classList.add('rv-off'); }
+  requestAnimationFrame(() => requestAnimationFrame(() => { document.body.classList.remove('reel-init'); document.documentElement.classList.remove('reel-boot'); }));   // hide instantly, animate reveals
+}
+function reveal(...keys) { for (const k of keys) for (const el of RV[k]()) if (el && el.classList.contains('rv-off')) { el.classList.remove('rv-off'); el.classList.add('rv-pop'); setTimeout(() => el.classList.remove('rv-pop'), 1400); } }
+function reelShowAll() { document.body.classList.remove('reel'); document.documentElement.classList.remove('reel-boot'); qa('.rv-off').forEach(el => el.classList.remove('rv-off')); }
+function lt(head, sub = '') { const el = $('#lt'); el.hidden = false; el.innerHTML = `<b>${head}</b>${sub ? `<span>${sub}</span>` : ''}`; el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); }
+function reelTick(dt) {
+  if (reel.drift && !fly && !(ui.follow && ui.demo)) { const c = camNow(); c.az += reel.drift * dt; setCam(c); }
+  $('#reelbar i').style.width = Math.min(100, (performance.now() - reel.t0) / 600) + '%';
+}
+// Engine HUD: agents, scale, live counts, clock, scenario id, and the equilibrium (MSA gap per replanning day).
+const stNum = (k) => +($('#st-' + k)?.textContent || '0').replace(/[^\d]/g, '') || 0;
+function sparkSVG(g, day) {
+  if (!g || !g.length) return ''; const n = g.length, W2 = 244, H2 = 38, mx = Math.max(...g, .04);
+  const x = (i) => 6 + i * (W2 - 12) / Math.max(1, n - 1), y = (v) => 4 + (1 - Math.sqrt(v / mx)) * (H2 - 10); const sh = g.slice(0, day || n);
+  return `<svg class="spark" viewBox="0 0 ${W2} ${H2 + 12}"><line class="thr" x1="6" x2="${W2 - 6}" y1="${y(.03).toFixed(1)}" y2="${y(.03).toFixed(1)}"/><polyline points="${sh.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ')}"/>${sh.map((v, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="2.6"/>`).join('')}<text x="6" y="${H2 + 10}">MSA gap / replanning day · converged &lt; 3%</text></svg>`;
+}
+function renderHUD() {
+  const el = $('#hud'); if (el.hidden) return; const r = S.plan.result || B.baseline || {}; const m = r.metrics || B.baseline?.metrics || {}; const k = reel.k;
+  const g = reel.gaps || r.settle?.gaps || null; const gap = g ? g[(reel.day || g.length) - 1] : r.settle?.gap;
+  el.innerHTML = `<div class="hh"><i></i>ENGINE · ${B.mode === 'live' ? 'LIVE' : String(B.mode).toUpperCase()}<span>${reel.fps} fps · WebGL</span></div>
+  <div class="hr"><span>agents</span><b>${num((m.agents || 0) * k, false)}</b><em>×${m.scale || ENG_SCALE} ppl</em></div>
+  <div class="hr"><span>people modeled</span><b>${num((m.people || 0) * k, false)}</b></div>
+  <div class="hr"><span>moving now</span><b>${num(stNum('car') + stNum('walk') + stNum('bike'), false)}</b><em>${num(stNum('car'), false)} cars</em></div>
+  <div class="hr"><span>sim clock</span><b>${hms(ui.time)}</b><em>${Math.round(ui.rate)}×</em></div>
+  <div class="hr"><span>scenario</span><b>${S.plan.id && S.plan.id !== 'baseline' ? '#' + String(S.plan.id).slice(0, 10) : 'baseline'}</b><em>${r.settle?.ms ? r.settle.ms + ' ms' : ''}</em></div>
+  <div class="hr"><span>equilibrium</span><b>${reel.day ? `day ${reel.day}/5` : 'settled'}</b><em>${gap != null ? 'Δ ' + (gap * 100).toFixed(1) + '%' : ''}</em></div>${sparkSVG(g, reel.day)}`;
+}
+function fpsLoop() { let n = 0, t = performance.now(); const f = () => { if (!reel.on) return; n++; const now = performance.now(); if (now - t > 500) { reel.fps = Math.round(n * 1000 / (now - t)); n = 0; t = now; } requestAnimationFrame(f); }; requestAnimationFrame(f); }
+async function countUp(ms, tok) { const t0 = performance.now(); while (performance.now() - t0 < ms) { reel.k = ease(Math.min(1, (performance.now() - t0) / ms)); await wait(40, tok); } reel.k = 1; }
+// Replays the engine's real per-day convergence (result.settle.gaps) as the HUD sparkline fills in.
+async function playSettle(tok, ms = 300) { const g = S.plan.result?.settle?.gaps; reel.gaps = g || null; if (!g) return; for (let d = 1; d <= g.length; d++) { reel.day = d; await wait(ms, tok); } reel.day = 0; }
+async function ticker(items, tok) { const el = $('#ticker'); el.classList.remove('out'); el.hidden = false; el.innerHTML = ''; for (const [k, v] of items) { const c = document.createElement('div'); c.className = 'tk'; c.innerHTML = `<i></i><b>${k}</b><span>${v}</span>`; el.append(c); await wait(230, tok); } }
+function renderXray(hv) {
+  const el = $('#xray'); if (!hv) { el.hidden = true; return; }
+  const modes = [['car', 'Car', 'var(--car)'], ['transit', 'BART/Muni', '#7fd3ff'], ['walk', 'Walk', 'var(--walk)'], ['bike', 'Bike', '#fff']];
+  const pb = hv.baseline?.mode_probs, pp = hv.plan?.mode_probs; const tm = (s) => `${pad2(s / 3600)}:${pad2(s / 60 % 60)}`; const pc = (v) => ((v || 0) * 100).toFixed(1).replace(/\.0$/, '');
+  el.innerHTML = `<div class="xh"><span>AGENT X-RAY</span><b>id ${hv.agent_id} · 1 of ${num(B.baseline?.metrics?.agents || 0, false)}</b></div><h3>${escH(hv.name)}</h3><div class="xs">${escH(hv.kind)} · ${escH(hv.region)} · income tier ${(hv.income_tier ?? 0) + 1}/3 · ${hv.car_available ? 'owns a car' : 'no car'}</div>
+  ${pb && pp ? `<div class="xsec">MODE CHOICE · MULTINOMIAL LOGIT · TODAY → PLAN</div>${modes.map(([k, l, c]) => `<div class="xr"><span>${l}</span><div class="bars"><i class="b0" style="width:${pc(pb[k])}%"></i><i class="b1" data-w="${pc(pp[k])}" style="background:${c}"></i></div><b>${pc(pb[k])}→${pc(pp[k])}%</b></div>`).join('')}` : ''}
+  <div class="xsec">CHOSEN · <b style="color:var(--car)">${escH(hv.baseline?.mode)}</b> → <b style="color:var(--hi)">${escH(hv.plan?.mode)}</b></div>
+  <div class="xd">${(hv.plan?.diary || []).slice(0, 6).map(d => `<p><span>${tm(d.t)}</span>${escH(d.text)}</p>`).join('')}</div>`;
+  el.hidden = false; requestAnimationFrame(() => requestAnimationFrame(() => el.querySelectorAll('.b1').forEach(b => { b.style.width = b.dataset.w + '%'; })));
+}
+async function loadDroidLever() {
+  try {
+    const j = await (await fetch(`${ENGINE_API}/policies?full=false`)).json(); const lv = (j.policies || []).find(p => p.kind === THRU.kind) || (j.policies || []).find(p => !p.builtin); if (!lv) return null;
+    const pr = (j.proposals || []).filter(p => p.kind === lv.kind).sort((a, b) => (b.created_at || 0) - (a.created_at || 0))[0];
+    return { lever: lv, prop: pr ? await (await fetch(`${ENGINE_API}/policies/${encodeURIComponent(pr.id)}`)).json() : null };
+  } catch (e) { console.warn('droid lever', e); return null; }
+}
+function renderCode(w) {
+  const el = $('#codecard'); if (!w) { el.hidden = true; return; } const p = w.prop || {}; const g = (p.gates || []).filter(x => x.passed).slice(-1)[0] || (p.gates || []).slice(-1)[0];
+  const hl = (s) => escH(s).replace(/^(\s*)(def|import|return|from|for|if|else)\b/, '$1<span class="k">$2</span>').replace(/(#.*)$/, '<span class="c">$1</span>');
+  const lines = String(p.diff || '').split('\n').filter(l => l.startsWith('+') && !l.startsWith('+++')).map(l => hl(l.slice(1)) || ' ');
+  el.innerHTML = `<div class="xh"><span>DROID · POLICY COMPILER</span><b>${escH(w.lever.file || w.lever.kind + '.py')} · ${lines.length} lines</b></div><div class="cq">“${escH(p.request || w.lever.description)}”</div>
+  <div class="code"><pre>${lines.join('\n')}</pre></div>
+  <div class="gates">${(g?.checks || []).map((c, i) => `<span class="${c.ok ? '' : 'no'}" style="animation-delay:${1.2 + i * .35}s">${c.ok ? '✓' : '✕'} ${escH(c.name)}</span>`).join('')}</div>
+  <div class="hot">→ hot-loaded into the running engine as <b>${escH(w.lever.title)}</b></div>`; el.hidden = false;
+}
+function reelWarm() {
+  const E = (o) => HPBackend.editsFrom({ ped: new Set(o.ped || []), blocks: new Map(), policies: o.policies || [], reopened: [] }); const merge = B.mergeEdits || HPBackend.mergeEdits;
+  const hero = E({ ped: HERO_EDGES.filter(e => !BASE_CF.has(e)) }), thru = merge(hero, { policies: [THRU] });
+  reel.warm.planner = plannerOptions(REEL_GOAL);
+  reel.warm.droid = loadDroidLever();
+  reel.warm.hero = runEngine(hero).then(() => runEngine(thru));
+  // Planner options get applied on top of hero + lever: run each combination now (cached server-side) and keep the best.
+  const total4 = (v) => (v?.mobility || 0) + (v?.social || 0) + (v?.economy || 0) + (v?.environment || 0);   // same 4 pillars as the Impact panel
+  reel.warm.best = Promise.all([reel.warm.planner, reel.warm.hero]).then(async ([opts]) => {
+    let best = null;
+    for (const [i, o] of (opts || []).entries()) { try { const r = await (await fetch(`${ENGINE_API}/scenario?lite=1`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: planName, edits: merge(thru, o.edits) }) })).json(); const t = total4(r.value); if (!best || t > best.total) best = { i, total: t }; } catch (e) { console.warn('planner warm', e); } }
+    return best;
+  });
+  // Ask the city: asked now against the hero plan with the panel closed; its map moves are held until the Ask beat.
+  if (MODS.ask && MODS.ask.available) { reel.holdAsk = true; reel.held = []; MODS.ask.reset?.(); const csi = HOST.currentScenarioId; HOST.currentScenarioId = () => EW.hero.plan_id; try { reel.warm.ask = MODS.ask.ask(REEL_ASK); } finally { HOST.currentScenarioId = csi; } }
+}
+function wrapHost() {
+  if (reel.wrapped) return; reel.wrapped = true;
+  for (const k of ['flyTo', 'highlight', 'setInfoView', 'setTime']) { const f = HOST[k]; HOST[k] = (...a) => { if (reel.holdAsk) { if (k !== 'setTime') reel.held.push(() => f(...a)); return; } return f(...a); }; }
+}
+// Data sources for the reel's opening: record counts from the engine's cached inputs (data/backend/*.json, fetched 2026-10-24)
+// where the page doesn't receive them from the engine. Marks are drawn in each publisher's colours, not their logo files.
+const SRC_MARK = {
+  osm: '<svg viewBox="0 0 40 40"><rect width="40" height="40" rx="9" fill="#fff" opacity=".18"/><circle cx="17" cy="17" r="8.5" fill="none" stroke="#fff" stroke-width="3"/><path d="M23.5 23.5l8 8" stroke="#fff" stroke-width="3.6" stroke-linecap="round"/><path d="M12 19l3.5-4 3 3 3.5-4.5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg>',
+  census: '<svg viewBox="0 0 40 40"><rect width="40" height="40" rx="6" fill="#fff"/><path d="M8 29h24M10 27v-9M15 27v-9M20 27v-9M25 27v-9M30 27v-9M7 16l13-7 13 7z" stroke="#112e51" stroke-width="2.2" fill="none" stroke-linejoin="round"/><path d="M7 16l13-7 13 7z" fill="#e31c3d"/></svg>',
+  datasf: '<svg viewBox="0 0 40 40"><rect width="40" height="40" rx="9" fill="#fff" opacity=".12"/><path d="M11 10h-3v20h3M29 10h3v20h-3" stroke="#4fb3e8" stroke-width="3" fill="none"/><rect x="14" y="21" width="3" height="6" fill="#fff"/><rect x="18.5" y="15" width="3" height="12" fill="#fff"/><rect x="23" y="18" width="3" height="9" fill="#4fb3e8"/></svg>',
+  google: '<svg viewBox="0 0 40 40"><path d="M20 3c-6.6 0-12 5.2-12 11.7C8 23.5 20 37 20 37s12-13.5 12-22.3C32 8.2 26.6 3 20 3z" fill="#ea4335"/><path d="M8 14.7C8 23.5 20 37 20 37l6-7.5L13.6 8.4C10.2 10.4 8 12.4 8 14.7z" fill="#fbbc05" opacity=".9"/><path d="M20 3c3.4 0 6.4 1.4 8.6 3.6L13.6 21.4 8.6 16C9.6 8.8 14.2 3 20 3z" fill="#4285f4"/><circle cx="20" cy="14.5" r="4.3" fill="#fff"/></svg>',
+  bart: '<svg viewBox="0 0 40 40"><rect width="40" height="40" rx="9" fill="#fff"/><path d="M8 26c6-10 18-10 24 0" stroke="#0099d8" stroke-width="4.5" fill="none" stroke-linecap="round"/><path d="M12 30c4.5-6 11.5-6 16 0" stroke="#0099d8" stroke-width="3" fill="none" stroke-linecap="round" opacity=".6"/></svg>',
+  caltrans: '<svg viewBox="0 0 40 40"><rect width="40" height="40" rx="9" fill="#0b2a4a"/><path d="M8 30L17 10h6l9 20" stroke="#fff" stroke-width="2.4" fill="none"/><path d="M20 13v3M20 19v3M20 25v4" stroke="#ff8200" stroke-width="2.4"/></svg>',
+  hp: '<svg viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#fff" opacity=".16"/><circle cx="13" cy="14" r="3" fill="#fff"/><circle cx="27" cy="12" r="3" fill="#7fd3ff"/><circle cx="20" cy="26" r="3" fill="#fff"/><circle cx="30" cy="28" r="2.4" fill="#ffad1f"/><circle cx="10" cy="28" r="2.4" fill="#27c4ff"/><path d="M13 14l7 12 7-14M10 28l10-2 10 2" stroke="#fff" stroke-width="1.2" opacity=".6" fill="none"/></svg>',
+};
+const GRID = 'repeating-linear-gradient(0deg, #fff 0 1px, transparent 1px 22px), repeating-linear-gradient(90deg, #fff 0 1px, transparent 1px 22px)';
+function reelSources() {
+  const m = B.baseline?.metrics || {}, pois = EW?.pois || [];
+  const office = BLD.filter(b => b.k === 'office').map(b => b.id ?? BLD.indexOf(b));
+  return [
+    { key: 'osm', mark: 'osm', wm: 'OpenStreetMap', pub: 'OpenStreetMap contributors · ODbL', vint: '2026 extract', b: '#7ebc6f', b2: '#a7e08f', bp: GRID,
+      title: 'Every street, building and storefront', stats: [[BLD.length, 'buildings'], [EDGES.length, 'street links'], [NODES.length, 'intersections'], [W.pois?.length || pois.length, 'points of interest']],
+      feeds: 'road graph · building footprints · walk network', fx: () => setInfo('zoning') },
+    { key: 'lodes', mark: 'census', wm: '<small>U.S. Census Bureau</small>LEHD · LODES', pub: 'Longitudinal Employer-Household Dynamics', vint: 'LODES 8 · 2023', b: '#112e51', b2: '#4f97e0', bp: GRID,
+      title: 'Where every job is, and where its worker lives', stats: [[m.jobs || 322449, 'jobs'], [265, 'work blocks'], [317463, 'home → work commutes']],
+      feeds: 'jobs per block · home region of every commuter', fx: () => setInfo('jobs') },
+    { key: 'acs', mark: 'census', wm: '<small>U.S. Census Bureau</small>American Community Survey', pub: '5-year estimates', vint: 'ACS · 2019–2023', b: '#205493', b2: '#7fb7f0', bp: GRID,
+      title: 'Who lives downtown', stats: [[m.residents || 37174, 'residents'], [20604, 'households'], [15, 'census tracts']],
+      feeds: 'resident population · household size', fx: () => setInfo('res') },
+    { key: 'datasf', mark: 'datasf', wm: 'Data<span style="color:#4fb3e8">SF</span>', pub: 'City & County of San Francisco', vint: 'Land Use · 2026', b: '#0e2a47', b2: '#4fb3e8', bp: GRID,
+      title: 'Floor area by use, building by building', stats: [[2173, 'building records'], [86.2, 'M sq ft office', 1], [11.4, 'M sq ft retail', 1], [31939, 'housing units']],
+      feeds: 'job capacity · shop floor space · homes', fx: () => { setInfo(null); highlight(office, .4); } },
+    { key: 'google', mark: 'google', wm: '<span style="color:#4285f4">G</span><span style="color:#ea4335">o</span><span style="color:#fbbc05">o</span><span style="color:#4285f4">g</span><span style="color:#34a853">l</span><span style="color:#ea4335">e</span> <span style="color:#5f6368;font-weight:600">Maps</span>', pub: 'Places + Popular times · via Apify', vint: 'fetched Oct 2026', b: '#ffffff', bf: '#202124', b2: '#4285f4',
+      title: 'Real businesses, and when people visit them', stats: [[868, 'places'], [344, 'with popular times'], [57792, 'hourly occupancy readings']],
+      feeds: 'destination choice · hourly visit profiles', fx: () => { highlight([]); setInfo('visits'); return setInterval(() => { for (let i = 0; i < 6; i++) { const p = pois[Math.floor(Math.random() * pois.length)]; if (p) brandSpark(p.x, p.z, 0x4285f4); } }, 160); } },
+    { key: 'bart', mark: 'bart', wm: 'BART', pub: 'Bay Area Rapid Transit · ridership', vint: 'Average weekday · Sep 2026', b: '#0099d8', b2: '#7fd3ff',
+      title: 'Every weekday exit at the downtown stations', stats: [[20648, 'Embarcadero'], [17217, 'Montgomery'], [14474, 'Powell']],
+      feeds: 'rail arrivals by hour · validated r = 0.90–0.97', fx: () => { setInfo(null); const st = INLETS.filter(g => g.mode === 'ped'); return setInterval(() => st.forEach(g => g.pos && brandSpark(g.pos[0], g.pos[1], 0x0099d8, true)), 420); } },
+    { key: 'caltrans', mark: 'caltrans', wm: '<span style="font-style:italic">Caltrans</span>', pub: 'California Dept. of Transportation', vint: 'Traffic Census · AADT', b: '#ff8200', bf: '#0b2a4a', b2: '#ffb15c',
+      title: 'Freeway volumes at the Bay Bridge ramps', stats: [[161000, 'vehicles / day · lower deck'], [10700, 'in the peak hour'], [5, 'count points']],
+      feeds: 'freeway approach volumes · I-80 / US-101', fx: () => { const pts = [[-53.4, 937.9], [-18.3, 972.8], [414.7, 491.2], [590.9, 375.6]]; return setInterval(() => pts.forEach(([x, z]) => brandSpark(x, z, 0xff8200, true)), 380); } },
+  ];
+}
+function brandSpark(x, z, hex, big) { spark('plan', x, z, big); const s = sparks.find(m => m.userData.t === 0 && m.position.x === x && m.position.z === z); if (s) s.material.color.setHex(hex); }
+function resetSparks() { for (const s of sparks) s.material.color.setHex(0xff3d9a); }
+function countEl(el, to, dec, ms) { const t0 = performance.now(); const f = () => { const k = Math.min(1, (performance.now() - t0) / ms); const v = to * (1 - Math.pow(1 - k, 3)); el.textContent = dec ? v.toFixed(dec) : num(v, false); if (k < 1 && reel.on) requestAnimationFrame(f); }; requestAnimationFrame(f); }
+function srcBanner(s, i, n, dur) {
+  const el = $('#srcbanner'); el.hidden = false; el.className = ''; el.style.cssText = `--b:${s.b};--b2:${s.b2 || s.b};--bf:${s.bf || '#fff'};--bp:${s.bp || 'none'};--dur:${dur}ms`;
+  el.innerHTML = `<div class="sb-brand"><div class="sb-logo">${SRC_MARK[s.mark]}<div class="sb-wm">${s.wm}</div></div><div class="sb-pub">${s.pub}</div></div>
+  <div class="sb-body"><div class="sb-eye"><span><b>${String(i + 1).padStart(2, '0')}</b> / ${String(n).padStart(2, '0')} · DATA SOURCE</span><span>${s.vint}</span></div><div class="sb-title">${s.title}</div>
+  <div class="sb-stats">${s.stats.map(([v, l, d]) => `<div><b data-v="${v}" data-d="${d || 0}">0</b><span>${l}</span></div>`).join('')}</div><div class="sb-feeds"><i>→</i> feeds ${s.feeds}</div></div><div class="sb-bar"></div>`;
+  void el.offsetWidth; el.classList.add('in');
+  el.querySelectorAll('.sb-stats b').forEach((b, k) => setTimeout(() => countEl(b, +b.dataset.v, +b.dataset.d, 1500), 250 + k * 160));
+}
+async function playSources(tok) {
+  const list = reelSources(), rail = $('#srcrail'), el = $('#srcbanner'), DUR = 3700; document.body.classList.add('reel-src'); rail.hidden = false; rail.classList.remove('out'); rail.innerHTML = '';
+  for (const [i, s] of list.entries()) {
+    jumpTo(Math.max(ui.time, (5 * 60 + 5 + i * 22) * 60));   // night → dawn across the sources, so each data layer is readable
+    srcBanner(s, i, list.length, DUR); let iv = null; try { iv = s.fx?.(); } catch (e) { console.warn(e); }
+    try { await wait(DUR - 350, tok); } finally { clearInterval(iv); }
+    el.classList.remove('in'); el.classList.add('out');
+    const c = document.createElement('div'); c.className = 'sr'; c.style.setProperty('--b', s.b === '#ffffff' ? '#4285f4' : s.b); c.innerHTML = `<i></i>${s.key === 'google' ? 'Google Maps' : s.key === 'lodes' ? 'LODES' : s.key === 'acs' ? 'ACS' : s.key === 'datasf' ? 'DataSF' : s.key === 'osm' ? 'OpenStreetMap' : s.key === 'bart' ? 'BART' : 'Caltrans'}`; rail.append(c);
+    await wait(350, tok);
+  }
+  highlight([]); setInfo(null); resetSparks(); document.body.classList.remove('reel-src');
+  const m = B.baseline?.metrics || {};
+  srcBanner({ mark: 'hp', wm: 'The Human Project', pub: `${list.length} sources fused · calibrated to observed mode split`, vint: 'synthetic weekday', b: 'linear-gradient(135deg,#1d5fd6,#3b9cff)', b2: '#7fd3ff',
+    title: 'Fused into one synthetic weekday', stats: [[m.people || 0, 'people'], [m.agents || 0, 'agents'], [EW?.inlets?.length || INLETS.length, 'entry points'], [5, 'replanning days']], feeds: 'activity demand · logit mode choice · BPR assignment' }, list.length - 1, list.length, 4200);
+  $('#srcbanner .sb-eye span').innerHTML = '<b>ENGINE</b> · ALL SOURCES';
+  await wait(4200, tok); el.classList.remove('in'); el.classList.add('out'); rail.classList.add('out'); await wait(400, tok); el.hidden = true; rail.hidden = true;
+}
+const within = (p, ms) => Promise.race([p, sleep(ms).then(() => undefined)]);
+async function demoReset() {
+  for (const e of [...S.plan.ped]) S.plan.ped.delete(e); for (const [bid] of S.plan.blocks) { setBuildingAttr('aTint', bid, BASE_COL[bid]); setBuildingAttr('aScale', bid, 1); } S.plan.blocks.clear(); S.plan.cache.clear(); planPolicies = []; planReopened = []; planReopenMode = '';
+  if (ENG) { await loadHeroView(EW.hero.plan_id); fillEngine(ENG.base, B.baseline); fillEngine(ENG.plan, B.baseline); useWorld(true); resetAgents(V.base, ui.time, false); paintTies(V.base); } else S.plan.settle(baseCarRoutes(), 5);
+  refreshTables(); refreshEditGlow(); recomputeTargets(); shown = { val: { ...target.val }, shape: target.shape.slice() }; drawPillars(); drawRadar(shown.shape); mariaMet = null; unfollow(); setCompare(false); switchView('plan'); setInfo(null); setTool('select'); showChips(''); ui.diversion = false; streetLabel.hide = true; spillLabel.hide = true; $('#toast').hidden = true; $('#settle-note').textContent = 'Plan A vs today'; resetAgents(V.plan, ui.time, false); paintTies(V.plan);
+  FEED.length = 0; renderFeed();
+}
+function endReel() {
+  if (!reel.on) return; reel.on = false; reel.drift = 0; reel.holdAsk = false; reel.held = []; reel.day = 0; reel.gaps = null; clearInterval(reel.iv);
+  for (const s of ['#lt', '#ticker', '#xray', '#codecard', '#reelbar', '#hud', '#srcbanner', '#srcrail']) $(s).hidden = true; resetSparks(); highlight([]); document.body.classList.remove('reel-src'); $('#endcard').hidden = true; reelShowAll(); MODS.policy?.close?.(); clearGhost(); toggleInfoPop(false); setInfo(null); setCompare(false); spillLabel.hide = true; spillPulse = []; $('#brush').hidden = true;
+}
+async function runReel() {
+  const tok = ++demoToken; ui.demo = true; reel.on = true; reel.t0 = performance.now(); setDemoBtn(true); $('#intro')?.remove(); $('#pitch')?.remove(); closeInspector(); toggleAI(false); toggleInfoPop(false); for (const m of Object.values(MODS)) m.close?.();
+  wrapHost(); reelHide(); setDrawer(true, 'impact'); $('#reelbar').hidden = false; $('#hud').hidden = false; reel.k = 0; fpsLoop(); reel.iv = setInterval(renderHUD, 200);
+  const log = (n) => console.log(`[reel] ${n} @ ${((performance.now() - reel.t0) / 1000).toFixed(1)}s`);
+  await demoReset(); reelWarm();
+  const hm = heroMid(); const i80 = INLETS.find(g => g.key === 'i80'); const ip = i80?.pos || [CAMS.fidi.x, CAMS.fidi.z];
+  const m0 = B.baseline?.metrics || {};
+  try {
+    // 1 · Boot: night → dawn over the skyline while each data source arrives in its own banner; the HUD counts up as they land.
+    await beat(async () => {
+      log('boot'); jumpTo(4 * 3600 + 50 * 60); togglePlay(true); setRate(1500);
+      setCam({ x: CAMS.fidi.x + 60, z: CAMS.fidi.z + 80, d: 820, az: CAMS.fidi.az - .9, el: .3 }); flyTo({ x: CAMS.fidi.x + 80, z: CAMS.fidi.z + 160, d: 2100, az: CAMS.fidi.az + .15, el: .62 }, 7);
+      await wait(500, tok); reveal('top', 'brand'); lt('San Francisco · Financial District + SoMa', 'one simulated weekday, built from real data');
+      await wait(1200, tok); (async () => { await wait(1500, tok); reveal('hud'); await countUp(27000, tok); })().catch(() => {});
+      setTimeout(() => { if (reel.on) reel.drift = .03; }, 6000);
+      await playSources(tok); reel.k = 1; reel.drift = 0;
+    }, async () => { $('#srcbanner').hidden = true; $('#srcrail').hidden = true; highlight([]); setInfo(null); resetSparks(); reel.k = 1; reel.drift = 0; });
+    // 2 · The swarm: rush hour at the Bay Bridge inlet, low and fast, then pull up over the whole flow.
+    await beat(async () => {
+      // Frame dt is capped, so the time-lapse alone doesn't reach rush hour: cut to it.
+      log('swarm'); $('#ticker').hidden = true; if (ui.time < 7 * 3600 + 40 * 60) jumpTo(7 * 3600 + 40 * 60); setRate(110); reveal('clock', 'stats', 'legends');
+      await flyWait({ x: ip[0], z: ip[1], d: 430, az: CAMS.fidi.az + .5, el: .3 }, 2.2, tok);
+      lt(`Rush hour · ${hms(ui.time).slice(0, 5)}`, `${num(stNum('car'), false)} cars and ${num(stNum('walk'), false)} people on foot right now`);
+      flyTo({ x: ip[0] - 250, z: ip[1] - 150, d: 1900, az: CAMS.fidi.az + .9, el: .72 }, 4.6); await wait(4800, tok);
+    });
+    // 3 · Layer flip: the same city through five data layers, camera orbiting.
+    await beat(async () => {
+      log('layers'); reveal('dock', 'info'); toggleInfoPop(true); reel.drift = .09;
+      for (const k of ['foot', 'ties', 'traffic']) { setInfo(k); lt(`Info view · ${INFO[k].name}`, INFO[k].desc); await wait(k === 'traffic' ? 1800 : 1400, tok); }
+      toggleInfoPop(false); reel.drift = 0;
+    });
+    // 4 · Paint 2nd St car-free; the engine replans five days; foot traffic + City Value.
+    await beat(async () => {
+      log('edit'); reveal('tools'); setInfo(null); setTool('ped');
+      await flyWait({ x: hm.mx + 40, z: hm.mz + 30, d: 900, az: .55, el: .92 }, 1.6, tok);
+      const br = $('#brush'); br.hidden = false; lt('Edit · 2nd Street car-free', 'Market → Folsom · 14 links');
+      for (const id of HERO_EDGES) { const e = EDGES[id]; for (let k = 0; k <= 2; k++) { const p = e.p[Math.round(k / 2 * (e.p.length - 1))]; v3.set(p[0], 1, p[1]).project(camera); br.style.left = ((v3.x + 1) / 2 * stage.clientWidth) + 'px'; br.style.top = ((1 - v3.y) / 2 * stage.clientHeight) + 'px'; await wait(40, tok); } togglePed(id, true); puff(e.mx, e.mz); }
+      br.hidden = true; streetLabel.el.textContent = '2nd St · car-free'; streetLabel.p.set(hm.mx, 10, hm.mz); streetLabel.hide = false;
+      lt('Replanning · 270k people re-choose mode, route and destination', 'logit mode choice · BPR assignment · MSA over 5 days'); await settle('2nd St · Market → Folsom'); setTool('select');
+      reveal('cv'); await playSettle(tok, 320); setInfo('foot'); reel.drift = .05;
+      const d = S.plan.delta || {}, v = S.plan.value || {}; lt(`Foot traffic on 2nd St ${pedStreetDelta()}`, isEng() ? `car trips ${num(d.trips?.car || 0)}/day · revenue ${money(d.revenue || 0)}/day · ${money(v.total || 0)}/yr` : ''); await wait(3200, tok); reel.drift = 0;
+    });
+    // 5 · Compare: two worlds, same second; spillover onto the parallel street.
+    await beat(async () => {
+      log('compare'); reveal('compare'); setInfo('traffic');
+      const s0 = spill(); const az = .45; const rx = Math.cos(az), rz = -Math.sin(az); const c0 = s0 ? [s0.e.mx - rx * 330, s0.e.mz - rz * 330] : [hm.mx, hm.mz];
+      flyTo({ x: c0[0], z: c0[1], d: 1700, az, el: .9 }, 1.4); spillPulse = s0 ? EDGES.filter(e => e.name === s0.e.name && Math.hypot(e.mx - s0.e.mx, e.mz - s0.e.mz) < 500).map(e => e.id) : []; setCompare(true);
+      lt('Baseline ⟷ Plan A · both running live', s0 ? `spillover: ${s0.e.name.replace(' Street', ' St')} +${Math.round(s0.pct * 100)}% traffic` : '');
+      for (let t = 0; t <= 1; t += .04) { ui.split = lerp(.95, .5, ease(t)); placeHandle(); await wait(25, tok); }
+      if (s0) { spillLabel.el.textContent = `Spillover: ${s0.e.name.replace(' Street', ' St')} +${Math.round(s0.pct * 100)}%`; spillLabel.p.set(s0.e.mx, 10, s0.e.mz); spillLabel.hide = false; }
+      for (let t = 0; t <= 1; t += .015) { ui.split = .5 + Math.sin(t * Math.PI * 2) * .14; placeHandle(); await wait(40, tok); } await wait(800, tok);
+    }, async () => { setCompare(false); spillLabel.hide = true; spillPulse = []; });
+    // 6 · Agent X-ray: one of 14k agents, her logit probabilities before/after, her day; then the social graph.
+    await beat(async () => {
+      log('xray'); setInfo(null);
+      if (isEng()) {
+        const hv = await loadHeroView(S.plan.id); const mid = EW.hero.agent_id; const pt = hv ? hv.plan.trips : []; const lunch = pt.find(t => t.purpose === 'lunch') || pt.find(t => t.mode === 'ped');
+        if (lunch) jumpTo(lunch.t_start - 40); setRate(40); followPerson(mid); renderXray(hv); lt(`Agent ${mid} · ${EW.hero.name}`, hv ? `${hv.baseline.mode} → ${hv.plan.mode} · ${hv.region}` : '');
+        const lp = lunch && ENG_POI_BY.get(lunch.poi); const wb = hv && hv.work_building >= 0 ? BLD[hv.work_building].c : lp ? [lp.x, lp.z] : [hm.mx, hm.mz]; await flyWait({ x: wb[0], z: wb[1], d: 520, az: .6, el: .8 }, 1.4, tok);
+        await wait(4600, tok);
+      }
+      unfollow(); closeInspector(); $('#xray').hidden = true; setInfo('ties'); reel.drift = .07; flyTo({ x: hm.mx - 40, z: hm.mz - 60, d: 1700, az: .62, el: 1.0 }, 1.6);
+      lt('Social graph · co-presence ties', isEng() ? `${num(S.plan.delta?.new_ties || 0)} ties/day vs today` : ''); await wait(2800, tok); reel.drift = 0;
+    }, async () => { unfollow(); closeInspector(); $('#xray').hidden = true; });
+    // 7 · Impact drawer + a policy lever that Droid wrote, tested and hot-loaded into the engine.
+    await beat(async () => {
+      log('droid'); setInfo(null); reveal('drawer'); lt('Impact · valued per year', 'mobility · street life · local economy · environment');
+      flyTo({ x: hm.mx, z: hm.mz, d: 1500, az: .9, el: .75 }, 2.2); await wait(1300, tok);
+      reveal('pol'); if (MODS.policy) { MODS.policy.open(); MODS.policy.showTab?.('levers'); }
+      const w = await within(reel.warm.droid, 1200); renderCode(w); lt('Droid wrote this lever', 'plan → code → pytest → determinism → sanity → hot-load');
+      await wait(5200, tok);
+      const merge = B.mergeEdits || HPBackend.mergeEdits; const ed = merge(currentEdits(), { policies: [THRU] });
+      lt(`Applying · ${w?.lever?.title || 'Through-traffic charge'} $${THRU.params.amount}`, 'merged into Plan A · replanning'); await applyEdits(ed, `${w?.lever?.title || 'Through-traffic charge'} $${THRU.params.amount}`); await playSettle(tok, 180);
+      $('#codecard').hidden = true; MODS.policy?.close?.();
+    }, async () => { $('#codecard').hidden = true; MODS.policy?.close?.(); });
+    // 8 · AI planner: Claude proposes, the engine tests each option, the best one is applied.
+    await beat(async () => {
+      log('planner'); reveal('ai'); const opts0 = await within(reel.warm.planner, 1500); if (!opts0 || !opts0.length) return;
+      toggleAI(true); $('#ai-body').innerHTML = ''; const inp = $('#ask-in'); inp.value = ''; for (const ch of REEL_GOAL) { inp.value += ch; await wait(12, tok); } inp.value = '';
+      lt('Claude proposes plans · the engine tests every one', `${opts0.length} options evaluated`); const opts = await askAI(REEL_GOAL, 'plan');
+      const els = [...document.querySelectorAll('#ai .opt')]; for (let i = 0; i < Math.min(els.length, 2); i++) { els[i].classList.add('hover'); setGhost(opts[i].preview()); flyTo({ x: opts[i].at[0], z: opts[i].at[1], d: 1150, az: .7, el: .8 }, 1.1); await wait(1600, tok); els[i].classList.remove('hover'); }
+      // Apply the option that adds the most on top of the current plan (tested at t=0); if none adds value, the previews stand.
+      const best = await within(reel.warm.best, 1500); const o = best && opts[best.i];
+      if (o && best.total > (S.plan.value?.total || 0)) { els[best.i]?.classList.add('hover'); setGhost(o.preview()); await wait(500, tok); await applyOption(o); } else { clearGhost(); toggleAI(false); }
+      setInfo('rev'); flyTo({ x: hm.mx, z: hm.mz, d: 1500, az: .62, el: .85 }, 1.2); lt('Revenue change per block', isEng() ? `${money(S.plan.delta?.revenue || 0)}/day · ${money(S.plan.value?.total || 0)}/yr total` : ''); await wait(2600, tok);
+    }, async () => { clearGhost(); toggleAI(false); });
+    // 9 · Ask the city: Droid queried the live simulation (asked at t=0); now its answer drives the map.
+    await beat(async () => {
+      log('ask'); toggleAI(false); setInfo(null); if (!MODS.ask) return; reveal('ask'); openModule('ask'); lt('Ask the city', 'Droid runs queries against the live simulation');
+      await within(reel.warm.ask, 2500); reel.holdAsk = false; for (const f of reel.held.splice(0)) f(); await wait(7000, tok);
+    }, async () => { reel.holdAsk = false; MODS.ask?.close?.(); $('#ask-dock').classList.remove('on'); });
+    // 10 · Dusk: the skyline lights up; pull back; end card with the numbers.
+    await beat(async () => {
+      log('dusk'); clearGhost(); setInfo(null); reveal('cams', 'end'); $('#lt').hidden = true; jumpTo(19 * 3600 + 35 * 60); setRate(150); reel.drift = .06;
+      flyTo({ x: CAMS.fidi.x + 120, z: CAMS.fidi.z + 200, d: 2300, az: CAMS.fidi.az + 2.4, el: .4 }, 3.4); await wait(2600, tok);
+      const m = B.baseline?.metrics || {}; const v = S.plan.value || {}; const ec = $('#endcard');
+      ec.innerHTML = `<div class="ec"><div class="lg">${svgIc('logo')}</div><h1>The Human Project</h1><p>Change a street. Watch a city of people replan.</p><div class="nums"><div><b>${num(m.people || 0, false)}</b><span>people</span></div><div><b>${num(m.agents || 0, false)}</b><span>agents</span></div><div><b>${num(EW?.pois?.length || 0, false)}</b><span>real places</span></div><div><b>6</b><span>data sources</span></div><div><b>5-day</b><span>equilibrium</span></div>${isEng() ? `<div><b class="up">${money(v.total || 0)}</b><span>plan value / yr</span></div>` : ''}</div></div>`;
+      ec.classList.remove('out'); ec.hidden = false; await wait(5200, tok); ec.classList.add('out'); await wait(800, tok);
+    });
+    log('end'); endDemo(); toast('Demo finished. Everything is live now: try painting a street.');
+  } catch (e) { if (e !== 'stop') console.error(e); }
+}
+if (FROM_HOME) { const api = QS.get('api'); const c = $('#crumb'); c.hidden = false; c.innerHTML = `<i>·</i><a href="../../home/${api ? '?api=' + encodeURIComponent(api) : ''}" title="Back to projects">SF Planning</a><i>/</i><span>FiDi &amp; SoMa</span>`; }
 $('#demo-btn').onclick = () => ui.demo ? endDemo() : runDemo();
 $('#intro-demo').onclick = runDemo;
 $('#intro-free').onclick = () => { $('#intro').remove(); setRate(90); flyTo('overview', .8); };
+if (FROM_HOME && !QS.has('reel')) { $('#intro')?.remove(); setRate(90); flyTo('overview', .8); }
 
 // ───────────────────────── main loop ─────────────────────────
 let inspTick = 0;
 let last = performance.now(), heatT = 0, uiT = 0, statT = 0;
 function renderStatus() {
-  const mode = estimate ? 'est' : ENG ? B.mode : 'offline';
-  const T = { live: ['Live engine', 'Live engine · calibrated to LODES, ACS, BART and Google popular times'], snapshot: ['Snapshot', 'Snapshot of engine results · calibrated to LODES, ACS, BART and Google popular times'], offline: ['Offline', 'Engine offline · numbers are in-browser estimates'], est: ['Estimate', 'Estimate (engine offline) · this edit isn’t pre-computed in the snapshot: engine baseline plus the in-browser model’s relative change'] }[mode];
+  const mode = !CITY.engine ? 'explore' : estimate ? 'est' : ENG ? B.mode : 'offline';
+  const T = { live: ['Live engine', 'Live engine · calibrated to LODES, ACS, BART and Google popular times'], snapshot: ['Snapshot', 'Snapshot of engine results · calibrated to LODES, ACS, BART and Google popular times'], offline: ['Offline', 'Engine offline · numbers are in-browser estimates'], explore: ['Explore mode', `Explore mode · simulation data for ${CITY.name} coming soon. Traffic and numbers are in-browser placeholders.`], est: ['Estimate', 'Estimate (engine offline) · this edit isn’t pre-computed in the snapshot: engine baseline plus the in-browser model’s relative change'] }[mode];
   const st = $('#status'), sl = $('#srcline'); st.className = 'status ' + mode; st.innerHTML = `<i></i>${T[0]}`; st.title = T[1]; sl.className = 'srcline ' + mode; sl.innerHTML = `<i></i><span>${T[1]}</span>`;
+}
+// ── City setup: explore mode for cities without engine data ──
+document.querySelectorAll('#cityseg a').forEach(a => a.classList.toggle('on', a.dataset.city === CITY.id));
+$('.brand').title = `The Human Project · ${CITY.name} · ${CITY.area}`;
+if (!IS_SF) { document.title = `Human Project · ${CITY.name}`; const lm = (CITY.landmarks || []).slice().sort((a, b) => (b.h || 0) - (a.h || 0)); const fb = $('[data-cam="fidi"]'), sb = $('[data-cam="soma"]'); const short = (n) => (n || '').replace(/ (Building|Tower|Center|Centre)$/, '').slice(0, 16); if (lm[0]) fb.textContent = short(lm[0].name); const b2 = lm.find(l => lm[0] && Math.hypot(l.x - lm[0].x, l.z - lm[0].z) > 500) || lm[1]; if (b2) sb.textContent = short(b2.name); }
+if (!CITY.engine) {
+  for (const id of ['#demo-btn', '#intro-demo', '#pitch-btn', '#ai-btn', '#ask-dock', '#pol-dock', '#live-dock', '#plans-btn']) { const el = $(id); if (el) { el.hidden = true; el.disabled = true; } }
+  document.querySelectorAll('[data-info="visits"], [data-info="rev"]').forEach(b => b.hidden = true);
+  $('.intro h1').innerHTML = `Explore <em>${CITY.name}</em>`;
+  $('.intro p').textContent = `${CITY.area}: real buildings, streets and transit, with placeholder traffic. The full simulation for ${CITY.name} is coming soon.`;
+  $('#intro-free').textContent = `Explore ${CITY.name}`; $('#intro-free').classList.add('primary');
 }
 renderStatus();
 recomputeTargets(); drawRadar(shown.shape); drawPillars(); paintTies(V.base); paintTies(V.plan);
 jumpTo(ui.time); $('#loading').remove();
-post('The Human Project', ENG ? `A simulated weekday from the engine: ${fmtK(S.base.m.people)} people in FiDi and SoMa.` : 'A simulated weekday (in-browser estimate).', null, 'engine');
+post('The Human Project', ENG ? `A simulated weekday from the engine: ${fmtK(S.base.m.people)} people in FiDi and SoMa.` : (CITY.engine ? 'A simulated weekday (in-browser estimate).' : `${CITY.name} · ${CITY.area}: placeholder traffic from the in-browser model. Engine data is coming soon.`), null, 'engine');
 function frame(now) { requestAnimationFrame(frame); tick(now); }
 function tick(now) {
   const dt = Math.min(.05, (now - last) / 1000); last = now;
@@ -2518,6 +3027,7 @@ function tick(now) {
   animTables(dt); animScales(dt);
   { const a = ui.follow != null && V[activeWorld()].active.find(a => a.t.p.id === ui.follow); if (a) { posAt(a.t, a.s, tmp); followRing.position.set(tmp.x, 2.6, tmp.z); followLabel.p.set(tmp.x, 16, tmp.z); } else if (ui.follow != null) { const fp = S.plan.pmap.get(ui.follow); const dw = V.plan.dwell.get(ui.follow); const c = dw ? [dw.q.x, dw.q.z] : fp && (fp.office || fp.home) ? (fp.office || fp.home).c : null; if (c) { followRing.position.set(c[0], 2.6, c[1]); followLabel.p.set(c[0], 30, c[1]); followRing.userData.seen = true; } } followRing.visible = ui.follow != null && !!(a || followRing.userData.seen); if (a) followRing.userData.seen = true; followRing.scale.setScalar(1 + .25 * Math.sin(now / 220)); followLabel.hide = !followRing.visible; }
   // camera: fly-to, demo follow, damping, clamp
+  if (reel.on) reelTick(dt);
   stepFly(dt);
   if (ui.follow && ui.demo && !fly) { const a = V.plan.active.find(a => a.t.p.id === ui.follow); if (a) { posAt(a.t, a.s, tmp); const k3 = 1 - Math.pow(.25, dt); const dx = (tmp.x - controls.target.x) * k3, dz = (tmp.z - controls.target.z) * k3; controls.target.x += dx; controls.target.z += dz; camera.position.x += dx; camera.position.z += dz; } }
   if (!fly) controls.update(); clampTarget();
@@ -2575,17 +3085,18 @@ const HOST = {
   showCursors: (list) => { const seen = new Set(); for (const c of list || []) { seen.add(c.id); let L = cursorLabels.get(c.id); if (!L) { L = addLabel('', 'cursor', c.x, 2, c.z, { w: 60 }); cursorLabels.set(c.id, L); } L.el.innerHTML = `<i style="background:${c.color}"></i><span style="background:${c.color}">${String(c.name || 'Guest').replace(/</g, '&lt;')}</span>`; L.p.set(c.x, 2, c.z); L.hide = false; } for (const [id, L] of cursorLabels) if (!seen.has(id)) L.hide = true; },
   loadLivePlan: async ({ planId, edits, result }) => { let r = result && result.trips ? result : null; if (!r && planId) { try { r = await B.getScenario(planId); } catch (e) { console.warn(e); } } restoreEdits(edits || {}); switchView('plan'); if (r && r.trips && ENG) { engineCache.set(editsKeyOf(currentEdits()), r); fillEngine(ENG.plan, r); useWorld(true); afterSettle('Live plan'); } else settle('Live plan'); },
   onLiveChange: (on) => { $('#live-dock').classList.toggle('on', !!on); },
-  onLiveAvailable: (ok) => { $('#live-dock').hidden = !ok; },
+  onLiveAvailable: (ok) => { $('#live-dock').hidden = !ok || !CITY.engine; },
 };
 window.HPHost = HOST;
 const MODS = {}; window.__mods = MODS;
-try { if (window.HPAsk) MODS.ask = window.HPAsk.mount(HOST); } catch (e) { console.warn('ask module', e); }
-try { if (window.HPPolicy) MODS.policy = window.HPPolicy.mount(HOST); } catch (e) { console.warn('policy module', e); }
-try { if (window.HPLive) { MODS.live = window.HPLive.mount(HOST, { pill: false, liveUrl: './live.mjs' }); LIVE = MODS.live; Promise.resolve(LIVE.ready).then(ok => { $('#live-dock').hidden = !ok; }).catch(() => {}); } } catch (e) { console.warn('live module', e); }
+if (CITY.engine) try { if (window.HPAsk) MODS.ask = window.HPAsk.mount(HOST); } catch (e) { console.warn('ask module', e); }
+if (CITY.engine) try { if (window.HPPolicy) MODS.policy = window.HPPolicy.mount(HOST); } catch (e) { console.warn('policy module', e); }
+if (CITY.engine) try { if (window.HPLive) { MODS.live = window.HPLive.mount(HOST, { pill: false, liveUrl: './live.mjs' }); LIVE = MODS.live; Promise.resolve(LIVE.ready).then(ok => { $('#live-dock').hidden = !ok; }).catch(() => {}); } } catch (e) { console.warn('live module', e); }
 function openModule(k) { for (const [n, m] of Object.entries(MODS)) if (n !== k && n !== 'live') m.close?.(); toggleAI(false); closeInspector(); MODS[k]?.toggle?.(); setTimeout(() => { $('#ask-dock').classList.toggle('on', !!MODS.ask && !MODS.ask.el?.classList.contains('hpx-closed')); $('#pol-dock').classList.toggle('on', !!MODS.policy && !MODS.policy.el?.classList.contains('hpx-closed')); }, 30); }
 $('#ask-dock').onclick = () => MODS.ask ? openModule('ask') : toast('Ask isn’t available in this build.');
 $('#pol-dock').onclick = () => MODS.policy ? openModule('policy') : toast('Policies aren’t available in this build.');
 $('#live-dock').onclick = () => MODS.live ? MODS.live.toggle() : toast('Live needs the shared session: start with ./run.sh --live');
 { let lastCur = 0; cv.addEventListener('pointermove', (ev) => { if (!LIVE || !LIVE.isLive || !LIVE.isLive()) return; const n = performance.now(); if (n - lastCur < 120) return; lastCur = n; const g = groundAt(ev); if (g) LIVE.cursor(g.x, g.z); }); }
 window.__bw = { MODS, HOST, settle, applyEdits, resetPlan, currentEdits, setApi: (u) => { ENGINE_API = u; }, engineCache, B, ENG, TOY, useWorld, loadHeroView, plannerOptions, S, V, ui, EDGES, HERO_EDGES, INLETS, BLOCK_OF, NBLOCK, setInfo, flyTo, jumpTo, setCompare, runDemo, camera, controls, scene, renderer, composer, water, settle, togglePed, setTool, askAI, openPitch, grade, followPerson, inspectBlock, BLD, CAL, Scenario, baseCarRoutes, valueOf, run: (n = 30) => { for (let i = 0; i < n; i++) { last -= 33; tick(performance.now()); } } };
+if (QS.has('reel')) { $('#intro')?.remove(); setTimeout(runDemo, 400); }   // opened from the homepage's Play demo
 </script>

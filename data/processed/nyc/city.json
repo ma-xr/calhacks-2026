@@ -1,0 +1,188 @@
+{
+ "id": "nyc",
+ "name": "New York",
+ "area": "Midtown Manhattan",
+ "center": [
+  40.754,
+  -73.984
+ ],
+ "box": {
+  "x0": -944.5,
+  "x1": 944.5,
+  "z0": -972.8,
+  "z1": 961.7
+ },
+ "districts": [
+  {
+   "label": "MIDTOWN",
+   "x": 0,
+   "z": 0
+  },
+  {
+   "label": "TIMES SQUARE",
+   "x": -180,
+   "z": -420
+  },
+  {
+   "label": "MURRAY HILL",
+   "x": 760,
+   "z": 520
+  }
+ ],
+ "landmarks": [
+  {
+   "name": "Empire State Building",
+   "id": 0,
+   "x": -139.9,
+   "z": 614.4,
+   "h": 443.2
+  },
+  {
+   "name": "Chrysler Building",
+   "id": 8,
+   "x": 738.1,
+   "z": 266.8,
+   "h": 319.0
+  },
+  {
+   "name": "Grand Central Terminal",
+   "id": 2447,
+   "x": 562.2,
+   "z": 157.3,
+   "h": 45.8
+  },
+  {
+   "name": "One Vanderbilt",
+   "id": 2414,
+   "x": 454.6,
+   "z": 123.4,
+   "h": 427.0
+  },
+  {
+   "name": "30 Rockefeller Plaza",
+   "id": 3187,
+   "x": 372.0,
+   "z": -567.3,
+   "h": 260.0
+  },
+  {
+   "name": "Bank of America Tower",
+   "id": 13,
+   "x": -60.4,
+   "z": -172.1,
+   "h": 366.0
+  },
+  {
+   "name": "Madison Square Garden",
+   "id": 41,
+   "x": -784.7,
+   "z": 389.0,
+   "h": 45.0
+  }
+ ],
+ "stations": [
+  {
+   "name": "34th Street\u2013Penn Station",
+   "x": -678.1,
+   "z": 265.2,
+   "entrances": 19
+  },
+  {
+   "name": "34th Street\u2013Herald Square",
+   "x": -327.8,
+   "z": 481.6,
+   "entrances": 16
+  },
+  {
+   "name": "47th\u201350th Streets\u2013Rockefeller Center",
+   "x": 225.2,
+   "z": -515.4,
+   "entrances": 15
+  },
+  {
+   "name": "Grand Central\u201342nd Street",
+   "x": 636.7,
+   "z": 263.6,
+   "entrances": 13
+  },
+  {
+   "name": "50th Street",
+   "x": -84.3,
+   "z": -881.9,
+   "entrances": 13
+  },
+  {
+   "name": "Times Square\u201342nd Street",
+   "x": -266.7,
+   "z": -120.8,
+   "entrances": 13
+  },
+  {
+   "name": "42nd Street\u2013Port Authority Bus Terminal",
+   "x": -483.6,
+   "z": -365.7,
+   "entrances": 11
+  },
+  {
+   "name": "28th Street",
+   "x": -592.5,
+   "z": 845.0,
+   "entrances": 10
+  },
+  {
+   "name": "Grand Central Terminal",
+   "x": 575.2,
+   "z": 131.9,
+   "entrances": 10
+  },
+  {
+   "name": "42nd Street\u2013Bryant Park",
+   "x": -48.0,
+   "z": -24.5,
+   "entrances": 9
+  },
+  {
+   "name": "33rd Street",
+   "x": -106.7,
+   "z": 722.2,
+   "entrances": 9
+  },
+  {
+   "name": "New York Penn Station",
+   "x": -743.0,
+   "z": 415.8,
+   "entrances": 9
+  },
+  {
+   "name": "Grand Central",
+   "x": 405.7,
+   "z": 136.1,
+   "entrances": 7
+  },
+  {
+   "name": "49th Street",
+   "x": -11.7,
+   "z": -652.3,
+   "entrances": 7
+  },
+  {
+   "name": "5th Avenue\u201353rd Street",
+   "x": 678.5,
+   "z": -725.1,
+   "entrances": 5
+  },
+  {
+   "name": "Times Square",
+   "x": -155.1,
+   "z": -176.0,
+   "entrances": 4
+  },
+  {
+   "name": "5th Avenue",
+   "x": 177.1,
+   "z": 28.4,
+   "entrances": 3
+  }
+ ],
+ "engine": false
+}

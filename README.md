@@ -18,7 +18,7 @@ cd calhacks-2026
 
 On the first run, `run.sh` creates `backend/.venv` and installs the engine's dependencies (about a minute). It then starts:
 - the **simulation engine** on http://localhost:8787, which calibrates the baseline in about 10 s
-- the **web app** on http://localhost:8765, opened automatically at `variants/a1-skyline-clean/`
+- the **web app** on http://localhost:8765, opened automatically at the projects homepage `home/`. Click the San Francisco card (or **Play demo** on it) to open the 3D app at `variants/a1-skyline-clean/`
 
 Stop both with **Ctrl-C**. Logs are in `.run/`. Change the ports with `HP_PORT=… WEB_PORT=… ./run.sh`.
 
@@ -47,6 +47,7 @@ If macOS asks whether Python, spacetime or node may accept incoming connections,
 `mockup/variants/a1-skyline-clean/index.html?snapshot` replays frozen engine results with no engine running. Serve `mockup/` with any static server. Published demo: https://claude.ai/artifact/PH5gp1pVKFvpRW7kvmvfm1
 
 ## Using it
+- **Projects home** (`/home/`): the San Francisco project shows live numbers from the engine (people, agents, inlets, POIs), its recent scenarios run against the engine, and the engine's calibration against ACS. Other cities are shown in setup, without results. `/home/?reel=1` clicks into San Francisco by itself and starts the guided demo.
 - **Play demo** walks through a 2-minute story: the morning rush, making 2nd St car-free, comparing to today, following one commuter, the AI planner, and the pitch.
 - **Edit tools:** make a street car-free (drag along it), change density, rezone a block. Every edit runs the real engine.
 - **Info views:** traffic, foot traffic, workplaces, residents, visits, zoning, connections, revenue change.

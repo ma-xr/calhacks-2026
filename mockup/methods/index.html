@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Methods · The Human Project</title>
+<meta name="description" content="Technical appendix: synthetic population, logit mode choice, BPR/MSA assignment, Huff destinations, co-presence ties, valuation, equity ledger, policy plugin gate, calibration and validation.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css" crossorigin="anonymous">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+<style>
+:root {
+  --bg: #07101f;
+  --bg2: #0c1830;
+  --panel: rgba(16, 32, 60, .80);
+  --line: rgba(255, 255, 255, .08);
+  --line-hi: rgba(255, 255, 255, .16);
+  --fill: rgba(255, 255, 255, .055);
+  --fill-hi: rgba(255, 255, 255, .10);
+  --hi: #7fd3ff;
+  --accent: #3b9cff;
+  --fg: #f3f7fc;
+  --dim: #a9bad1;
+  --mute: #7b8fab;
+  --good: #4fdc7a;
+  --bad: #ff5d5d;
+  --warn: #ffd23a;
+  --s1: #3b8fe6;       /* chart series 1: model */
+  --s2: #c98a1e;       /* chart series 2: observed / plan */
+  --div-neg: #d9534f;  /* diverging: loses */
+  --div-mid: #8a94a6;  /* diverging: neutral */
+  --div-pos: #3fae66;  /* diverging: gains */
+  --grid: rgba(255, 255, 255, .07);
+  --f: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --r: 10px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 16px; }
+body { margin: 0; background: var(--bg); background-image: radial-gradient(1200px 600px at 70% -10%, rgba(59,156,255,.10), transparent 60%);
+  color: var(--fg); font-family: var(--f); font-size: 15px; line-height: 1.62; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+a { color: var(--hi); text-decoration: none; } a:hover { text-decoration: underline; }
+code, .num, .mono { font-family: var(--mono); font-size: .86em; }
+code { background: var(--fill); padding: 1px 5px; border-radius: 5px; color: #d9e6f5; word-break: break-word; }
+.layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); max-width: 1220px; margin: 0 auto; gap: 40px; padding: 0 28px; }
+aside.toc { position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto; padding: 28px 0 24px; }
+.toc .brand { font-weight: 800; letter-spacing: -.01em; font-size: 15px; }
+.toc .brand span { color: var(--hi); }
+.toc .sub { color: var(--mute); font-size: 12px; margin: 2px 0 18px; font-family: var(--mono); }
+.toc ol { list-style: none; padding: 0; margin: 0; counter-reset: s; }
+.toc li a { display: flex; gap: 10px; padding: 5px 10px; border-radius: 7px; color: var(--dim); font-size: 13px; line-height: 1.35; }
+.toc li a:hover { background: var(--fill); text-decoration: none; color: var(--fg); }
+.toc li a.on { background: var(--fill-hi); color: var(--fg); box-shadow: inset 2px 0 0 var(--accent); }
+.toc li a b { font-family: var(--mono); font-weight: 500; color: var(--mute); min-width: 18px; }
+main { min-width: 0; padding: 40px 0 120px; max-width: 900px; }
+header.hd { border-bottom: 1px solid var(--line); padding-bottom: 22px; margin-bottom: 8px; }
+.kicker { font-family: var(--mono); font-size: 12px; color: var(--hi); letter-spacing: .08em; text-transform: uppercase; }
+h1 { font-size: 34px; line-height: 1.15; letter-spacing: -.02em; margin: 8px 0 10px; font-weight: 800; }
+.meta { color: var(--mute); font-size: 12.5px; font-family: var(--mono); }
+section { padding-top: 34px; border-top: 1px solid var(--line); margin-top: 34px; }
+section:first-of-type { border-top: 0; margin-top: 0; }
+h2 { font-size: 22px; letter-spacing: -.01em; margin: 0 0 14px; display: flex; gap: 12px; align-items: baseline; }
+h2 .sn { font-family: var(--mono); color: var(--accent); font-weight: 500; font-size: 17px; }
+h3 { font-size: 15.5px; margin: 26px 0 8px; color: var(--fg); }
+p { margin: 10px 0; color: #dde6f2; }
+.lede { font-size: 16px; color: var(--fg); }
+.note, .note2 { color: var(--dim); font-size: 13px; }
+.cite a { font-family: var(--mono); font-size: 12px; }
+.katex { font-size: 1.06em; }
+.katex-display { overflow-x: auto; overflow-y: hidden; padding: 12px 6px; margin: 14px 0; background: var(--fill); border: 1px solid var(--line); border-radius: var(--r); }
+.katex-display > .katex { color: #eef4fb; }
+.tw { overflow-x: auto; margin: 12px 0 16px; border: 1px solid var(--line); border-radius: var(--r); background: rgba(255,255,255,.02); }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: left; padding: 8px 11px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--mute); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; background: rgba(255,255,255,.03); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+td.pos { color: var(--good); } td.neg { color: var(--bad); }
+.ptab td:first-child { white-space: nowrap; }
+.ptab td:first-child code { font-size: 11.5px; }
+.pv { font-family: var(--mono); font-size: 12px; min-width: 120px; max-width: 260px; overflow-wrap: anywhere; }
+.ptab td:last-child { min-width: 200px; }
+.rng { color: var(--mute); font-size: 11px; }
+.rec { font-family: var(--mono); font-size: 12px; min-width: 220px; }
+.srct { color: var(--dim); font-size: 12px; }
+.badge { font-family: var(--mono); font-size: 10.5px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line-hi); white-space: nowrap; }
+.badge.data { color: var(--good); border-color: rgba(79,220,122,.35); }
+.badge.literature { color: var(--hi); border-color: rgba(127,211,255,.35); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin: 18px 0; }
+.stats div { background: var(--fill); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; }
+.stats b { display: block; font-family: var(--mono); font-size: 21px; font-weight: 600; color: var(--fg); }
+.stats span { color: var(--mute); font-size: 12px; }
+figure.fig { margin: 16px 0; padding: 14px; background: var(--fill); border: 1px solid var(--line); border-radius: var(--r); }
+figure.fig:empty { display: none; }
+figcaption { color: var(--dim); font-size: 12.5px; margin-top: 8px; }
+.ctitle { font-size: 13px; font-weight: 600; margin: 0 0 6px; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--dim); margin: 2px 0 6px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+svg { display: block; width: 100%; height: auto; }
+svg text { font-family: var(--f); }
+.ax text, .tick { fill: var(--mute); font-size: 11px; font-family: var(--mono); }
+.gl { stroke: var(--grid); }
+.dl { fill: var(--dim); font-size: 11px; font-family: var(--mono); }
+.pipe .bx rect { fill: var(--bg2); stroke: var(--line-hi); }
+.pipe .bx.k rect { stroke: var(--accent); }
+.pipe .bx.src rect { fill: rgba(255,255,255,.03); stroke-dasharray: 3 3; }
+.pipe .bx.gate rect { stroke: #b46cff; }
+.pipe .t1 { fill: var(--fg); font-size: 12.5px; font-weight: 600; text-anchor: middle; }
+.pipe .t2 { fill: var(--dim); font-size: 10px; font-family: var(--mono); text-anchor: middle; }
+.pipe .lbl { fill: var(--hi); }
+.pipe .ar { stroke: var(--dim); stroke-width: 1.4; fill: none; }
+.pipe .ar.src { stroke: var(--mute); stroke-dasharray: 2 3; }
+.pipe .ar.gate { stroke: #b46cff; }
+.pipe .ar.loop { stroke: var(--hi); stroke-dasharray: 4 3; }
+.pipe .ahp { fill: var(--dim); }
+ol.refs { list-style: none; padding: 0; margin: 0; font-size: 13px; }
+ol.refs li { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px; padding: 7px 0; border-bottom: 1px solid var(--line); color: #dde6f2; }
+ol.refs .refn { font-family: var(--mono); color: var(--mute); }
+ol.refs .url { display: block; font-family: var(--mono); font-size: 11px; word-break: break-all; color: var(--hi); opacity: .85; }
+.gaps { border: 1px solid rgba(255,210,58,.25); background: rgba(255,210,58,.05); border-radius: var(--r); padding: 4px 18px 8px; margin-top: 22px; }
+.gaps h3 { color: var(--warn); }
+.gaps li { margin: 6px 0; color: #dde6f2; font-size: 14px; }
+#tip { position: fixed; pointer-events: none; z-index: 50; background: #0f1f3b; border: 1px solid var(--line-hi); border-radius: 8px; padding: 8px 10px; font-size: 12px;
+  color: var(--fg); box-shadow: 0 10px 30px rgba(0,0,0,.4); max-width: 320px; display: none; line-height: 1.45; }
+#tip .tk { color: var(--mute); }
+#tip table { font-size: 11.5px; margin-top: 4px; } #tip td, #tip th { padding: 2px 6px; border: 0; white-space: nowrap; }
+.sortable th { cursor: pointer; user-select: none; }
+.sortable th:hover { color: var(--fg); }
+.sortable th.asc::after { content: " ▲"; } .sortable th.desc::after { content: " ▼"; }
+.swatch { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+#eqmap svg { max-width: 600px; margin: 0 auto; }
+.eqm .bay { fill: #0d2747; stroke: rgba(127,211,255,.25); }
+.eqm .land { fill: #13233d; stroke: rgba(255,255,255,.10); }
+.eqm .ocean { fill: #081a33; }
+.eqm .study { fill: none; stroke: var(--hi); stroke-width: 1.6; stroke-dasharray: 3 2; }
+.eqm .bub { stroke: var(--bg); stroke-width: 2; cursor: pointer; }
+.eqm .bub:hover { stroke: var(--fg); }
+.eqm .rl { fill: var(--fg); font-size: 12px; font-weight: 600; pointer-events: none; }
+.eqm .rv { fill: var(--dim); font-size: 10.5px; font-family: var(--mono); pointer-events: none; }
+.eqm .wl { fill: rgba(127,211,255,.45); font-size: 11px; font-style: italic; }
+.dscale { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--mute); font-family: var(--mono); margin-top: 6px; flex-wrap: wrap; }
+.dscale .bar { width: 160px; height: 9px; border-radius: 5px; background: linear-gradient(90deg, var(--div-neg), var(--div-mid), var(--div-pos)); }
+/* sticky losers strip */
+#losers { position: fixed; right: 16px; top: 16px; width: 270px; z-index: 40; background: rgba(12, 24, 48, .94); border: 1px solid var(--line-hi);
+  border-radius: 12px; padding: 12px 14px; box-shadow: 0 10px 30px rgba(0,0,0,.35); backdrop-filter: blur(8px); font-size: 12.5px; }
+#losers h4 { margin: 0 0 6px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--mute); display: flex; justify-content: space-between; gap: 8px; }
+#losers h4 a { text-transform: none; letter-spacing: 0; font-weight: 500; }
+#losers .row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 3px 0; border-bottom: 1px dashed var(--line); }
+#losers .row:last-child { border-bottom: 0; }
+#losers .g { color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#losers .v { font-family: var(--mono); font-size: 11.5px; text-align: right; white-space: nowrap; }
+#losers .v.l { color: var(--bad); } #losers .v.w { color: var(--good); }
+#losers .sub { color: var(--mute); font-size: 10.5px; font-family: var(--mono); }
+#losers .sep { margin-top: 8px; }
+@media (max-width: 1500px) {
+  #losers { top: auto; bottom: 0; right: 0; left: 0; width: auto; border-radius: 12px 12px 0 0; padding: 8px 16px; display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 4px 22px; max-height: 40vh; overflow-y: auto; }
+  #losers .sep { margin-top: 0; }
+  #losers .row { padding: 1px 0; }
+  main { padding-bottom: 210px; }
+}
+@media (max-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0 16px; }
+  aside.toc { position: static; height: auto; padding: 22px 0 0; }
+  .toc ol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 8px; }
+  main { padding-top: 16px; }
+  h1 { font-size: 27px; }
+}
+@media (max-width: 560px) {
+  #losers { grid-template-columns: minmax(0, 1fr); }
+  #losers .wins { display: none; }
+  .toc ol { grid-template-columns: minmax(0, 1fr); }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="toc" aria-label="Contents">
+  <div class="brand">The Human <span>Project</span></div>
+  <div class="sub">Methods · technical appendix</div>
+  <ol><li><a href="#overview"><b>1</b><span>System overview</span></a></li><li><a href="#data"><b>2</b><span>Data sources</span></a></li><li><a href="#population"><b>3</b><span>Synthetic population</span></a></li><li><a href="#destinations"><b>4</b><span>Activity and destination choice</span></a></li><li><a href="#modechoice"><b>5</b><span>Mode choice (multinomial logit)</span></a></li><li><a href="#assignment"><b>6</b><span>Network assignment</span></a></li><li><a href="#evaporation"><b>7</b><span>Traffic evaporation and trip suppression</span></a></li><li><a href="#social"><b>8</b><span>Social ties: co-presence model</span></a></li><li><a href="#valuation"><b>9</b><span>Economic and valuation model</span></a></li><li><a href="#equity"><b>10</b><span>Who wins, who pays: ledger and equity map</span></a></li><li><a href="#policy"><b>11</b><span>Policy plugin calculus and the Droid verification gate</span></a></li><li><a href="#validation"><b>12</b><span>Calibration and validation</span></a></li><li><a href="#references"><b>13</b><span>References</span></a></li></ol>
+</aside>
+<main>
+<header class="hd">
+  <div class="kicker">Technical appendix</div>
+  <h1>Methods: an agent-swarm model of a weekday in FiDi / SoMa</h1>
+  <div class="meta">Engine v0.2 · numbers generated 2026-10-24 22:10 by <code>scripts/build_methods.py</code> from the engine, <code>research/parameters/parameters.json</code> and <code>research/validation/validation.json</code></div>
+</header>
+<section id="overview"><h2><span class=sn>1</span>System overview</h2>
+<p class=lede>The Human Project simulates one weekday in San Francisco's Financial District and upper SoMa as a swarm of
+14,140 software agents, each standing for \(s = 21\) real people (270,942 people present in the baseline).
+A run is a fixed point of a MATSim-style loop <span class=cite>[<a href="#ref-1">1</a>]</span>: agents choose modes on yesterday's congested travel times,
+cars are loaded onto the OpenStreetMap road graph, link costs are updated with a BPR function, and the day is replayed.
+After the last replanning day a final day is simulated in full: walking legs, Huff destination choice, walk-by retail,
+co-presence encounters and the dollar valuation. A plan (closing streets to cars, rezoning, prices, plugin policies) is
+evaluated by exactly the same procedure as the baseline, with common random numbers, so a plan with no edits reproduces
+the baseline bit for bit and differences are effects, not sampling noise.</p>
+<div class=stats>
+ <div><b>14,140</b><span>agents</span></div>
+ <div><b>21</b><span>people per agent</span></div>
+ <div><b>270,942</b><span>people represented</span></div>
+ <div><b>1,451</b><span>street edges (1,100 nodes)</span></div>
+ <div><b>65</b><span>map inlets (62 car, 3 rail)</span></div>
+ <div><b>5</b><span>replanning days per plan</span></div>
+</div>
+<figure class=fig><svg class=pipe viewBox="0 0 890 322" role="img" aria-label="Simulation pipeline"><defs><marker id=ah viewBox="0 0 10 10" refX=9 refY=5 markerWidth=7 markerHeight=7 orient=auto-start-reverse><path d="M0 0 L10 5 L0 10 z" class=ahp /></marker></defs><g class="bx src"><rect x="20" y="18" width="150" height="56" rx="9"/><text x="95.0" y="38" class=t1>OpenStreetMap</text><text x="95.0" y="54" class=t2>roads · buildings · POIs</text></g><g class="bx src"><rect x="195" y="18" width="150" height="56" rx="9"/><text x="270.0" y="38" class=t1>LODES · ACS · DataSF</text><text x="270.0" y="54" class=t2>jobs · residents · floor area</text></g><g class="bx src"><rect x="370" y="18" width="325" height="56" rx="9"/><text x="532.5" y="38" class=t1>Research parameters</text><text x="532.5" y="54" class=t2>77 keys: value · unit · status · source</text></g><g class="bx src"><rect x="720" y="18" width="150" height="56" rx="9"/><text x="795.0" y="38" class=t1>Google popular times</text><text x="795.0" y="54" class=t2>POI quality · hourly shape</text></g><g class="bx "><rect x="20" y="128" width="150" height="66" rx="9"/><text x="95.0" y="148" class=t1>World graph</text><text x="95.0" y="164" class=t2>nodes · edges · inlets</text><text x="95.0" y="177" class=t2>blocks · POIs</text></g><g class="bx "><rect x="195" y="128" width="150" height="66" rx="9"/><text x="270.0" y="148" class=t1>Population</text><text x="270.0" y="164" class=t2>§3  occupancy × LODES</text><text x="270.0" y="177" class=t2>ACS · s people/agent</text></g><g class="bx k"><rect x="370" y="128" width="150" height="66" rx="9"/><text x="445.0" y="148" class=t1>Mode choice</text><text x="445.0" y="164" class=t2>§5  MNL, Gumbel ε</text><text x="445.0" y="177" class=t2>ASC calibration</text></g><g class="bx k"><rect x="545" y="128" width="150" height="66" rx="9"/><text x="620.0" y="148" class=t1>Assignment</text><text x="620.0" y="164" class=t2>§6  BPR · inlet trees</text><text x="620.0" y="177" class=t2>MSA gap</text></g><g class="bx "><rect x="720" y="128" width="150" height="66" rx="9"/><text x="795.0" y="148" class=t1>Final day</text><text x="795.0" y="164" class=t2>§4 §8  Huff · walk-by</text><text x="795.0" y="177" class=t2>co-presence · ties</text></g><g class="bx gate"><rect x="20" y="248" width="150" height="56" rx="9"/><text x="95.0" y="268" class=t1>Droid gate</text><text x="95.0" y="284" class=t2>§11  6 checks</text></g><g class="bx gate"><rect x="195" y="248" width="325" height="56" rx="9"/><text x="357.5" y="268" class=t1>Policy plugins</text><text x="357.5" y="284" class=t2>c_plug → §5 · χ_e → §6 · α_j → §4</text></g><g class="bx "><rect x="545" y="248" width="150" height="56" rx="9"/><text x="620.0" y="268" class=t1>Validation</text><text x="620.0" y="284" class=t2>§12  BART · SFMTA · INRIX</text></g><g class="bx k"><rect x="720" y="248" width="150" height="56" rx="9"/><text x="795.0" y="268" class=t1>City Value</text><text x="795.0" y="284" class=t2>§9 §10  $/yr · ledger</text></g><line x1="170" y1="161.0" x2="191" y2="161.0" class="ar " marker-end="url(#ah)"/><line x1="345" y1="161.0" x2="366" y2="161.0" class="ar " marker-end="url(#ah)"/><line x1="695" y1="161.0" x2="716" y2="161.0" class="ar " marker-end="url(#ah)"/><line x1="520" y1="150" x2="541" y2="150" class="ar " marker-end="url(#ah)"/><path d="M545 174 C 531 174, 534 174, 524 174" class="ar loop" marker-end="url(#ah)"/><text x="532.5" y="122" class="t2 lbl">K = 5 days</text><line x1="95.0" y1="74" x2="95.0" y2="124" class="ar src" marker-end="url(#ah)"/><line x1="270.0" y1="74" x2="270.0" y2="124" class="ar src" marker-end="url(#ah)"/><line x1="795.0" y1="74" x2="795.0" y2="124" class="ar src" marker-end="url(#ah)"/><line x1="445.0" y1="74" x2="445.0" y2="124" class="ar src" marker-end="url(#ah)"/><line x1="620.0" y1="74" x2="620.0" y2="124" class="ar src" marker-end="url(#ah)"/><line x1="170" y1="276" x2="191" y2="276" class="ar gate" marker-end="url(#ah)"/><line x1="445.0" y1="248" x2="445.0" y2="198" class="ar gate" marker-end="url(#ah)"/><line x1="795.0" y1="194" x2="795.0" y2="244" class="ar " marker-end="url(#ah)"/><line x1="740" y1="194" x2="675" y2="244" class="ar " marker-end="url(#ah)"/></svg><figcaption><b>Figure 1.</b> Pipeline. Solid arrows carry data; the dashed loop is the replanning
+fixed point (Section 6). Policy plugins enter through three hooks (Section 11) and only after passing the Droid gate.</figcaption></figure>
+<p>Evaluation cost on this machine: engine boot (ASC calibration, baseline and hero plan) 7.1 s; one plan 985 ms
+(5 replanning days + final day).</p>
+</section><section id="data"><h2><span class=sn>2</span>Data sources</h2>
+<p>All inputs are cached JSON files written by <code>backend/data/*.py</code>; the counts below are read from those files at build time.
+Raw API responses are cached with their query parameters; credentials are never written.</p>
+<div class=tw><table><thead><tr><th>Dataset</th><th>Vintage</th><th>Feeds</th><th>Records</th></tr></thead><tbody><tr><td><b>OpenStreetMap (Overpass)</b> <span class=cite>[<a href="#ref-2">2</a>]</span></td><td>2026 extract</td><td>Road graph, building footprints, POIs, parks, rail stations</td><td class=rec>1,100 nodes · 1,451 edges (1,228 drivable) · 2,173 buildings · 1,225 POIs · 65 inlets</td></tr><tr><td><b>LEHD LODES8 (WAC, OD)</b> <span class=cite>[<a href="#ref-3">3</a>]</span></td><td>2023</td><td>Jobs per work block (control total), earnings tiers, home region of workers</td><td class=rec>322,449 jobs in 265 work blocks · 317,463 in-state OD jobs · 51,783 with homes &gt;150 km (excluded)</td></tr><tr><td><b>ACS 5-year</b> <span class=cite>[<a href="#ref-4">4</a>]</span></td><td>2019–2023</td><td>Resident control total and household size of the tracts in the area</td><td class=rec>15 tracts · 37,174 residents · 20,604 households · 1.804 persons/household</td></tr><tr><td><b>DataSF Land Use + Zoning</b> <span class=cite>[<a href="#ref-5">5</a>]</span></td><td>2026 snapshot, 2023 archive</td><td>Floor area by use per building (office, retail, hotel, other, units)</td><td class=rec>2,173 building records · 86.2M sqft office</td></tr><tr><td><b>Google Maps via Apify</b> <span class=cite>[<a href="#ref-6">6</a>]</span></td><td>fetched 2026-10-24</td><td>POI quality (rating, reviews), hourly popular-times profiles by category</td><td class=rec>868 places · 388 matched to OSM POIs · 344 with popular times</td></tr><tr><td><b>BART ridership</b> <span class=cite>[<a href="#ref-7">7</a>]</span></td><td>2026-09 (daily); 2025-09 weekdays (22 days, incl. Labor Day) (hourly)</td><td>Validation of rail-inlet arrivals (volume and hourly shape)</td><td class=rec>Embarcadero: 20,648 weekday exits · Montgomery Street: 17,217 weekday exits · Powell Street: 14,474 weekday exits</td></tr><tr><td><b>SFMTA manual bike counts</b> <span class=cite>[<a href="#ref-8">8</a>]</span></td><td>2015–2017</td><td>Validation of cycling volumes (PM peak)</td><td class=rec>11 count sites</td></tr><tr><td><b>Caltrans Traffic Census AADT</b> <span class=cite>[<a href="#ref-9">9</a>]</span></td><td>current layer</td><td>Freeway approach volumes (context; no SF surface-street car counts exist on DataSF)</td><td class=rec>5 count points (I-80 / Bay Bridge ramps)</td></tr><tr><td><b>Kastle Back to Work Barometer</b> <span class=cite>[<a href="#ref-10">10</a>]</span></td><td>2026</td><td>Office occupancy rate applied to office jobs</td><td class=rec>occupancy 0.472</td></tr><tr><td><b>BART GTFS</b> <span class=cite>[<a href="#ref-11">11</a>]</span></td><td>v72, 2026</td><td>One-way Clipper fares by home region</td><td class=rec>fare_rules / fare_attributes</td></tr></tbody></table></div>
+<p class=note>Study area: Work blocks = 2020 census blocks in SF County whose internal point (xwalk blklatdd/blklondd) lies in bbox S37.7800 W-122.4095 N37.7975 E-122.3880.</p></section><section id="population"><h2><span class=sn>3</span>Synthetic population</h2>
+<p>Jobs are placed per building from floor area and job densities, then scaled to the LODES control total; residents from
+dwelling units and household size, scaled to the ACS total. For building \(b\) with office, retail, hotel and other floor
+areas \(F_b^{\cdot}\) (ft²) and units \(U_b\):</p>
+$$J_b^{\mathrm{off}} = (1-v)\,\frac{F_b^{\mathrm{off}}}{a_{\mathrm{off}}},\qquad
+  J_b^{\mathrm{oth}} = \frac{F_b^{\mathrm{ret}}}{a_{\mathrm{ret}}}+\frac{F_b^{\mathrm{hot}}}{a_{\mathrm{hot}}}+\frac{F_b^{\mathrm{cie}}}{a_{\mathrm{cie}}},\qquad
+  R_b = U_b\,h \tag{1}$$
+$$J_b \leftarrow J_b\,\frac{J^{\mathrm{LODES}}}{\sum_{b'} J_{b'}},\qquad R_b \leftarrow R_b\,\frac{R^{\mathrm{ACS}}}{\sum_{b'} R_{b'}} \tag{2}$$
+<p>with \(v\) the FiDi office vacancy rate and \(a_\cdot\) floor area per job. Buildings without a DataSF record fall back to
+an OSM-type template. Only part of the job base is in the area on a given weekday: office jobs scale with the Kastle
+badge-swipe occupancy \(o\), other jobs with an attendance share \(\rho\):</p>
+$$W_b = o\,J_b^{\mathrm{off}} + \rho\,J_b^{\mathrm{oth}},\qquad s = \operatorname{round}\!\Big(\textstyle\sum_b W_b \,/\, N^{*}\Big) \tag{3}$$
+<p>where \(N^{*}\) is the worker-agent budget. This gives \(\sum_b W_b = 185,770\) present workers and \(s = 21\)
+people per agent. Agents are allocated to buildings by largest remainder of \(W_b/s\) (deterministic), giving
+8,846 worker, 1,770 resident, 2,286 visitor and 1,238 through-traffic agents (14,140 total).</p>
+<p><b>Attributes.</b> Earnings tier is drawn from the LODES WAC earnings split (SE01/02/03 = 6.7% / 8.0% / 85.3%);
+home region given tier from LODES OD by earnings, with the "other" region shrunk to the share that excludes homes more than
+150 km away (head-office reporting artifacts). Each region carries the part of the trip that lies outside the map:</p>
+<div class=tw><table><thead><tr><th>Home region</th><th>Share of jobs (LODES, excl. far)</th><th>Car min outside map</th><th>Transit min outside map</th><th>Car miles outside</th><th>Bridge toll</th></tr></thead><tbody><tr><td>East Bay</td><td class=num>32.8%</td><td class=num>32</td><td class=num>30</td><td class=num>12</td><td>yes</td></tr><tr><td>Peninsula</td><td class=num>21.4%</td><td class=num>38</td><td class=num>46</td><td class=num>20</td><td>–</td></tr><tr><td>Western SF</td><td class=num>11.0%</td><td class=num>18</td><td class=num>24</td><td class=num>4</td><td>–</td></tr><tr><td>Mission</td><td class=num>14.2%</td><td class=num>14</td><td class=num>19</td><td class=num>3</td><td>–</td></tr><tr><td>North Beach</td><td class=num>4.8%</td><td class=num>10</td><td class=num>17</td><td class=num>2</td><td>–</td></tr><tr><td>North Bay</td><td class=num>6.3%</td><td class=num>40</td><td class=num>45</td><td class=num>18</td><td>yes</td></tr><tr><td>Downtown resident</td><td class=num>2.8%</td><td class=num>0</td><td class=num>6</td><td class=num>0</td><td>–</td></tr><tr><td>Elsewhere</td><td class=num>6.6%</td><td class=num>45</td><td class=num>50</td><td class=num>25</td><td>yes</td></tr></tbody></table></div>
+<p>Arrival times, work hours, lunch, coffee, errand and evening activities are drawn per agent once (seed 2026). Each agent also
+carries a persistent Gumbel vector \(\boldsymbol\varepsilon_i \in \mathbb{R}^4\) for mode choice and a hash-seeded uniform stream for
+destination noise, so baseline and plan share the same draws (common random numbers). Rezoning or densifying a building keeps
+or removes base agents by a fixed relocation uniform and appends new agents with stable ids.</p>
+<div class=tw><table class="ptab"><thead><tr><th>Parameter</th><th>Symbol</th><th>Value</th><th>Unit</th><th>Status</th><th>Source</th></tr></thead><tbody><tr><td><code>sf_office_occupancy_rate</code></td><td>\(o\)</td><td class=pv>0.472<div class=rng>range 0.44 … 0.55</div></td><td>fraction of pre-pandemic badge swipes</td><td><span class="badge data">data</span></td><td><span class=cite>[<a href="#ref-12">12</a>]</span> <span class=srct>Kastle Systems Back to Work Barometer, week incl. 13 Oct 2026</span></td></tr><tr><td><code>fidi_office_vacancy_rate</code></td><td>\(v\)</td><td class=pv>0.29<div class=rng>range 0.248 … 0.309</div></td><td>fraction of inventory</td><td><span class="badge data">data</span></td><td><span class=cite>[<a href="#ref-13">13</a>]</span> <span class=srct>Kidder Mathews, San Francisco Office Market Report Q2 2026</span></td></tr><tr><td><code>office_sqft_per_job</code></td><td>\(a_{\mathrm{off}}\)</td><td class=pv>240<div class=rng>range 220 … 300</div></td><td>gross sqft/job</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-14">14</a>]</span> <span class=srct>SF Planning, Jobs-Housing Fit Report 2020</span></td></tr><tr><td><code>retail_sqft_per_job</code></td><td>\(a_{\mathrm{ret}}\)</td><td class=pv>350<div class=rng>range 300 … 500</div></td><td>gross sqft/job</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-14">14</a>]</span> <span class=srct>SF Planning, Jobs-Housing Fit Report 2020</span></td></tr><tr><td><code>hotel_sqft_per_job</code></td><td>\(a_{\mathrm{hot}}\)</td><td class=pv>440<div class=rng>range 400 … 900</div></td><td>gross sqft/job</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-14">14</a>]</span> <span class=srct>SF Planning, Jobs-Housing Fit Report 2020</span></td></tr><tr><td><code>persons_per_household_downtown</code></td><td>\(h\)</td><td class=pv>1.8<div class=rng>range 1.6 … 2</div></td><td>persons/household</td><td><span class="badge data">data</span></td><td><span class=cite>[<a href="#ref-15">15</a>]</span> <span class=srct>ACS 2019-2023 5-year, B01003/B11001 for the 15 SF tracts inside the s…</span></td></tr><tr><td><code>home_region_share_downtown_workers</code></td><td></td><td class=pv>east_bay: 0.328; peninsula_south_bay: 0.214; sf_west: 0.11; sf_southeast_mission: 0.142; sf_north: 0.048; sf_in_area: 0.028; north_bay: 0.063; other: 0.066</td><td>share of jobs in sim bbox by home region</td><td><span class="badge data">data</span></td><td><span class=cite>[<a href="#ref-16">16</a>]</span> <span class=srct>Census LEHD LODES8 OD main JT00 2023 (CA), jobs in SF blocks inside t…</span></td></tr><tr><td><code>income_tier_share_downtown_workers</code></td><td></td><td class=pv>low: 0.067; mid: 0.08; high: 0.853</td><td>share of jobs</td><td><span class="badge data">data</span></td><td><span class=cite>[<a href="#ref-17">17</a>]</span> <span class=srct>Census LODES8 WAC 2023 (CE01-CE03), SF blocks in sim bbox</span></td></tr></tbody></table></div>
+</section><section id="destinations"><h2><span class=sn>4</span>Activity and destination choice</h2>
+<p>Each present worker takes part in activity \(a\in\{\)morning coffee, lunch, afternoon coffee, errand, evening\(\}\) with a
+Bernoulli draw of probability \(p_a\) (lunch out: \(p_{\mathrm{lunch}} = 0.52\) <span class=cite>[<a href="#ref-18">18</a>]</span>); residents and visitors have
+their own activity sets. The destination of every activity is a Huff / multinomial-logit choice among POIs of the
+matching categories, with walking distance on the street graph <span class=cite>[<a href="#ref-19">19</a>]</span>:</p>
+$$U_{ij} = \ln\!\big(w_{c(j)}\,q_j\,\alpha_j\big) + b_{\mathrm{cf}}\,\mathbb{1}[j \text{ fronts a car-free edge}] - \lambda\,d_{ij} + \varepsilon_{ij},
+\qquad j^{*}_i = \arg\max_{j:\,d_{ij}\le r_a} U_{ij} \tag{4}$$
+<p>Here \(w_c\) weights category \(c\) for the purpose, \(\alpha_j\) is the plugin attractiveness multiplier (Eq. 30),
+\(\lambda\) the distance decay per metre, \(r_a\) a purpose radius and \(\varepsilon_{ij}\) a Gumbel draw from a hash of
+(agent, POI, purpose), identical across scenarios. Taking the argmax over Gumbel-perturbed utilities is an exact draw from
+the logit probabilities \(P_{ij} = e^{V_{ij}}/\sum_k e^{V_{ik}}\). POI quality comes from Google rating \(g_j\) and review count \(n_j\)
+when the POI is matched (388 of 1,225), otherwise from a deterministic draw:</p>
+$$q_j = \operatorname{clip}\!\Big(\big(g_j/\bar g\big)^{2}\,\big(\kappa_0 + \kappa_1\ln(1+n_j)\big),\; q_{\min},\, q_{\max}\Big) \tag{5}$$
+<p><b>Walk-by visits.</b> Pedestrians passing a POI's frontage edges \(E_j\) stop with a category capture rate \(\gamma_c\),
+shaped by an hourly propensity taken from the Google popular-times profile \(g_c(h)\) of that category:</p>
+$$\pi_c(h) = \frac{g_c(h)}{\tfrac{1}{16}\sum_{h'=7}^{22} g_c(h')},\qquad
+  I_j(h) = \pi_{c(j)}(h)\,\gamma_{c(j)}\,q_j\,(1+b_{\mathrm{cf}}\mathbb{1}_j^{\mathrm{cf}})\sum_{e\in E_j} f^{\mathrm{ped}}_e(h) \tag{6}$$
+$$\text{Revenue}_j = \tau_{c(j)} \sum_h \big(s\,N^{\mathrm{dest}}_j(h) + I_j(h)\big) \tag{7}$$
+<p>with \(f^{\mathrm{ped}}_e(h)\) people per hour on edge \(e\), \(N^{\mathrm{dest}}_j(h)\) destination arrivals (agents) and
+\(\tau_c\) the average ticket. Baseline: 490,161 visits and $10.76M revenue per weekday across 1,225 POIs.</p>
+<div class=tw><table class="ptab"><thead><tr><th>Parameter</th><th>Symbol</th><th>Value</th><th>Unit</th><th>Status</th><th>Source</th></tr></thead><tbody><tr><td><code>lunch_out_share_office_workers</code></td><td>\(p_{\mathrm{lunch}}\)</td><td class=pv>0.52<div class=rng>range 0.4 … 0.6</div></td><td>share of in-office days</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-18">18</a>]</span> <span class=srct>ezCater 2025 office lunch survey (via press coverage)</span></td></tr><tr><td><code>avg_ticket_usd</code></td><td>\(\tau_c\)</td><td class=pv>cafe: 7; restaurant: 28; fast_food: 13; bar: 25; shop: 45</td><td>USD/visit</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-20">20</a>]</span> <span class=srct>Toast restaurant check data (2023); ezCater; SF downtown shopper surv…</span></td></tr><tr><td><code>walking_speed_m_s</code></td><td>\(v_{\mathrm{walk}}\)</td><td class=pv>1.34<div class=rng>range 1.07 … 1.4</div></td><td>m/s</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-21">21</a>]</span> <span class=srct>SFCTA ActivitySim constants (walk 3 mph)</span></td></tr><tr><td><code>walk_detour_factor</code></td><td></td><td class=pv>1.21<div class=rng>range 1.14 … 1.3</div></td><td>network/crow-fly distance</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-22">22</a>]</span> <span class=srct>Boeing (2019), Urban spatial order: street network orientation, confi…</span></td></tr></tbody></table></div>
+</section><section id="modechoice"><h2><span class=sn>5</span>Mode choice (multinomial logit)</h2>
+<p>Workers choose among car, transit (BART / Muni), walk and bike with a multinomial logit <span class=cite>[<a href="#ref-23">23</a>]</span>. Systematic utilities, in
+minutes \(t\) and dollars \(c\), one way:</p>
+$$\begin{aligned}
+V_i^{\mathrm{car}} &= \mathrm{ASC}_{\mathrm{car}} + \beta_t\big(t^{\mathrm{out}}_{r} + \bar t^{\mathrm{in}}_i + t^{\mathrm{park}}\big) + \beta_{c,i}\,c^{\mathrm{car}}_i\\
+V_i^{\mathrm{tr}} &= \beta_t\big(t^{\mathrm{tr,out}}_{r} + \mu\,t^{\mathrm{wait}} + \mu\,t^{\mathrm{acc}}_i\big) + \beta_{c,i}\,\phi_{r}\\
+V_i^{\mathrm{walk}} &= \mathrm{ASC}_{\mathrm{walk}} + \beta_t\,\mu\,t^{\mathrm{walk}}_i, \qquad t^{\mathrm{walk}}_i < T_{\mathrm{walk}}\\
+V_i^{\mathrm{bike}} &= \mathrm{ASC}_{\mathrm{bike}} + \beta_t\,\mu_{b}\,t^{\mathrm{bike}}_i, \qquad t^{\mathrm{bike}}_i < T_{\mathrm{bike}}
+\end{aligned} \tag{8}$$
+<p>\(\bar t^{\mathrm{in}}_i = \tfrac12(t^{\mathrm{AM}}_i + t^{\mathrm{PM}}_i)\) is the congested in-map car time from the cheapest
+inlet of the agent's home region (Eq. 13), \(\mu\) the walk/wait time multiplier, \(t^{\mathrm{acc}}_i\) the station-to-office
+walk and \(\phi_r\) the BART fare. Car is unavailable (\(V=-\infty\)) without a car or without a reachable parking node. The money
+coefficient converts the time coefficient with the agent's value of time:</p>
+$$\beta_{c,i} = \frac{60\,\beta_t}{\mathrm{VOT}\cdot m_{k(i)}},\qquad
+  c^{\mathrm{car}}_i = \tfrac12 c^{\mathrm{park}} + \tfrac12 c^{\mathrm{toll}}_r + c^{\mathrm{voc}}\,(\ell_r + \ell_0) + c^{\mathrm{charge}}_i + c^{\mathrm{plug}}_i \tag{9}$$
+<p>where \(m_k\) scales VOT by income tier \(k\) and \(\ell_r\) is the out-of-map mileage. Choice is the argmax of utility plus the
+agent's persistent Gumbel draw, which is an exact sample from the logit probabilities:</p>
+$$m_i = \arg\max_{m}\big(V_i^{m} + \varepsilon_{im}\big),\quad \varepsilon_{im}\sim\mathrm{Gumbel}(0,1)
+\;\;\Longleftrightarrow\;\; P_i(m) = \frac{e^{V_i^m}}{\sum_{m'} e^{V_i^{m'}}} \tag{10}$$
+<p>\(\beta_t\) is set in the engine defaults (it is not one of the sourced research parameters); the cited regional models use
+work-tour in-vehicle-time coefficients of -0.0134 (MTC TM1) <span class=cite>[<a href="#ref-24">24</a>]</span> and -0.016 utils/min (SFCTA ActivitySim) <span class=cite>[<a href="#ref-25">25</a>]</span>.</p>
+<h3>Calibration of the alternative-specific constants</h3>
+<p>Transit is the reference alternative. During the cold start the ASCs are updated after each block of replanning days
+by the standard log-ratio correction toward the target worker split \(\sigma^{*}\):</p>
+$$\mathrm{ASC}_m \leftarrow \mathrm{ASC}_m + \ln\frac{\sigma^{*}_m}{\hat\sigma_m} - \ln\frac{\sigma^{*}_{\mathrm{tr}}}{\hat\sigma_{\mathrm{tr}}},\qquad m\in\{\mathrm{car},\mathrm{walk},\mathrm{bike}\} \tag{11}$$
+<p>Four blocks of 4 days are followed by 10 settling days (26 days in all). The target split is an
+<b>assumed</b> downtown worker split (car = drive alone + carpool, renormalized without "other" and WFH); it is not a cited
+value. For context, the two sourced splits it sits between: ACS 2024 SF-County workplace commuters drive alone 42.1%,
+carpool 8.5%, transit 34.2%, walk 8.6%, bike 3.3% <span class=cite>[<a href="#ref-26">26</a>]</span>; SFCTA downtown trips (2023) auto 36.9%,
+transit 20.9%, walk+bike 39.7% <span class=cite>[<a href="#ref-27">27</a>]</span>.</p>
+<div class=tw><table><thead><tr><th>Mode</th><th>Target (assumed)</th><th>Model (baseline)</th><th>Residual</th><th>Estimated ASC</th></tr></thead><tbody><tr><td>car</td><td class=num>34.4%</td><td class=num>35.1%</td><td class=num>+0.7 pp</td><td class=num>0.260</td></tr><tr><td>transit</td><td class=num>48.4%</td><td class=num>49.7%</td><td class=num>+1.3 pp</td><td class=num>0 (reference)</td></tr><tr><td>walk</td><td class=num>12.9%</td><td class=num>11.1%</td><td class=num>−1.8 pp</td><td class=num>3.261</td></tr><tr><td>bike</td><td class=num>4.3%</td><td class=num>4.2%</td><td class=num>−0.1 pp</td><td class=num>−1.716</td></tr></tbody></table></div>
+<figure class=fig id=fig-cal></figure>
+<div class=tw><table class="ptab"><thead><tr><th>Parameter</th><th>Symbol</th><th>Value</th><th>Unit</th><th>Status</th><th>Source</th></tr></thead><tbody><tr><td><code>vot_personal_usd_per_hr</code></td><td>\(\mathrm{VOT}\)</td><td class=pv>21.8<div class=rng>range 19.4 … 28.2</div></td><td>USD(2024)/person-hour</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-28">28</a>]</span> <span class=srct>Caltrans, 2026 INFRA Cal-B/C vs Federal (USDOT BCA guidance) comparis…</span></td></tr><tr><td><code>walk_wait_time_multiplier</code></td><td>\(\mu\)</td><td class=pv>2<div class=rng>range 1.5 … 2.65</div></td><td>x in-vehicle VOT</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-28">28</a>]</span> <span class=srct>Caltrans, 2026 INFRA Cal-B/C vs Federal (USDOT BCA guidance) comparis…</span></td></tr><tr><td><code>daily_parking_cost_fidi_usd</code></td><td>\(c^{\mathrm{park}}\)</td><td class=pv>22<div class=rng>range 22 … 40</div></td><td>USD/day</td><td><span class="badge data">data</span></td><td><span class=cite>[<a href="#ref-29">29</a>]</span> <span class=srct>SFMTA Golden Gateway Garage (250 Clay St) rates</span></td></tr><tr><td><code>bart_fare_usd</code></td><td>\(\phi_r\)</td><td class=pv>east_bay: 6.33; peninsula: 5.07; sf: 2.85; sf_bart: 2.55; north_bay: 8</td><td>USD one-way (Clipper)</td><td><span class="badge data">data</span></td><td><span class=cite>[<a href="#ref-30">30</a>]</span> <span class=srct>BART GTFS feed v72 (fare_rules/fare_attributes, valid 2026-01-12..202…</span></td></tr><tr><td><code>bridge_toll_usd</code></td><td>\(c^{\mathrm{toll}}\)</td><td class=pv>8.5<div class=rng>range 8 … 8.5</div></td><td>USD</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-31">31</a>]</span> <span class=srct>Bay Bridge toll schedule 2026 (Wikipedia infobox; primary BATA page n…</span></td></tr><tr><td><code>vehicle_operating_cost_usd_per_mile</code></td><td>\(c^{\mathrm{voc}}\)</td><td class=pv>0.58<div class=rng>range 0.41 … 0.8</div></td><td>USD(2024)/mile</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-28">28</a>]</span> <span class=srct>Caltrans, 2026 INFRA Cal-B/C vs Federal (USDOT BCA guidance) comparis…</span></td></tr><tr><td><code>mtc_tm1_ivt_coef_work_per_min</code></td><td></td><td class=pv>-0.0134</td><td>utils/min</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-24">24</a>]</span> <span class=srct>MTC Travel Model One, ModeChoice.xls (work tours)</span></td></tr><tr><td><code>sfcta_ivt_coef_work_per_min</code></td><td></td><td class=pv>-0.016</td><td>utils/min</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-25">25</a>]</span> <span class=srct>SFCTA ActivitySim tour mode choice coefficients (work)</span></td></tr><tr><td><code>sf_county_worker_mode_share_acs2024</code></td><td></td><td class=pv>drive_alone: 0.421; carpool: 0.085; transit: 0.342; walk: 0.086; bike: 0.033; other: 0.034; wfh: 0.159</td><td>share of commuters excl. WFH (wfh = share of all workers)</td><td><span class="badge data">data</span></td><td><span class=cite>[<a href="#ref-26">26</a>]</span> <span class=srct>ACS 2024 1-year, Table B08601 Means of Transportation to Work for Wor…</span></td></tr><tr><td><code>downtown_trip_mode_share_sfcta</code></td><td></td><td class=pv>y2019: auto: 0.245; transit: 0.279; walk_bike: 0.434; tnc: 0.042; y2023: auto: 0.369; transit: 0.209; walk_bike: 0.397; tnc: 0.025</td><td>share of trips to/from/within Downtown</td><td><span class="badge data">data</span></td><td><span class=cite>[<a href="#ref-27">27</a>]</span> <span class=srct>SFCTA, Downtown Travel Study (May 2025), Executive Summary</span></td></tr></tbody></table></div>
+</section><section id="assignment"><h2><span class=sn>6</span>Network assignment</h2>
+<p>Cars are assigned per hour of day \(h\) on the directed OSM car graph. Link travel time follows the BPR function
+<span class=cite>[<a href="#ref-32">32</a>]</span>, with modeled agent volume inflated by the share \(\sigma_{\mathrm{bg}}\) of traffic not represented by agents
+(taxis/TNC, freight, buses) and capped at \(f_{\max}\):</p>
+$$f_e(h) = \min\!\Big(1 + \alpha\Big(\frac{x_e(h)}{(1-\sigma_{\mathrm{bg}})\,C_e}\Big)^{\beta},\; f_{\max}\Big),\qquad
+  C_e = n^{\mathrm{lanes}}_e\,\bar C_{\mathrm{class}(e)},\qquad \tau_e(h) = \tau^{0}_e\, f_e(h)\,\chi_e \tag{12}$$
+<p>\(\chi_e\) is the product of plugin edge factors (Eq. 30). A car edge closed in a plan is removed from the graph; parking is
+restricted to the main strongly connected component of the open graph so every driver can enter and leave.</p>
+<p><b>Inlets and routing.</b> 62 car inlets are generated from every road crossing the map edge. A home region may use
+a set of inlets \(\mathcal I_r\), each with a head-start cost \(o_{ri}\) (extra outside minutes plus a road-class penalty).
+One multi-source Dijkstra tree per (region, hour) gives every node its cheapest entry:</p>
+$$t^{\mathrm{AM}}_{i} = \min_{k\in\mathcal I_{r(i)}}\big(o_{rk} + \mathrm{SP}_h(k \to p_i)\big),\qquad
+  t^{\mathrm{PM}}_{i} = \min_{k\in\mathcal I_{r(i)}}\big(o_{rk} + \mathrm{SP}_h(p_i \to k)\big) \tag{13}$$
+<p>with \(p_i\) the parking node. A virtual super-source links to every entry with its offset, so a closure moves drivers to
+another inlet. Edge volumes \(x_e(h)\) are accumulated by subtree sums over each tree (no per-trip path walk), each agent
+carrying \(s/\omega\) vehicles (\(\omega\) persons per commuter car). An inlet toll enters the AM tree as time at VOT.</p>
+<h3>Replanning and MSA</h3>
+<p>Day \(k\) re-runs mode choice on the current link factors, loads cars, and averages volumes by the method of successive
+averages <span class=cite>[<a href="#ref-33">33</a>]</span>; plans are warm-started from the calibrated state, which counts as the first iterate:</p>
+$$\bar{\mathbf x}_{k} = \bar{\mathbf x}_{k-1} + \frac{1}{k+1}\big(\mathbf x_k - \bar{\mathbf x}_{k-1}\big),\qquad
+  \mathbf f_k = \mathrm{BPR}(\bar{\mathbf x}_k) \tag{14}$$
+$$\mathrm{gap}_k = \frac{\sum_{h,e}\big|\bar x_{k,he} - \bar x_{k-1,he}\big|}{\sum_{h,e}\bar x_{k-1,he}},\qquad
+  \text{converged} \iff \mathrm{gap}_{K} < 0.03,\quad K = 5 \tag{15}$$
+<p>This is a relative change in averaged flows, not a Wardrop relative gap <span class=cite>[<a href="#ref-34">34</a>]</span>; it measures how much the averaged state
+still moves. After day \(K\) one more choice + loading pass produces the reported day. Measured per-day gaps
+(engine run at build time):</p>
+<figure class=fig id=fig-gap></figure>
+<p class=note><b>Honest reading.</b> Neither run meets the 0.03 criterion at day 5: the baseline ends at 0.0363, the 2nd St plan at
+0.0404, and both results carry <code>"converged": false</code> in the API. The gap rises on day 2 because the first day's mode
+shift is absorbed into the average at weight 1/2. Plans are scored as differences against a baseline settled by the same
+procedure, which cancels part of the residual movement, but not all of it.</p>
+<div class=tw><table class="ptab"><thead><tr><th>Parameter</th><th>Symbol</th><th>Value</th><th>Unit</th><th>Status</th><th>Source</th></tr></thead><tbody><tr><td><code>bpr_alpha</code></td><td>\(\alpha\)</td><td class=pv>0.15<div class=rng>range 0.15 … 1.12</div></td><td>-</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-35">35</a>]</span> <span class=srct>Bureau of Public Roads (1964) volume-delay function; FHWA HPMS Append…</span></td></tr><tr><td><code>bpr_beta</code></td><td>\(\beta\)</td><td class=pv>4<div class=rng>range 4 … 6</div></td><td>-</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-35">35</a>]</span> <span class=srct>BPR (1964); FHWA HPMS Appendix N</span></td></tr><tr><td><code>lane_capacity_vph</code></td><td>\(\bar C_{\mathrm{class}}\)</td><td class=pv>motorway: 2050; motorway_link: 1450; trunk: 1450; primary: 900; secondary: 800; tertiary: 650; residential: 600; unclassified: 600; living_street: 300</td><td>veh/hour/lane</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-36">36</a>]</span> <span class=srct>MTC Travel Model One SpeedCapacity_1hour.block (area type 0 = regiona…</span></td></tr><tr><td><code>urban_free_flow_speed_kmh</code></td><td></td><td class=pv>motorway: 88; motorway_link: 48; trunk: 64; primary: 32; secondary: 32; tertiary: 28; residential: 24; unclassified: 24; living_street: 10</td><td>km/h</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-36">36</a>]</span> <span class=srct>MTC Travel Model One SpeedCapacity_1hour.block free-flow speeds, regi…</span></td></tr><tr><td><code>downtown_arterial_speed_mph_2025</code></td><td></td><td class=pv>am: 12.9; pm: 11.5</td><td>mph</td><td><span class="badge data">data</span></td><td><span class=cite>[<a href="#ref-37">37</a>]</span> <span class=srct>SFCTA Congestion Management Program 2025, Fig 4-3</span></td></tr><tr><td><code>bay_bridge_aadt</code></td><td></td><td class=pv>231,000</td><td>vehicles/day (two-way)</td><td><span class="badge data">data</span></td><td><span class=cite>[<a href="#ref-38">38</a>]</span> <span class=srct>Caltrans Traffic Census AADT (2024), SF-Oakland Bay Bridge toll plaza</span></td></tr></tbody></table></div>
+</section><section id="evaporation"><h2><span class=sn>7</span>Traffic evaporation and trip suppression</h2>
+<p>Removing road capacity does not simply move all traffic elsewhere; part of it disappears <span class=cite>[<a href="#ref-39">39</a>]</span>. The engine represents
+this in two ways. <b>Commuter suppression:</b> in a plan, a worker who drives and whose in-map car time rose against the baseline
+skips the car trip (works from home, combines trips) with probability</p>
+$$p^{\mathrm{gone}}_i = \operatorname{clip}\!\Big(-\varepsilon_{T}\,\frac{\max(0,\;\bar t^{\mathrm{in}}_i - \bar t^{\mathrm{in,base}}_i)}{t^{\mathrm{out}}_r + \bar t^{\mathrm{in,base}}_i},\; 0,\; p_{\max}\Big),
+\qquad \text{gone}_i = \mathbb 1\big[u_i < p^{\mathrm{gone}}_i\big] \tag{16}$$
+<p>with \(\varepsilon_T = -0.5\) the short-run elasticity of car trips with respect to travel time <span class=cite>[<a href="#ref-40">40</a>]</span> and \(u_i\) a fixed
+per-agent uniform. <b>Through-traffic:</b> each through vehicle compares crossing the area with a freeway bypass:</p>
+$$\text{stay}_i \iff \beta_t\,t^{\mathrm{thr}}_i + \beta_{c,i}\,c^{\mathrm{plug}}_i + \varepsilon_{i0} \;>\; \beta_t\big(t^{\mathrm{free}}_i + t^{\mathrm{byp}}\big) + \varepsilon_{i1} \tag{17}$$
+<p>and in a plan is additionally suppressed by Eq. 16 with denominator \(t^{\mathrm{thr,base}}_i + t_0\). Validation against the
+Cairns et al. definition (Δ area traffic ÷ prior traffic on the treated street) for car-free Market St gives
+<b>−3.26</b> against a median of <b>−0.11</b>. The model ratio is unstable because its denominator, private-car VMT on the
+pre-2020 Market St (where forced turns already made through-driving impractical), is small; see Section 12.</p>
+<div class=tw><table class="ptab"><thead><tr><th>Parameter</th><th>Symbol</th><th>Value</th><th>Unit</th><th>Status</th><th>Source</th></tr></thead><tbody><tr><td><code>car_trip_time_elasticity</code></td><td>\(\varepsilon_T\)</td><td class=pv>-0.5<div class=rng>range -1 … -0.22</div></td><td>elasticity</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-40">40</a>]</span> <span class=srct>Litman (VTPI), Transportation Elasticities; Goodwin (1996) Empirical…</span></td></tr><tr><td><code>traffic_evaporation_median</code></td><td></td><td class=pv>-0.106<div class=rng>range -0.22 … -0.05</div></td><td>fraction of treated road's prior traffic</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-41">41</a>]</span> <span class=srct>Cairns, Atkins &amp; Goodwin (2002), Disappearing traffic? The story so f…</span></td></tr><tr><td><code>cairns_central_shopping_median</code></td><td></td><td class=pv>-0.137</td><td>fraction</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-41">41</a>]</span> <span class=srct>Cairns et al. (2002)</span></td></tr><tr><td><code>parking_price_elasticity_vehicle_trips</code></td><td></td><td class=pv>-0.3<div class=rng>range -0.54 … -0.1</div></td><td>elasticity</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-40">40</a>]</span> <span class=srct>Litman (VTPI), Transportation Elasticities</span></td></tr></tbody></table></div>
+</section><section id="social"><h2><span class=sn>8</span>Social ties: co-presence model</h2>
+<p>Encounters are counted from co-presence. Every destination visit \((i, j, t, d)\) occupies time bins of width \(\Delta\) at POI \(j\).
+In a bin with \(n_{jb}\) agents (\(N_{jb} = s\,n_{jb}\) people), each person registers at most \(K\) others:</p>
+$$E = \sum_{j,b} \tfrac12\,N_{jb}\,\min(N_{jb}-1,\,K) \;+\; E^{\mathrm{street}},\qquad
+  E^{\mathrm{hab}} = \sum_{j,b} \tfrac12\,N_{jb}\min(N_{jb}-1,K)\,\frac{n^{\mathrm{hab}}_{jb}}{n_{jb}} + \theta\,E^{\mathrm{street}} \tag{18}$$
+<p>\(n^{\mathrm{hab}}\) counts habitual agents (workers and residents, who repeat their routine). On car-free edges a share \(\delta\)
+of passers-by lingers and meets others in the same way:</p>
+$$E^{\mathrm{street}} = \sum_{h}\sum_{e\,\in\,\mathrm{cf}} \tfrac12\,L_{eh}\,\min\!\big(\max(L_{eh}-1,0),K\big),\qquad L_{eh} = \delta\,f^{\mathrm{ped}}_{e}(h) \tag{19}$$
+<p>Repeated co-presence turns into weak ties <span class=cite>[<a href="#ref-42">42</a>]</span> at rate \(p_{\mathrm{tie}}\) per repeat, with \(R\) repeat days out of \(D\)
+workdays (time-binned co-location as a proximity proxy follows <span class=cite>[<a href="#ref-43">43</a>]</span>):</p>
+$$\Delta T^{\mathrm{weak}} = E^{\mathrm{hab}}\;p_{\mathrm{tie}}\;\frac{R}{D}\quad[\text{ties/yr}] \tag{20}$$
+<p><b>Neighbouring.</b> Residents' friends on their own street fall with traffic, following Appleyard's San Francisco street study
+<span class=cite>[<a href="#ref-44">44</a>]</span> (3.0 / 1.3 / 0.9 friends per resident on light / moderate / heavy streets). With \(A_e\) the daily
+vehicles on the resident's home edge (agents plus background), \(F(A)\) is piecewise-linear through those three levels at
+breakpoints \(A_1<A_2<A_3\):</p>
+$$N^{\mathrm{nbr}} = s\sum_{i\in\mathrm{res}} F\big(A_{e(i)}\big) \tag{21}$$
+<p>Baseline: 3,552,723 encounters per weekday, 12,425 new weak ties per year, 98,078 neighbour friendships.</p>
+<div class=tw><table class="ptab"><thead><tr><th>Parameter</th><th>Symbol</th><th>Value</th><th>Unit</th><th>Status</th><th>Source</th></tr></thead><tbody><tr><td><code>appleyard_friends_by_traffic</code></td><td></td><td class=pv>light: 3; moderate: 1.3; heavy: 0.9</td><td>friends per resident on the street</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-45">45</a>]</span> <span class=srct>Appleyard (1981) Livable Streets, via Streetfilms video transcript; s…</span></td></tr></tbody></table></div>
+</section><section id="valuation"><h2><span class=sn>9</span>Economic and valuation model</h2>
+<p>City Value is the annualized change of a plan against the baseline, itemized by pillar: mobility, social, economy and environment.
+Health is deliberately not valued: physical-activity benefits (WHO HEAT × VSL) dominated every total, so active minutes and
+deaths averted are reported as plain metrics only. Crash costs are likewise not monetized. With \(D\) workdays per year:</p>
+<p><b>Mobility</b> is the change in commuter consumer surplus, the logit log-sum converted to dollars <span class=cite>[<a href="#ref-23">23</a>]</span>, computed on
+physical (bonus-free) walking distances so that a street's amenity is not counted both as time saved and as street life:</p>
+$$\mathrm{CS}_i = \frac{1}{-\beta_{c,i}}\,\ln\sum_{m\in\mathcal A_i} e^{V^{\mathrm{w}}_{im}} \quad[\$/\text{trip}] \tag{22}$$
+$$\Delta\mathcal V_{\mathrm{mob}} = 2sD\sum_{i\in\mathrm{workers}}\big(\mathrm{CS}^{\mathrm{plan}}_i - \mathrm{CS}^{\mathrm{base}}_i\big)
+  \;-\; sD\,\mathrm{VOT}\sum_{i\in\mathrm{thr}}\frac{\Delta t^{\mathrm{thr}}_i}{60} \;-\; D\,\mathrm{VOT}\,\psi\,\frac{\sigma_{\mathrm{bg}}}{1-\sigma_{\mathrm{bg}}}\,\Delta H^{\mathrm{delay}} \tag{23}$$
+<p>where a through vehicle that switches to the bypass is charged \(t^{\mathrm{byp}}\), and \(\Delta H^{\mathrm{delay}}\) is the change in
+agent vehicle-hours of delay, scaled to background traffic with weight \(\psi\).</p>
+<p><b>Environment:</b> CO₂ from in-map VMT (agents + background) and out-of-map commute VMT, at the social cost of carbon:</p>
+$$\Delta\mathcal V_{\mathrm{env}} = -D\,\mathrm{SCC}\;\frac{e_{\mathrm{CO_2}}}{1000}\;\Delta\Big(\mathrm{VMT}^{\mathrm{in}}\tfrac{1}{1-\sigma_{\mathrm{bg}}} + \mathrm{VMT}^{\mathrm{out}}\Big) \tag{24}$$
+<p><b>Economy:</b> local value added on the net-new part of revenue, the city's share of sales tax, charge and parking revenue (a transfer
+to the city) and property tax on new floor area \(\Delta F\):</p>
+$$\Delta\mathcal V_{\mathrm{eco}} = D\,\Delta\mathrm{Rev}\,\big(\nu\,\eta + t_{\mathrm{city}}\big) + D\,\Delta\mathrm{Charges} + \Delta F\,P_{\mathrm{assessed}}\,t_{\mathrm{prop}} \tag{25}$$
+<p><b>Social:</b> weak ties and chance encounters at a per-tie and per-encounter value \(\upsilon_{\mathrm{tie}}, \upsilon_{\mathrm{enc}}\), neighbour
+friendships at half a tie:</p>
+$$\Delta\mathcal V_{\mathrm{soc}} = \upsilon_{\mathrm{tie}}\,\Delta T^{\mathrm{weak}} + D\,\upsilon_{\mathrm{enc}}\,\Delta E + \tfrac12\,\upsilon_{\mathrm{tie}}\,\Delta N^{\mathrm{nbr}} \tag{26}$$
+$$\mathcal V = \Delta\mathcal V_{\mathrm{mob}} + \Delta\mathcal V_{\mathrm{soc}} + \Delta\mathcal V_{\mathrm{eco}} + \Delta\mathcal V_{\mathrm{env}} \tag{27}$$
+<p>Rent pressure is reported beside the total as a trade-off and not monetized. The map client shows the engine's itemized
+<code>value</code> when it is online; its offline fallback is a simplified toy and is not described here.</p>
+<h3>Worked example: 2nd Street (Market → Folsom) car-free (hero plan <code>84731cbe0c91</code>)</h3>
+<p>Total <b>+$1.79M/yr</b>: mobility −$1.36M, social +$1.44M, economy +$1.52M, environment +$190.8k. Every line as the engine itemizes it:</p>
+<div class=tw><table><thead><tr><th>Pillar</th><th>Line</th><th>Quantity</th><th>$/yr</th></tr></thead><tbody><tr><td>mobility</td><td>Commuter time &amp; cost (logit consumer surplus)</td><td class=num>-4,449.5 $/day</td><td class="num neg">−$1.11M</td></tr><tr><td>mobility</td><td>Through-traffic travel time</td><td class=num>-3.2 veh-h/day</td><td class="num neg">−$17.3k</td></tr><tr><td>mobility</td><td>Delay to other traffic (taxis, freight, buses)</td><td class=num>-35.9 veh-h/day</td><td class="num neg">−$235.1k</td></tr><tr><td>environment</td><td>CO₂ (social cost of carbon)</td><td class=num>6.4 t/day</td><td class="num pos">+$190.8k</td></tr><tr><td>economy</td><td>Local value added from business revenue (net new share)</td><td class=num>21,337.0 $/day</td><td class="num pos">+$1.47M</td></tr><tr><td>economy</td><td>City sales-tax revenue</td><td class=num>21,337.0 $/day</td><td class="num pos">+$53.3k</td></tr><tr><td>economy</td><td>Congestion charge / parking revenue to the city (transfer)</td><td class=num>0.0 $/day</td><td class="num ">$0.00</td></tr><tr><td>economy</td><td>Property tax on new floor area</td><td class=num>0.0 m²</td><td class="num ">$0.00</td></tr><tr><td>social</td><td>New acquaintances formed (weak ties)</td><td class=num>241.3 ties/yr</td><td class="num pos">+$265.4k</td></tr><tr><td>social</td><td>Chance encounters in shared places</td><td class=num>84,494.7 /day</td><td class="num pos">+$1.06M</td></tr><tr><td>social</td><td>Neighbouring on calmer streets (Appleyard)</td><td class=num>218.9 friendships</td><td class="num pos">+$120.4k</td></tr></tbody></table></div>
+<div class=tw><table class="ptab"><thead><tr><th>Parameter</th><th>Symbol</th><th>Value</th><th>Unit</th><th>Status</th><th>Source</th></tr></thead><tbody><tr><td><code>vot_personal_usd_per_hr</code></td><td>\(\mathrm{VOT}\)</td><td class=pv>21.8<div class=rng>range 19.4 … 28.2</div></td><td>USD(2024)/person-hour</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-28">28</a>]</span> <span class=srct>Caltrans, 2026 INFRA Cal-B/C vs Federal (USDOT BCA guidance) comparis…</span></td></tr><tr><td><code>co2_kg_per_vmt</code></td><td>\(e_{\mathrm{CO_2}}\)</td><td class=pv>0.4</td><td>kg CO2/vehicle-mile</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-46">46</a>]</span> <span class=srct>US EPA, Greenhouse Gas Emissions from a Typical Passenger Vehicle</span></td></tr><tr><td><code>scc_usd_per_tonne</code></td><td>\(\mathrm{SCC}\)</td><td class=pv>120<div class=rng>range 120 … 340</div></td><td>USD(2020)/tCO2</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-47">47</a>]</span> <span class=srct>EPA 2023 SC-GHG report (via RFF primer)</span></td></tr><tr><td><code>retail_value_added_share</code></td><td>\(\nu\)</td><td class=pv>0.55<div class=rng>range 0.25 … 0.63</div></td><td>fraction of revenue</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-48">48</a>]</span> <span class=srct>BEA GDP by industry: accommodation &amp; food services value added (FRED)…</span></td></tr><tr><td><code>city_share_of_sales_tax</code></td><td>\(t_{\mathrm{city}}\)</td><td class=pv>0.01<div class=rng>range 0.0075 … 0.01</div></td><td>fraction of taxable sales</td><td><span class="badge literature">literature</span></td><td><span class=cite>[<a href="#ref-49">49</a>]</span> <span class=srct>Bradley-Burns Uniform Local Sales and Use Tax</span></td></tr><tr><td><code>sf_sales_tax_rate</code></td><td></td><td class=pv>0.08625</td><td>fraction</td><td><span class="badge data">data</span></td><td><span class=cite>[<a href="#ref-49">49</a>]</span> <span class=srct>CDTFA, California City &amp; County Sales &amp; Use Tax Rates</span></td></tr></tbody></table></div>
+</section><section id="equity"><h2><span class=sn>10</span>Who wins, who pays: ledger and equity map</h2>
+<p>The mobility line of Eq. 23 is a sum over people, so it can be split. For a group \(G\) of workers (home region × income tier),
+matched by agent id between baseline and plan:</p>
+$$\Delta\mathcal V_G = 2sD\sum_{i\in G}\Delta\mathrm{CS}_i,\qquad
+  \overline{\Delta\mathcal V}_G = \frac{2D}{|G|}\sum_{i\in G}\Delta\mathrm{CS}_i\quad[\$/\text{yr per person}],\qquad
+  \sum_G \Delta\mathcal V_G = \Delta\mathcal V_{\mathrm{commuters}} \tag{28}$$
+<p>Travel time is the time term of the agent's chosen mode in Eq. 8 on physical distances, both legs; money is that mode's
+out-of-pocket cost from Eq. 9 (car) or the fare (transit), both legs. Both are averaged over agents who travel in both runs.
+Check: the groups sum to <b>−$1.11M</b>/yr, the engine's commuter consumer-surplus line is <b>−$1.11M</b>/yr.
+This ledger covers commuters only: through-traffic, background traffic and the non-mobility pillars are not attributed to groups.</p>
+<figure class=fig><div id=eqmap></div><figcaption><b>Figure 4.</b> Equity map, 2nd Street (Market → Folsom) car-free vs baseline. Schematic Bay Area, not to scale.
+Bubble area ∝ people represented; colour = mean Δ$/yr per person (diverging, red = loses, green = gains, grey ≈ 0). Hover a region for its income tiers.</figcaption></figure>
+<div class=tw><table id=ledger class=sortable><thead><tr>
+<th data-k=region_name>Home region</th><th data-k=tier>Income</th><th data-k=people class=num>People</th>
+<th data-k=car_b class=num>Car share base → plan</th><th data-k=switchers class=num>Switchers</th>
+<th data-k=dt_min_day class=num>Δ min/day</th><th data-k=dcost_usd_day class=num>Δ $/day cost</th>
+<th data-k=dcs_usd_yr_pp class=num>Δ $/yr per person</th><th data-k=dcs_usd_yr_total class=num>Group Δ $/yr</th></tr></thead><tbody></tbody></table></div>
+<p class=note>Click a column to sort. Switchers = people whose mode (or skip) differs between runs. Most losses come from drivers and
+would-be drivers facing traffic diverted from 2nd St; the log-sum also counts the worsened car option for people who did not drive.</p>
+</section><section id="policy"><h2><span class=sn>11</span>Policy plugin calculus and the Droid verification gate</h2>
+<p>Besides built-in levers (street closures, rezoning, density, congestion charge, parking price), new policies are Python modules
+written by the Droid policy compiler. A module declares <code>KIND</code>, <code>PARAMS</code> (with defaults and bounds) and any of three
+pure-numpy hooks over read-only views of agents, edges and POIs. For active plugins \(p\in\mathcal P\), effects compose as</p>
+$$c^{\mathrm{plug}}_i = \sum_{p\in\mathcal P} c_{p,i},\qquad c_{p,i}\in[-100,\,500]\;\$ \;\;\text{(car\_cost\_usd: per one-way car trip)} \tag{29}$$
+$$\chi_e = \prod_{p\in\mathcal P}\chi_{p,e},\qquad \alpha_j = \prod_{p\in\mathcal P}\alpha_{p,j},\qquad \chi_{p,e},\alpha_{p,j}\in[0.05,\,20] \tag{30}$$
+<p>\(c^{\mathrm{plug}}\) enters the car utility (Eq. 9), the through-traffic stay/bypass choice (Eq. 17) and charges paid;
+\(\chi\) multiplies car link costs (Eq. 12); \(\alpha\) multiplies Huff attractiveness (Eq. 4). Parameters are clipped to their declared
+bounds, arrays are checked for shape and finiteness, and out-of-range values abort the scenario. Only modules recorded in
+<code>approved.json</code> are registered.</p>
+<h3>Gate (<code>backend/droid/gate.py</code>)</h3>
+<p>A generated policy must pass six checks, in order, before a human can approve it:</p>
+<div class=tw><table><thead><tr><th>#</th><th>Check</th><th>Condition</th></tr></thead><tbody>
+<tr><td>1</td><td>files</td><td><code>generated/&lt;kind&gt;.py</code> and <code>test_&lt;kind&gt;.py</code> exist</td></tr>
+<tr><td>2</td><td>static</td><td>AST scan: imports limited to numpy, math (tests also pytest, hp.policies); no <code>open/exec/eval/compile/__import__/getattr</code>…, no I/O or randomness attributes (<code>random, load, save, system, environ</code>…), no dunder attributes</td></tr>
+<tr><td>3</td><td>load</td><td>imports with sockets disabled; <code>KIND</code> matches; <code>PARAMS</code> and <code>EXAMPLE</code> are dicts</td></tr>
+<tr><td>4</td><td>pytest</td><td>the generated test and the full engine suite pass</td></tr>
+<tr><td>5</td><td>determinism</td><td>same edits evaluated twice give identical metrics (JSON equality)</td></tr>
+<tr><td>6</td><td>sanity</td><td>all metrics finite; \(\mathrm{VMT},\mathrm{Rev},\mathrm{Visits}\in[0.5,1.5]\times\) baseline, \(\mathrm{People}\in[0.8,1.2]\times\); delay ≥ 0; at least one headline metric changes</td></tr>
+</tbody></table></div>
+$$\mathrm{pass} = \bigwedge_{k=1}^{6}\mathrm{check}_k,\qquad \frac{m^{\mathrm{policy}}}{m^{\mathrm{base}}}\in[\ell_m,u_m]\;\;\forall m\in\{\mathrm{VMT},\mathrm{Rev},\mathrm{Visits},\mathrm{People}\} \tag{31}$$
+</section><section id="validation"><h2><span class=sn>12</span>Calibration and validation</h2>
+<p>Two kinds of evidence are kept apart. <b>Calibrated</b> rows were fitted on purpose (the three ASCs, Eq. 11) and show the fit only.
+<b>Validation</b> rows were not fitted: the model was not tuned to hit them, and differences are reported as they come out. Rows
+below are from <code>research/validation/validation.json</code>, generated by <code>backend/hp/validation.py</code>
+(one weekday, 14,140 agents at 21 people per agent). Observed values are research parameters with status data or literature.</p>
+<h3>Mode split (calibrated)</h3>
+<div class=tw><table><thead><tr><th>Quantity</th><th>Model</th><th>Observed / literature</th><th>Source</th><th>Notes</th></tr></thead><tbody><tr><td>Commute mode share: car</td><td class=num>+35.1%</td><td class=num>+34.4%</td><td>assumed target (Section 5)</td><td class=note2>calibrated (ASCs)</td></tr><tr><td>Commute mode share: transit</td><td class=num>+49.7%</td><td class=num>+48.4%</td><td>assumed target (Section 5)</td><td class=note2>calibrated (ASCs)</td></tr><tr><td>Commute mode share: walk</td><td class=num>+11.1%</td><td class=num>+12.9%</td><td>assumed target (Section 5)</td><td class=note2>calibrated (ASCs)</td></tr><tr><td>Commute mode share: bike</td><td class=num>+4.2%</td><td class=num>+4.3%</td><td>assumed target (Section 5)</td><td class=note2>calibrated (ASCs)</td></tr></tbody></table></div>
+<h3>Car-free Market Street, Jan 29 2020 (validation)</h3>
+<p>Counterfactual: Market St reopened to private cars as before 2020 (with the forced turns modeled as a travel-time factor on the
+reopened edges) against today's car-free Market St <span class=cite>[<a href="#ref-50">50</a>]</span> <span class=cite>[<a href="#ref-51">51</a>]</span>.</p>
+<div class=tw><table><thead><tr><th>Quantity</th><th>Model</th><th>Observed / literature</th><th>Source</th><th>Notes</th></tr></thead><tbody><tr><td>Muni speed on Market St</td><td class=num>+0.0%</td><td class=num>+6.0%</td><td><span class=cite>[<a href="#ref-52">52</a>]</span></td><td class=note2>bus time index = 1 + 0.25·(car congestion − 1) on Market edges</td></tr><tr><td>Worst parallel-street slowdown (Mission Street)</td><td class=num>+4.8%</td><td class=num>+4.0%</td><td><span class=cite>[<a href="#ref-53">53</a>]</span></td><td class=note2>AM-peak travel-time factor, length-weighted</td></tr><tr><td>Cycling on Market St</td><td class=num>+97.6%</td><td class=num>+25.0%</td><td><span class=cite>[<a href="#ref-52">52</a>]</span></td><td class=note2>bike agent-trips over Market edges</td></tr><tr><td>Traffic evaporation (Δ area VMT ÷ prior VMT on Market St)</td><td class=num>−3.26</td><td class=num>−0.11</td><td><span class=cite>[<a href="#ref-41">41</a>]</span></td><td class=note2>Cairns et al. definition; median of 63 cases, range roughly −100% to +25%</td></tr><tr><td>Car traffic in the whole study area (VMT)</td><td class=num>−0.6%</td><td class=num>—</td><td></td><td class=note2>context: share of all area traffic</td></tr></tbody></table></div>
+<figure class=fig id=fig-val></figure>
+<h3>Pedestrianizing 2nd St, Market → Folsom (validation)</h3>
+<div class=tw><table><thead><tr><th>Quantity</th><th>Model</th><th>Observed / literature</th><th>Source</th><th>Notes</th></tr></thead><tbody><tr><td>Foot traffic on the treated street</td><td class=num>+24.6%</td><td class=num>+29.0%</td><td><span class=cite>[<a href="#ref-54">54</a>]</span></td><td class=note2>people/day on 2nd St Market→Folsom</td></tr><tr><td>Revenue of 19 businesses fronting the street</td><td class=num>+24.5%</td><td class=num>+15.0%</td><td><span class=cite>[<a href="#ref-55">55</a>]</span></td><td class=note2>destination + walk-by visits × ticket</td></tr><tr><td>Visits per day: walkers vs drivers (ratio)</td><td class=num>1.18</td><td class=num>2.00</td><td><span class=cite>[<a href="#ref-56">56</a>]</span></td><td class=note2>baseline workers; literature measures visits/month to a high street by access mode</td></tr></tbody></table></div>
+<h3>Business visit timing vs Google popular times</h3>
+<p>Partly calibrated: the walk-in propensity \(\pi_c(h)\) in Eq. 6 uses these shapes; destination trips do not.</p>
+<div class=tw><table><thead><tr><th>Quantity</th><th>Model</th><th>Observed / literature</th><th>Source</th><th>Notes</th></tr></thead><tbody><tr><td>Hourly visit profile correlation: bar</td><td class=num>0.52</td><td class=num>0.80</td><td><span class=cite>[<a href="#ref-6">6</a>]</span> Google Maps popular times via Apify</td><td class=note2>Pearson r over 24 h. Partly calibrated: walk-in propensity by hour uses these shapes; destination trips (lunch, coffee, dinner) do not</td></tr><tr><td>Hourly visit profile correlation: cafe</td><td class=num>0.82</td><td class=num>0.80</td><td><span class=cite>[<a href="#ref-6">6</a>]</span> Google Maps popular times via Apify</td><td class=note2>Pearson r over 24 h. Partly calibrated: walk-in propensity by hour uses these shapes; destination trips (lunch, coffee, dinner) do not</td></tr><tr><td>Hourly visit profile correlation: fast_food</td><td class=num>0.60</td><td class=num>0.80</td><td><span class=cite>[<a href="#ref-6">6</a>]</span> Google Maps popular times via Apify</td><td class=note2>Pearson r over 24 h. Partly calibrated: walk-in propensity by hour uses these shapes; destination trips (lunch, coffee, dinner) do not</td></tr><tr><td>Hourly visit profile correlation: restaurant</td><td class=num>0.66</td><td class=num>0.80</td><td><span class=cite>[<a href="#ref-6">6</a>]</span> Google Maps popular times via Apify</td><td class=note2>Pearson r over 24 h. Partly calibrated: walk-in propensity by hour uses these shapes; destination trips (lunch, coffee, dinner) do not</td></tr><tr><td>Hourly visit profile correlation: shop</td><td class=num>0.90</td><td class=num>0.80</td><td><span class=cite>[<a href="#ref-6">6</a>]</span> Google Maps popular times via Apify</td><td class=note2>Pearson r over 24 h. Partly calibrated: walk-in propensity by hour uses these shapes; destination trips (lunch, coffee, dinner) do not</td></tr></tbody></table></div>
+<figure class=fig id=fig-pop></figure>
+<h3>Rail arrivals vs BART</h3>
+<div class=tw><table><thead><tr><th>Quantity</th><th>Model</th><th>Observed / literature</th><th>Source</th><th>Notes</th></tr></thead><tbody><tr><td>Embarcadero: people arriving per weekday (ratio model/BART exits)</td><td class=num>3.14</td><td class=num>1.00</td><td><span class=cite>[<a href="#ref-57">57</a>]</span></td><td class=note2>model 64,827 vs BART 20,648 exits; model inlet also carries Muni Metro/other rail riders</td></tr><tr><td>Embarcadero: hourly arrival profile correlation</td><td class=num>0.97</td><td class=num>0.80</td><td><span class=cite>[<a href="#ref-58">58</a>]</span> BART hourly OD (Sep 2025)</td><td class=note2>Pearson r over 24 hours</td></tr><tr><td>Montgomery Street: people arriving per weekday (ratio model/BART exits)</td><td class=num>2.25</td><td class=num>1.00</td><td><span class=cite>[<a href="#ref-57">57</a>]</span></td><td class=note2>model 38,724 vs BART 17,217 exits; model inlet also carries Muni Metro/other rail riders</td></tr><tr><td>Montgomery Street: hourly arrival profile correlation</td><td class=num>0.94</td><td class=num>0.80</td><td><span class=cite>[<a href="#ref-58">58</a>]</span> BART hourly OD (Sep 2025)</td><td class=note2>Pearson r over 24 hours</td></tr><tr><td>Powell Street: people arriving per weekday (ratio model/BART exits)</td><td class=num>2.12</td><td class=num>1.00</td><td><span class=cite>[<a href="#ref-57">57</a>]</span></td><td class=note2>model 30,660 vs BART 14,474 exits; model inlet also carries Muni Metro/other rail riders</td></tr><tr><td>Powell Street: hourly arrival profile correlation</td><td class=num>0.84</td><td class=num>0.80</td><td><span class=cite>[<a href="#ref-58">58</a>]</span> BART hourly OD (Sep 2025)</td><td class=note2>Pearson r over 24 hours</td></tr></tbody></table></div>
+<h3>Cycling vs SFMTA counts</h3>
+<div class=tw><table><thead><tr><th>Quantity</th><th>Model</th><th>Observed / literature</th><th>Source</th><th>Notes</th></tr></thead><tbody><tr><td>Cyclists at count sites, PM peak hour (Pearson r across sites)</td><td class=num>0.59</td><td class=num>0.60</td><td><span class=cite>[<a href="#ref-8">8</a>]</span> SFMTA manual bike counts (DataSF v4v2-5x7s)</td><td class=note2>11 sites, counts from 2015-2017</td></tr><tr><td>Cyclists at count sites, total (ratio model/observed)</td><td class=num>0.09</td><td class=num>1.00</td><td><span class=cite>[<a href="#ref-8">8</a>]</span> SFMTA manual bike counts</td><td class=note2>model counts commuters only; observed includes all cyclists</td></tr></tbody></table></div>
+<div class=gaps><h3>Open gaps</h3><ul>
+<li><b>Muni on Market St:</b> about 0% against +6% observed. With car traffic spread over all 62 inlets, the restricted pre-2020 Market carries
+too few cars in the counterfactual to slow buses.</li>
+<li><b>Cycling on Market St:</b> about +98% against +25%; cycling route choice responds too strongly to car-free streets.</li>
+<li><b>Cycling volume:</b> modeled cyclists at the count sites are a small fraction of the 2015–17 counts (ratio in the table); through-cyclists and
+non-commute cycling are not modeled.</li>
+<li><b>Rail volume:</b> arrivals at the three rail inlets are 2–3× BART exits, because each inlet also carries Muni Metro, bus and ferry riders.
+The hourly shape matches well (r ≥ 0.84).</li>
+<li><b>Evaporation ratio:</b> unstable, since its denominator (pre-2020 private-car VMT on Market) is small.</li>
+<li><b>Walker vs driver visit frequency:</b> 1.18 against the reported ≈2×.</li>
+<li><b>Convergence:</b> the 0.03 MSA criterion is not met after 5 days (Section 6).</li>
+</ul></div>
+</section><section id="references"><h2><span class=sn>13</span>References</h2><p>Literature, data and parameter sources in order of first citation. Parameter sources are taken from <code>research/parameters/parameters.json</code> (status data or literature only).</p><ol class=refs><li id="ref-1"><span class=refn>[1]</span><span>Horni, A., Nagel, K., Axhausen, K. W. (eds.) (2016). <i>The Multi-Agent Transport Simulation MATSim</i>. Ubiquity Press. <a class=url href="https://doi.org/10.5334/baw" target=_blank rel=noopener>https://doi.org/10.5334/baw</a></span></li><li id="ref-2"><span class=refn>[2]</span><span>OpenStreetMap contributors. Road graph, buildings, POIs and parks via the Overpass API (ODbL). <a class=url href="https://www.openstreetmap.org" target=_blank rel=noopener>https://www.openstreetmap.org</a></span></li><li id="ref-3"><span class=refn>[3]</span><span>U.S. Census Bureau, LEHD Origin-Destination Employment Statistics (LODES8), California 2023: WAC S000 JT00, OD main JT00, crosswalk. <a class=url href="https://lehd.ces.census.gov/data/lodes/LODES8/ca/" target=_blank rel=noopener>https://lehd.ces.census.gov/data/lodes/LODES8/ca/</a></span></li><li id="ref-4"><span class=refn>[4]</span><span>U.S. Census Bureau, American Community Survey 5-year estimates 2019–2023 (api.census.gov), 2023 Gazetteer tracts. <a class=url href="https://api.census.gov/data/2023/acs/acs5" target=_blank rel=noopener>https://api.census.gov/data/2023/acs/acs5</a></span></li><li id="ref-5"><span class=refn>[5]</span><span>DataSF. San Francisco Land Use (c5ge-t6pj, current; fdfd-xptc, 2023 archive) and Zoning Districts (3i4a-hu95). <a class=url href="https://data.sf.gov/resource/c5ge-t6pj.json" target=_blank rel=noopener>https://data.sf.gov/resource/c5ge-t6pj.json</a></span></li><li id="ref-6"><span class=refn>[6]</span><span>Google Maps places and popular times, scraped with the Apify actor compass/crawler-google-places (run vbfPXBeCW7izCHgG1). <a class=url href="https://apify.com/compass/crawler-google-places" target=_blank rel=noopener>https://apify.com/compass/crawler-google-places</a></span></li><li id="ref-7"><span class=refn>[7]</span><span>BART. Monthly ridership report, September 2026 (average weekday OD); hourly OD 2025. <a class=url href="https://www.bart.gov/sites/default/files/2026-10/Ridership_202609.xlsx" target=_blank rel=noopener>https://www.bart.gov/sites/default/files/2026-10/Ridership_202609.xlsx</a></span></li><li id="ref-8"><span class=refn>[8]</span><span>SFMTA manual bicycle counts (DataSF v4v2-5x7s), PM peak, 2015–2017. <a class=url href="https://data.sf.gov/resource/v4v2-5x7s.json" target=_blank rel=noopener>https://data.sf.gov/resource/v4v2-5x7s.json</a></span></li><li id="ref-9"><span class=refn>[9]</span><span>Caltrans. Traffic Census AADT (state highway count points), ArcGIS FeatureServer. <a class=url href="https://caltrans-gis.dot.ca.gov/arcgis/rest/services/CHhighway/Traffic_AADT/FeatureServer/0" target=_blank rel=noopener>https://caltrans-gis.dot.ca.gov/arcgis/rest/services/CHhighway/Traffic_AADT/FeatureServer/0</a></span></li><li id="ref-10"><span class=refn>[10]</span><span>Kastle Systems. Back to Work Barometer (weekly office occupancy, % of pre-pandemic). <a class=url href="https://www.kastle.com/safety-wellness/getting-america-back-to-work/" target=_blank rel=noopener>https://www.kastle.com/safety-wellness/getting-america-back-to-work/</a></span></li><li id="ref-11"><span class=refn>[11]</span><span>BART GTFS feed (fare_rules / fare_attributes). <a class=url href="https://www.bart.gov/dev/schedules/google_transit.zip" target=_blank rel=noopener>https://www.bart.gov/dev/schedules/google_transit.zip</a></span></li><li id="ref-12"><span class=refn>[12]</span><span>Kastle Systems Back to Work Barometer, week incl. 13 Oct 2026 <a class=url href="https://www.kastle.com/safety-wellness/getting-america-back-to-work/" target=_blank rel=noopener>https://www.kastle.com/safety-wellness/getting-america-back-to-work/</a></span></li><li id="ref-13"><span class=refn>[13]</span><span>Kidder Mathews, San Francisco Office Market Report Q2 2026 <a class=url href="https://kidder.com/wp-content/uploads/market_report/office-market-research-san-francisco-2026-2q.pdf" target=_blank rel=noopener>https://kidder.com/wp-content/uploads/market_report/office-market-research-san-francisco-2026-2q.pdf</a></span></li><li id="ref-14"><span class=refn>[14]</span><span>SF Planning, Jobs-Housing Fit Report 2020 <a class=url href="https://sfplanning.org/sites/default/files/resources/2021-11/Jobs-Housing_Fit_Report_2020.pdf" target=_blank rel=noopener>https://sfplanning.org/sites/default/files/resources/2021-11/Jobs-Housing_Fit_Report_2020.pdf</a></span></li><li id="ref-15"><span class=refn>[15]</span><span>ACS 2019-2023 5-year, B01003/B11001 for the 15 SF tracts inside the sim bbox <a class=url href="https://api.census.gov/data/2023/acs/acs5" target=_blank rel=noopener>https://api.census.gov/data/2023/acs/acs5</a></span></li><li id="ref-16"><span class=refn>[16]</span><span>Census LEHD LODES8 OD main JT00 2023 (CA), jobs in SF blocks inside the sim bbox; computed in data/backend/lodes.json <a class=url href="https://lehd.ces.census.gov/data/lodes/LODES8/ca/od/ca_od_main_JT00_2023.csv.gz" target=_blank rel=noopener>https://lehd.ces.census.gov/data/lodes/LODES8/ca/od/ca_od_main_JT00_2023.csv.gz</a></span></li><li id="ref-17"><span class=refn>[17]</span><span>Census LODES8 WAC 2023 (CE01-CE03), SF blocks in sim bbox <a class=url href="https://lehd.ces.census.gov/data/lodes/LODES8/ca/wac/ca_wac_S000_JT00_2023.csv.gz" target=_blank rel=noopener>https://lehd.ces.census.gov/data/lodes/LODES8/ca/wac/ca_wac_S000_JT00_2023.csv.gz</a></span></li><li id="ref-18"><span class=refn>[18]</span><span>ezCater 2025 office lunch survey (via press coverage) <a class=url href="https://www.aol.com/articles/week-worth-lunches-now-cost-130000134.html" target=_blank rel=noopener>https://www.aol.com/articles/week-worth-lunches-now-cost-130000134.html</a></span></li><li id="ref-19"><span class=refn>[19]</span><span>Esri. Understanding the Huff model (ArcGIS Business Analyst documentation). <a class=url href="https://pro.arcgis.com/en/pro-app/3.2/tool-reference/business-analyst/understanding-huff-model.htm" target=_blank rel=noopener>https://pro.arcgis.com/en/pro-app/3.2/tool-reference/business-analyst/understanding-huff-model.htm</a></span></li><li id="ref-20"><span class=refn>[20]</span><span>Toast restaurant check data (2023); ezCater; SF downtown shopper survey 2007-08 <a class=url href="https://www.retailbrew.com/stories/2023/05/30/higher-average-lunchtime-checks-post-pandemic" target=_blank rel=noopener>https://www.retailbrew.com/stories/2023/05/30/higher-average-lunchtime-checks-post-pandemic</a></span></li><li id="ref-21"><span class=refn>[21]</span><span>SFCTA ActivitySim constants (walk 3 mph) <a class=url href="https://github.com/sfcta/activitysim-sfcta/blob/main/configs/common/constants.yaml" target=_blank rel=noopener>https://github.com/sfcta/activitysim-sfcta/blob/main/configs/common/constants.yaml</a></span></li><li id="ref-22"><span class=refn>[22]</span><span>Boeing (2019), Urban spatial order: street network orientation, configuration, and entropy (SF circuity) <a class=url href="https://arxiv.org/pdf/1708.00836" target=_blank rel=noopener>https://arxiv.org/pdf/1708.00836</a></span></li><li id="ref-23"><span class=refn>[23]</span><span>Koppelman, F. S., Bhat, C. (2006). <i>A Self Instructing Course in Mode Choice Modeling: Multinomial and Nested Logit Models</i>. FTA. <a class=url href="https://www.caee.utexas.edu/prof/bhat/COURSES/LM_Draft_060131Final-060630.pdf" target=_blank rel=noopener>https://www.caee.utexas.edu/prof/bhat/COURSES/LM_Draft_060131Final-060630.pdf</a></span></li><li id="ref-24"><span class=refn>[24]</span><span>MTC Travel Model One, ModeChoice.xls (work tours) <a class=url href="https://github.com/BayAreaMetro/travel-model-one/blob/master/model-files/model/ModeChoice.xls" target=_blank rel=noopener>https://github.com/BayAreaMetro/travel-model-one/blob/master/model-files/model/ModeChoice.xls</a></span></li><li id="ref-25"><span class=refn>[25]</span><span>SFCTA ActivitySim tour mode choice coefficients (work) <a class=url href="https://github.com/sfcta/activitysim-sfcta/blob/main/configs/resident/tour_mode_choice_coefficients.csv" target=_blank rel=noopener>https://github.com/sfcta/activitysim-sfcta/blob/main/configs/resident/tour_mode_choice_coefficients.csv</a></span></li><li id="ref-26"><span class=refn>[26]</span><span>ACS 2024 1-year, Table B08601 Means of Transportation to Work for Workplace Geography, San Francisco County <a class=url href="https://censusreporter.org/tables/B08601/?primary_geo_id=05000US06075" target=_blank rel=noopener>https://censusreporter.org/tables/B08601/?primary_geo_id=05000US06075</a></span></li><li id="ref-27"><span class=refn>[27]</span><span>SFCTA, Downtown Travel Study (May 2025), Executive Summary <a class=url href="https://www.sfcta.org/sites/default/files/2025-05/Downtown_Travel_Study_FINAL_Report_2025-05-22_Executive_Summary.pdf" target=_blank rel=noopener>https://www.sfcta.org/sites/default/files/2025-05/Downtown_Travel_Study_FINAL_Report_2025-05-22_Executive_Summary.pdf</a></span></li><li id="ref-28"><span class=refn>[28]</span><span>Caltrans, 2026 INFRA Cal-B/C vs Federal (USDOT BCA guidance) comparison of values matrix (2024$) <a class=url href="https://dot.ca.gov/-/media/dot-media/programs/transportation-planning/documents/division-transportation-planning/transportation-economics/cal-bc-federal-comparison-of-value-matrix-2026-a11y.pdf" target=_blank rel=noopener>https://dot.ca.gov/-/media/dot-media/programs/transportation-planning/documents/division-transportation-planning/transportation-economics/cal-bc-federal-comparison-of-value-matrix-2026-a11y.pdf</a></span></li><li id="ref-29"><span class=refn>[29]</span><span>SFMTA Golden Gateway Garage (250 Clay St) rates <a class=url href="https://www.sfmta.com/index%2Ephp/garages-lots/golden-gateway-garage" target=_blank rel=noopener>https://www.sfmta.com/index%2Ephp/garages-lots/golden-gateway-garage</a></span></li><li id="ref-30"><span class=refn>[30]</span><span>BART GTFS feed v72 (fare_rules/fare_attributes, valid 2026-01-12..2026-08-30), weighted by BART 2025 weekday 05-10h hourly OD to EMBR+MONT <a class=url href="https://www.bart.gov/dev/schedules/google_transit.zip" target=_blank rel=noopener>https://www.bart.gov/dev/schedules/google_transit.zip</a></span></li><li id="ref-31"><span class=refn>[31]</span><span>Bay Bridge toll schedule 2026 (Wikipedia infobox; primary BATA page not reachable) <a class=url href="https://en.wikipedia.org/wiki/San_Francisco%E2%80%93Oakland_Bay_Bridge" target=_blank rel=noopener>https://en.wikipedia.org/wiki/San_Francisco%E2%80%93Oakland_Bay_Bridge</a></span></li><li id="ref-32"><span class=refn>[32]</span><span>FHWA. HPMS Field Manual, Appendix N: procedures for estimating highway capacity (BPR link-performance function). <a class=url href="https://www.fhwa.dot.gov/ohim/hpmsmanl/appn5.cfm" target=_blank rel=noopener>https://www.fhwa.dot.gov/ohim/hpmsmanl/appn5.cfm</a></span></li><li id="ref-33"><span class=refn>[33]</span><span>Sheffi, Y. (1985). <i>Urban Transportation Networks: Equilibrium Analysis with Mathematical Programming Methods</i>. Prentice-Hall. <a class=url href="http://web.mit.edu/sheffi/www/selectedMedia/sheffi_urban_trans_networks.pdf" target=_blank rel=noopener>http://web.mit.edu/sheffi/www/selectedMedia/sheffi_urban_trans_networks.pdf</a></span></li><li id="ref-34"><span class=refn>[34]</span><span>Wardrop, J. G. (1952). Some theoretical aspects of road traffic research. <i>Proc. ICE</i> Part II 1(3):325–378.</span></li><li id="ref-35"><span class=refn>[35]</span><span>Bureau of Public Roads (1964) volume-delay function; FHWA HPMS Appendix N <a class=url href="https://www.fhwa.dot.gov/ohim/hpmsmanl/appn5.cfm" target=_blank rel=noopener>https://www.fhwa.dot.gov/ohim/hpmsmanl/appn5.cfm</a></span></li><li id="ref-36"><span class=refn>[36]</span><span>MTC Travel Model One SpeedCapacity_1hour.block (area type 0 = regional core) <a class=url href="https://github.com/BayAreaMetro/travel-model-one/blob/master/model-files/scripts/block/SpeedCapacity_1hour.block" target=_blank rel=noopener>https://github.com/BayAreaMetro/travel-model-one/blob/master/model-files/scripts/block/SpeedCapacity_1hour.block</a></span></li><li id="ref-37"><span class=refn>[37]</span><span>SFCTA Congestion Management Program 2025, Fig 4-3 <a class=url href="https://www.sfcta.org/sites/default/files/2025-12/SFCTA_CMP2025_Fig4-3_CMP_Arterial_Average_Speeds_Citywide_and_in_the_Downtown_Core.csv" target=_blank rel=noopener>https://www.sfcta.org/sites/default/files/2025-12/SFCTA_CMP2025_Fig4-3_CMP_Arterial_Average_Speeds_Citywide_and_in_the_Downtown_Core.csv</a></span></li><li id="ref-38"><span class=refn>[38]</span><span>Caltrans Traffic Census AADT (2024), SF-Oakland Bay Bridge toll plaza <a class=url href="https://caltrans-gis.dot.ca.gov/arcgis/rest/services/CHhighway/Traffic_AADT/MapServer/0" target=_blank rel=noopener>https://caltrans-gis.dot.ca.gov/arcgis/rest/services/CHhighway/Traffic_AADT/MapServer/0</a></span></li><li id="ref-39"><span class=refn>[39]</span><span>Cairns, S., Atkins, S., Goodwin, P. (2002). Disappearing traffic? The story so far. <i>Proc. ICE Municipal Engineer</i> 151(1):13–22. <a class=url href="https://nacto.org/wp-content/uploads/disappearing_traffic_cairns.pdf" target=_blank rel=noopener>https://nacto.org/wp-content/uploads/disappearing_traffic_cairns.pdf</a></span></li><li id="ref-40"><span class=refn>[40]</span><span>Litman (VTPI), Transportation Elasticities; Goodwin (1996) Empirical evidence on induced traffic, Transportation 23 <a class=url href="https://www.vtpi.org/elasticities.pdf" target=_blank rel=noopener>https://www.vtpi.org/elasticities.pdf</a></span></li><li id="ref-41"><span class=refn>[41]</span><span>Cairns, Atkins &amp; Goodwin (2002), Disappearing traffic? The story so far, Proc. ICE Municipal Engineer 151(1) <a class=url href="https://nacto.org/wp-content/uploads/disappearing_traffic_cairns.pdf" target=_blank rel=noopener>https://nacto.org/wp-content/uploads/disappearing_traffic_cairns.pdf</a></span></li><li id="ref-42"><span class=refn>[42]</span><span>Granovetter, M. (1973). The strength of weak ties. <i>American Journal of Sociology</i> 78(6):1360–1380. <a class=url href="https://en.wikipedia.org/wiki/Interpersonal_ties" target=_blank rel=noopener>https://en.wikipedia.org/wiki/Interpersonal_ties</a></span></li><li id="ref-43"><span class=refn>[43]</span><span>Sapiezynski, P. et al. (2019). Interaction data from the Copenhagen Networks Study. <i>Scientific Data</i> 6:315. <a class=url href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6906316/" target=_blank rel=noopener>https://pmc.ncbi.nlm.nih.gov/articles/PMC6906316/</a></span></li><li id="ref-44"><span class=refn>[44]</span><span>Appleyard, D. (1981). <i>Livable Streets</i>. University of California Press (street-traffic and neighbouring study, 1969–71); summary via Streetfilms transcript. <a class=url href="https://amara.org/videos/WrBmfcwZMu7b/en/103981" target=_blank rel=noopener>https://amara.org/videos/WrBmfcwZMu7b/en/103981</a></span></li><li id="ref-45"><span class=refn>[45]</span><span>Appleyard (1981) Livable Streets, via Streetfilms video transcript; see also https://pps.org/article/dappleyard <a class=url href="https://amara.org/videos/WrBmfcwZMu7b/en/103981" target=_blank rel=noopener>https://amara.org/videos/WrBmfcwZMu7b/en/103981</a></span></li><li id="ref-46"><span class=refn>[46]</span><span>US EPA, Greenhouse Gas Emissions from a Typical Passenger Vehicle <a class=url href="https://www.epa.gov/greenvehicles/greenhouse-gas-emissions-typical-passenger-vehicle" target=_blank rel=noopener>https://www.epa.gov/greenvehicles/greenhouse-gas-emissions-typical-passenger-vehicle</a></span></li><li id="ref-47"><span class=refn>[47]</span><span>EPA 2023 SC-GHG report (via RFF primer) <a class=url href="https://www.rff.org/publications/reports/adopting-the-social-cost-of-carbon-for-state-benefit-cost-analysis-a-primer-for-practitioners/" target=_blank rel=noopener>https://www.rff.org/publications/reports/adopting-the-social-cost-of-carbon-for-state-benefit-cost-analysis-a-primer-for-practitioners/</a></span></li><li id="ref-48"><span class=refn>[48]</span><span>BEA GDP by industry: accommodation &amp; food services value added (FRED) vs Census food-service sales <a class=url href="https://fred.stlouisfed.org/series/USFOODDPNGSP" target=_blank rel=noopener>https://fred.stlouisfed.org/series/USFOODDPNGSP</a></span></li><li id="ref-49"><span class=refn>[49]</span><span>Bradley-Burns Uniform Local Sales and Use Tax <a class=url href="https://www.cdtfa.ca.gov/taxes-and-fees/sales-use-tax-rates.htm" target=_blank rel=noopener>https://www.cdtfa.ca.gov/taxes-and-fees/sales-use-tax-rates.htm</a></span></li><li id="ref-50"><span class=refn>[50]</span><span>SFMTA Board of Directors (2021). Better Market Street car-free evaluation. <a class=url href="https://sfmta.com/media/25169/download" target=_blank rel=noopener>https://sfmta.com/media/25169/download</a></span></li><li id="ref-51"><span class=refn>[51]</span><span>INRIX (2020). Full car ban on Market Street: little impact on surrounding roads. <a class=url href="https://inrix.com/blog/full-car-ban-on-market-street-little-impact-on-surrounding-roads/" target=_blank rel=noopener>https://inrix.com/blog/full-car-ban-on-market-street-little-impact-on-surrounding-roads/</a></span></li><li id="ref-52"><span class=refn>[52]</span><span>SFMTA Board, Better Market Street update (19 Jan 2021); SF Chronicle 26 Feb 2020 quoting SFMTA <a class=url href="https://sfmta.com/media/25169/download" target=_blank rel=noopener>https://sfmta.com/media/25169/download</a></span></li><li id="ref-53"><span class=refn>[53]</span><span>INRIX (2020), Full car ban on Market Street: little impact on surrounding roads <a class=url href="https://inrix.com/blog/full-car-ban-on-market-street-little-impact-on-surrounding-roads/" target=_blank rel=noopener>https://inrix.com/blog/full-car-ban-on-market-street-little-impact-on-surrounding-roads/</a></span></li><li id="ref-54"><span class=refn>[54]</span><span>SFMTA JFK Promenade data update (April 2022) <a class=url href="https://www.sfmta.com/project-updates/april-2022-update-new-hearing-date-and-new-robust-data" target=_blank rel=noopener>https://www.sfmta.com/project-updates/april-2022-update-new-hearing-date-and-new-robust-data</a></span></li><li id="ref-55"><span class=refn>[55]</span><span>NYC DOT Measuring the Street (2012); Volker &amp; Handy (2021) review; TfL/UCL <a class=url href="https://nacto.org/wp-content/uploads/measuring_the_street_nyc_dot.pdf" target=_blank rel=noopener>https://nacto.org/wp-content/uploads/measuring_the_street_nyc_dot.pdf</a></span></li><li id="ref-56"><span class=refn>[56]</span><span>SF downtown shopper survey (via Streetsblog 2009); Takapuna/Auckland (Fleming et al.); Clifton et al. 2012 Portland <a class=url href="https://sf.streetsblog.org/2009/05/27/only-17-percent-drive-to-downtown-sf-to-shop-study-finds" target=_blank rel=noopener>https://sf.streetsblog.org/2009/05/27/only-17-percent-drive-to-downtown-sf-to-shop-study-finds</a></span></li><li id="ref-57"><span class=refn>[57]</span><span>BART ridership reports <a class=url href="https://www.bart.gov/about/reports/ridership" target=_blank rel=noopener>https://www.bart.gov/about/reports/ridership</a></span></li><li id="ref-58"><span class=refn>[58]</span><span>BART. Hourly origin-destination ridership, 2025. <a class=url href="https://afcweb.bart.gov/ridership/origin-destination/date-hour-soo-dest-2025.csv.gz" target=_blank rel=noopener>https://afcweb.bart.gov/ridership/origin-destination/date-hour-soo-dest-2025.csv.gz</a></span></li><li id="ref-59"><span class=refn>[59]</span><span>MTC Travel Model One. <code>SpeedCapacity_1hour.block</code>, <code>SpeedFlowCurve.block</code>, <code>HwyAssign.job</code>. <a class=url href="https://github.com/BayAreaMetro/travel-model-one/tree/master/model-files/scripts" target=_blank rel=noopener>https://github.com/BayAreaMetro/travel-model-one/tree/master/model-files/scripts</a></span></li><li id="ref-60"><span class=refn>[60]</span><span>MTC Travel Model One. <code>ModeChoice.xls</code> (tour mode choice UEC). <a class=url href="https://github.com/BayAreaMetro/travel-model-one/blob/master/model-files/model/ModeChoice.xls" target=_blank rel=noopener>https://github.com/BayAreaMetro/travel-model-one/blob/master/model-files/model/ModeChoice.xls</a></span></li><li id="ref-61"><span class=refn>[61]</span><span>SFCTA ActivitySim (SF-CHAMP successor). Tour mode choice coefficients and constants. <a class=url href="https://github.com/sfcta/activitysim-sfcta/tree/main/configs" target=_blank rel=noopener>https://github.com/sfcta/activitysim-sfcta/tree/main/configs</a></span></li><li id="ref-62"><span class=refn>[62]</span><span>USDOT (2016). Revised Departmental Guidance on Valuation of Travel Time in Economic Analysis. <a class=url href="https://www.transportation.gov/sites/dot.gov/files/docs/Revised%20Departmental%20Guidance%20on%20Valuation%20of%20Travel%20Time%20in%20Economic%20Analysis%20-%20September%202016.pdf" target=_blank rel=noopener>https://www.transportation.gov/sites/dot.gov/files/docs/Revised%20Departmental%20Guidance%20on%20Valuation%20of%20Travel%20Time%20in%20Economic%20Analysis%20-%20September%202016.pdf</a></span></li><li id="ref-63"><span class=refn>[63]</span><span>Litman, T. (2026). <i>Understanding Transport Demands and Elasticities</i>. Victoria Transport Policy Institute. <a class=url href="https://www.vtpi.org/elasticities.pdf" target=_blank rel=noopener>https://www.vtpi.org/elasticities.pdf</a></span></li></ol></section>
+</main>
+</div>
+<div id="losers" aria-label="Biggest losers and winners of the hero plan"></div>
+<div id="tip"></div>
+<script>
+const DATA = {"settle":{"baseline":{"days":5,"ms":1142,"converged":false,"gap":0.0363,"gaps":[0.0658,0.1027,0.082,0.0501,0.0363]},"plan":{"days":5,"ms":985,"converged":false,"gap":0.0404,"gaps":[0.0918,0.1152,0.0787,0.0574,0.0404]},"msa_days":5,"calib_days":26},"calibration":{"asc":{"car":0.26021532973998185,"walk":3.2612561119197587,"bike":-1.7158778979219091},"target":{"car":0.3440860215053763,"transit":0.48387096774193544,"walk":0.12903225806451613,"bike":0.04301075268817204},"beta_t":-0.035,"modeled":{"car":65163,"transit":92253,"walk":20559,"bike":7791}},"ledger":[{"region":"east_bay","region_name":"East Bay","tier":"low","agents":163,"people":3423,"car_b":0.11042944785276074,"car_p":0.11042944785276074,"transit_b":0.8895705521472392,"transit_p":0.8895705521472392,"active_b":0.0,"active_p":0.0,"gone_p":0.0,"switchers":0,"dt_min_day":0.02185409943012405,"dcost_usd_day":0.0,"dcs_usd_yr_pp":-0.6819644408870499,"dcs_usd_yr_total":-2334.364281156372,"worst_pp":-17.40763515958399,"losers_share":0.4539877300613497},{"region":"east_bay","region_name":"East Bay","tier":"mid","agents":185,"people":3885,"car_b":0.2756756756756757,"car_p":0.2648648648648649,"transit_b":0.7243243243243244,"transit_p":0.7351351351351352,"active_b":0.0,"active_p":0.0,"gone_p":0.0,"switchers":42,"dt_min_day":0.3777042074152992,"dcost_usd_day":-0.3621621621621622,"dcs_usd_yr_pp":-3.6323100518254443,"dcs_usd_yr_total":-14111.524551341852,"worst_pp":-69.94336586535432,"losers_share":0.6054054054054054},{"region":"east_bay","region_name":"East Bay","tier":"high","agents":2530,"people":53130,"car_b":0.3814229249011858,"car_p":0.3794466403162055,"transit_b":0.6185770750988142,"transit_p":0.6205533596837944,"active_b":0.0,"active_p":0.0,"gone_p":0.0,"switchers":105,"dt_min_day":0.08227506231957443,"dcost_usd_day":-0.06620553359683795,"dcs_usd_yr_pp":-8.818724131581549,"dcs_usd_yr_total":-468538.8131109277,"worst_pp":-164.13637921746016,"losers_share":0.6415019762845849},{"region":"peninsula_south_bay","region_name":"Peninsula","tier":"low","agents":90,"people":1890,"car_b":0.1,"car_p":0.1,"transit_b":0.9,"transit_p":0.9,"active_b":0.0,"active_p":0.0,"gone_p":0.0,"switchers":0,"dt_min_day":0.027819571092726234,"dcost_usd_day":0.0,"dcs_usd_yr_pp":-0.7578015718728182,"dcs_usd_yr_total":-1432.2449708396264,"worst_pp":-8.855579688418658,"losers_share":0.45555555555555555},{"region":"peninsula_south_bay","region_name":"Peninsula","tier":"mid","agents":115,"people":2415,"car_b":0.26956521739130435,"car_p":0.26956521739130435,"transit_b":0.7304347826086957,"transit_p":0.7304347826086957,"active_b":0.0,"active_p":0.0,"gone_p":0.0,"switchers":0,"dt_min_day":0.07104686566423099,"dcost_usd_day":0.0,"dcs_usd_yr_pp":-5.9083614861296745,"dcs_usd_yr_total":-14268.692989003164,"worst_pp":-42.86767139203995,"losers_share":0.6521739130434783},{"region":"peninsula_south_bay","region_name":"Peninsula","tier":"high","agents":1681,"people":35301,"car_b":0.4312908982748364,"car_p":0.4271267102914932,"transit_b":0.5687091017251636,"transit_p":0.5693039857227841,"active_b":0.0,"active_p":0.0,"gone_p":0.003569303985722784,"switchers":147,"dt_min_day":0.1064486838506886,"dcost_usd_day":-0.021970149253731343,"dcs_usd_yr_pp":-12.527358307161748,"dcs_usd_yr_total":-442228.2756011169,"worst_pp":-139.1582875565156,"losers_share":0.6793575252825699},{"region":"sf_west","region_name":"Western SF","tier":"low","agents":65,"people":1365,"car_b":0.18461538461538463,"car_p":0.18461538461538463,"transit_b":0.4461538461538462,"transit_p":0.4461538461538462,"active_b":0.36923076923076925,"active_p":0.36923076923076925,"gone_p":0.0,"switchers":0,"dt_min_day":0.008498779383730747,"dcost_usd_day":0.0,"dcs_usd_yr_pp":-0.5047043204598299,"dcs_usd_yr_total":-688.9213974276679,"worst_pp":-14.782276854161225,"losers_share":0.4307692307692308},{"region":"sf_west","region_name":"Western SF","tier":"mid","agents":101,"people":2121,"car_b":0.38613861386138615,"car_p":0.38613861386138615,"transit_b":0.43564356435643564,"transit_p":0.43564356435643564,"active_b":0.1782178217821782,"active_p":0.1782178217821782,"gone_p":0.0,"switchers":0,"dt_min_day":0.005523481535498428,"dcost_usd_day":0.0,"dcs_usd_yr_pp":-0.35995730685782285,"dcs_usd_yr_total":-763.4694478454422,"worst_pp":-25.170484321470177,"losers_share":0.39603960396039606},{"region":"sf_west","region_name":"Western SF","tier":"high","agents":855,"people":17955,"car_b":0.4760233918128655,"car_p":0.4760233918128655,"transit_b":0.3672514619883041,"transit_p":0.3672514619883041,"active_b":0.1567251461988304,"active_p":0.1567251461988304,"gone_p":0.0,"switchers":0,"dt_min_day":0.0073205351193415796,"dcost_usd_day":0.0,"dcs_usd_yr_pp":-1.5613641110137615,"dcs_usd_yr_total":-28034.292613252088,"worst_pp":-75.43310721661456,"losers_share":0.5239766081871345},{"region":"sf_southeast_mission","region_name":"Mission","tier":"low","agents":92,"people":1932,"car_b":0.10869565217391304,"car_p":0.10869565217391304,"transit_b":0.21739130434782608,"transit_p":0.21739130434782608,"active_b":0.6739130434782609,"active_p":0.6739130434782609,"gone_p":0.0,"switchers":0,"dt_min_day":0.007108458820097373,"dcost_usd_day":0.0,"dcs_usd_yr_pp":-0.6985732433772305,"dcs_usd_yr_total":-1349.643506204809,"worst_pp":-17.251908524606563,"losers_share":0.44565217391304346},{"region":"sf_southeast_mission","region_name":"Mission","tier":"mid","agents":124,"people":2604,"car_b":0.20967741935483872,"car_p":0.20967741935483872,"transit_b":0.21774193548387097,"transit_p":0.21774193548387097,"active_b":0.5725806451612904,"active_p":0.5725806451612904,"gone_p":0.0,"switchers":0,"dt_min_day":0.013643522543882586,"dcost_usd_day":0.0,"dcs_usd_yr_pp":-0.6751873366940622,"dcs_usd_yr_total":-1758.187824751338,"worst_pp":-18.30846028396005,"losers_share":0.46774193548387094},{"region":"sf_southeast_mission","region_name":"Mission","tier":"high","agents":994,"people":20874,"car_b":0.30181086519114686,"car_p":0.30181086519114686,"transit_b":0.20020120724346077,"transit_p":0.20020120724346077,"active_b":0.49798792756539234,"active_p":0.49798792756539234,"gone_p":0.0,"switchers":0,"dt_min_day":0.017495828372678417,"dcost_usd_day":0.0,"dcs_usd_yr_pp":-2.6347970305630386,"dcs_usd_yr_total":-54998.75321597287,"worst_pp":-89.99043026738995,"losers_share":0.5553319919517102},{"region":"sf_north","region_name":"North Beach","tier":"low","agents":21,"people":441,"car_b":0.09523809523809523,"car_p":0.09523809523809523,"transit_b":0.0,"transit_p":0.0,"active_b":0.9047619047619048,"active_p":0.9047619047619048,"gone_p":0.0,"switchers":0,"dt_min_day":0.0003136166445854439,"dcost_usd_day":0.0,"dcs_usd_yr_pp":0.000327867629241963,"dcs_usd_yr_total":0.14458962449570567,"worst_pp":-0.017387020961212585,"losers_share":0.3333333333333333},{"region":"sf_north","region_name":"North Beach","tier":"mid","agents":35,"people":735,"car_b":0.08571428571428572,"car_p":0.08571428571428572,"transit_b":0.0,"transit_p":0.0,"active_b":0.9142857142857143,"active_p":0.9142857142857143,"gone_p":0.0,"switchers":0,"dt_min_day":-6.0494922234153946e-05,"dcost_usd_day":0.0,"dcs_usd_yr_pp":0.009897205887186645,"dcs_usd_yr_total":7.274446327082185,"worst_pp":-0.370643672423121,"losers_share":0.42857142857142855},{"region":"sf_north","region_name":"North Beach","tier":"high","agents":368,"people":7728,"car_b":0.13043478260869565,"car_p":0.13043478260869565,"transit_b":0.08152173913043478,"transit_p":0.08423913043478261,"active_b":0.7880434782608695,"active_p":0.7853260869565217,"gone_p":0.0,"switchers":21,"dt_min_day":-0.07635367646819534,"dcost_usd_day":0.01548913043478261,"dcs_usd_yr_pp":0.03419228692980095,"dcs_usd_yr_total":264.2379933935017,"worst_pp":-9.853733204526094,"losers_share":0.42391304347826086},{"region":"north_bay","region_name":"North Bay","tier":"low","agents":27,"people":567,"car_b":0.18518518518518517,"car_p":0.18518518518518517,"transit_b":0.8148148148148148,"transit_p":0.8148148148148148,"active_b":0.0,"active_p":0.0,"gone_p":0.0,"switchers":0,"dt_min_day":-0.004748456097683768,"dcost_usd_day":0.0,"dcs_usd_yr_pp":0.35386725533681085,"dcs_usd_yr_total":200.64273377597175,"worst_pp":-0.6590363292851009,"losers_share":0.18518518518518517},{"region":"north_bay","region_name":"North Bay","tier":"mid","agents":28,"people":588,"car_b":0.21428571428571427,"car_p":0.21428571428571427,"transit_b":0.7857142857142857,"transit_p":0.7857142857142857,"active_b":0.0,"active_p":0.0,"gone_p":0.0,"switchers":0,"dt_min_day":-0.005797153058287969,"dcost_usd_day":0.0,"dcs_usd_yr_pp":0.9899241823082074,"dcs_usd_yr_total":582.075419197226,"worst_pp":-1.4154803111363634,"losers_share":0.21428571428571427},{"region":"north_bay","region_name":"North Bay","tier":"high","agents":454,"people":9534,"car_b":0.45594713656387664,"car_p":0.45374449339207046,"transit_b":0.5440528634361234,"transit_p":0.5462555066079295,"active_b":0.0,"active_p":0.0,"gone_p":0.0,"switchers":21,"dt_min_day":0.10471008848821801,"dcost_usd_day":-0.08176211453744493,"dcs_usd_yr_pp":-0.06010590828076873,"dcs_usd_yr_total":-573.049729548849,"worst_pp":-26.658731113847978,"losers_share":0.43171806167400884},{"region":"sf_in_area","region_name":"Downtown resident","tier":"low","agents":24,"people":504,"car_b":0.0,"car_p":0.0,"transit_b":0.0,"transit_p":0.0,"active_b":1.0,"active_p":1.0,"gone_p":0.0,"switchers":0,"dt_min_day":0.0,"dcost_usd_day":0.0,"dcs_usd_yr_pp":-0.003538890250805634,"dcs_usd_yr_total":-1.7836006864060394,"worst_pp":-0.08373725215715666,"losers_share":0.25},{"region":"sf_in_area","region_name":"Downtown resident","tier":"mid","agents":28,"people":588,"car_b":0.07142857142857142,"car_p":0.07142857142857142,"transit_b":0.0,"transit_p":0.0,"active_b":0.9285714285714286,"active_p":0.9285714285714286,"gone_p":0.0,"switchers":0,"dt_min_day":1.3280162401128695e-05,"dcost_usd_day":0.0,"dcs_usd_yr_pp":-0.06011569394465915,"dcs_usd_yr_total":-35.34802803945958,"worst_pp":-2.06026791477143,"losers_share":0.42857142857142855},{"region":"sf_in_area","region_name":"Downtown resident","tier":"high","agents":173,"people":3633,"car_b":0.05202312138728324,"car_p":0.05202312138728324,"transit_b":0.05202312138728324,"transit_p":0.05202312138728324,"active_b":0.8959537572254336,"active_p":0.8959537572254336,"gone_p":0.0,"switchers":0,"dt_min_day":-0.002173090292973536,"dcost_usd_day":0.0,"dcs_usd_yr_pp":-0.02179151952867535,"dcs_usd_yr_total":-79.16859044767754,"worst_pp":-2.7101552374340088,"losers_share":0.4508670520231214},{"region":"other","region_name":"Elsewhere","tier":"low","agents":60,"people":1260,"car_b":0.03333333333333333,"car_p":0.03333333333333333,"transit_b":0.9666666666666667,"transit_p":0.9666666666666667,"active_b":0.0,"active_p":0.0,"gone_p":0.0,"switchers":0,"dt_min_day":0.0022556916226776024,"dcost_usd_day":0.0,"dcs_usd_yr_pp":-0.3035713988794875,"dcs_usd_yr_total":-382.49996258815423,"worst_pp":-3.82053913310898,"losers_share":0.43333333333333335},{"region":"other","region_name":"Elsewhere","tier":"mid","agents":95,"people":1995,"car_b":0.17894736842105263,"car_p":0.17894736842105263,"transit_b":0.8210526315789474,"transit_p":0.8210526315789474,"active_b":0.0,"active_p":0.0,"gone_p":0.0,"switchers":0,"dt_min_day":0.021149909177590364,"dcost_usd_day":0.0,"dcs_usd_yr_pp":-2.066295204905837,"dcs_usd_yr_total":-4122.258933787144,"worst_pp":-16.085433910742353,"losers_share":0.6},{"region":"other","region_name":"Elsewhere","tier":"high","agents":538,"people":11298,"car_b":0.38847583643122674,"car_p":0.3828996282527881,"transit_b":0.6115241635687733,"transit_p":0.6152416356877324,"active_b":0.0,"active_p":0.0,"gone_p":0.0018587360594795538,"switchers":63,"dt_min_day":0.14398780592048582,"dcost_usd_day":-0.18093109869646182,"dcs_usd_yr_pp":-6.87918048015957,"dcs_usd_yr_total":-77720.98106484281,"worst_pp":-145.19549493923734,"losers_share":0.6412639405204461}],"regions":[{"key":"east_bay","name":"East Bay","share":0.32844,"car_min":32,"tr_min":30,"miles":12,"toll":true,"fare":"east_bay"},{"key":"peninsula_south_bay","name":"Peninsula","share":0.21375,"car_min":38,"tr_min":46,"miles":20,"toll":false,"fare":"peninsula"},{"key":"sf_west","name":"Western SF","share":0.11046,"car_min":18,"tr_min":24,"miles":4,"toll":false,"fare":"sf"},{"key":"sf_southeast_mission","name":"Mission","share":0.14183,"car_min":14,"tr_min":19,"miles":3,"toll":false,"fare":"sf"},{"key":"sf_north","name":"North Beach","share":0.04812,"car_min":10,"tr_min":17,"miles":2,"toll":false,"fare":"sf"},{"key":"north_bay","name":"North Bay","share":0.06339,"car_min":40,"tr_min":45,"miles":18,"toll":true,"fare":"north_bay"},{"key":"sf_in_area","name":"Downtown resident","share":0.02797,"car_min":0,"tr_min":6,"miles":0,"toll":false,"fare":"sf"},{"key":"other","name":"Elsewhere","share":0.06605,"car_min":45,"tr_min":50,"miles":25,"toll":true,"fare":"east_bay"}],"validation":[{"quantity":"Commute mode share: car","model":0.3507800135654533,"target":0.3440860215053763},{"quantity":"Commute mode share: transit","model":0.4966086366719421,"target":0.48387096774193544},{"quantity":"Commute mode share: walk","model":0.11067148993895547,"target":0.12903225806451613},{"quantity":"Commute mode share: bike","model":0.04193985982364911,"target":0.04301075268817204},{"quantity":"Muni speed on Market St","model":0.00019584535333572184,"target":0.06},{"quantity":"Worst parallel-street slowdown (Mission Street)","model":0.04758103411159165,"target":0.04},{"quantity":"Cycling on Market St","model":0.975609756097561,"target":0.25},{"quantity":"Traffic evaporation (\u0394 area VMT \u00f7 prior VMT on Market St)","model":-3.2573764184657223,"target":-0.106},{"quantity":"Car traffic in the whole study area (VMT)","model":-0.005698777860989268,"target":null},{"quantity":"Foot traffic on the treated street","model":0.245771436976026,"target":0.29},{"quantity":"Revenue of 19 businesses fronting the street","model":0.2447524152255749,"target":0.15},{"quantity":"Visits per day: walkers vs drivers (ratio)","model":1.181413647769264,"target":2.0},{"quantity":"Hourly visit profile correlation: bar","model":0.5191136964499824,"target":0.8},{"quantity":"Hourly visit profile correlation: cafe","model":0.8150551484003115,"target":0.8},{"quantity":"Hourly visit profile correlation: fast_food","model":0.5986890896126096,"target":0.8},{"quantity":"Hourly visit profile correlation: restaurant","model":0.6646414217086424,"target":0.8},{"quantity":"Hourly visit profile correlation: shop","model":0.8955718355172068,"target":0.8},{"quantity":"Embarcadero: people arriving per weekday (ratio model/BART exits)","model":3.1396261139093373,"target":1.0},{"quantity":"Embarcadero: hourly arrival profile correlation","model":0.9736981768038302,"target":0.8},{"quantity":"Montgomery Street: people arriving per weekday (ratio model/BART exits)","model":2.2491723296741593,"target":1.0},{"quantity":"Montgomery Street: hourly arrival profile correlation","model":0.9391437632743168,"target":0.8},{"quantity":"Powell Street: people arriving per weekday (ratio model/BART exits)","model":2.1182810556860576,"target":1.0},{"quantity":"Powell Street: hourly arrival profile correlation","model":0.8434624742598635,"target":0.8},{"quantity":"Cyclists at count sites, PM peak hour (Pearson r across sites)","model":0.5879063427397109,"target":0.6},{"quantity":"Cyclists at count sites, total (ratio model/observed)","model":0.08796152652807943,"target":1.0}]};
+</script>
+<script>
+(function () {
+const $ = (s, r = document) => r.querySelector(s);
+const NS = 'http://www.w3.org/2000/svg';
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const fmt$ = (x, d = 0) => (x < 0 ? '−' : x > 0 ? '+' : '') + '$' + Math.abs(x).toLocaleString('en-US', { maximumFractionDigits: d, minimumFractionDigits: d });
+const fmtK$ = (x) => { const a = Math.abs(x), s = x < 0 ? '−' : x > 0 ? '+' : ''; return a >= 1e6 ? s + '$' + (a / 1e6).toFixed(2) + 'M' : a >= 1e3 ? s + '$' + (a / 1e3).toFixed(1) + 'k' : s + '$' + a.toFixed(0); };
+const fmtN = (x) => Math.round(x).toLocaleString('en-US');
+const pp = (x) => (x * 100).toFixed(1) + '%';
+const sgn = (x, d = 2) => Math.abs(x) < 0.5 * Math.pow(10, -d) ? (0).toFixed(d) : (x < 0 ? '−' : '+') + Math.abs(x).toFixed(d);
+const TIER = { low: 'low income', mid: 'mid income', high: 'high income' };
+const tip = $('#tip');
+function showTip(html, ev) { tip.innerHTML = html; tip.style.display = 'block'; moveTip(ev); }
+function moveTip(ev) { const w = tip.offsetWidth, h = tip.offsetHeight; let x = ev.clientX + 14, y = ev.clientY + 14;
+  if (x + w > innerWidth - 8) x = ev.clientX - w - 14; if (y + h > innerHeight - 8) y = ev.clientY - h - 14; tip.style.left = Math.max(8, x) + 'px'; tip.style.top = Math.max(8, y) + 'px'; }
+function hideTip() { tip.style.display = 'none'; }
+function el(tag, attrs, parent, text) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; if (parent) parent.appendChild(e); return e; }
+function hover(node, html) { node.addEventListener('mouseenter', (e) => showTip(html, e)); node.addEventListener('mousemove', moveTip); node.addEventListener('mouseleave', hideTip); }
+function legend(items) { return '<div class=legend>' + items.map(([c, t]) => `<span><i style="background:${c}"></i>${t}</span>`).join('') + '</div>'; }
+
+// ── Figure: MSA gaps ──
+(function gapChart() {
+  const f = $('#fig-gap'); if (!f) return;
+  const b = DATA.settle.baseline.gaps, p = DATA.settle.plan.gaps;
+  f.innerHTML = '<div class=ctitle>Figure 3. Relative flow change per replanning day (Eq. 15)</div>' + legend([[css('--s1'), 'Baseline'], [css('--s2'), '2nd St car-free plan']]);
+  const W = 660, H = 240, m = { l: 46, r: 118, t: 12, b: 34 };
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'MSA gap per day' }, f);
+  const ymax = Math.max(...b, ...p, 0.03) * 1.15, n = b.length;
+  const X = (i) => m.l + (i) * (W - m.l - m.r) / (n - 1), Y = (v) => H - m.b - v / ymax * (H - m.t - m.b);
+  for (let v = 0; v <= ymax; v += 0.02) { el('line', { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), class: 'gl' }, svg); el('text', { x: m.l - 8, y: Y(v) + 4, 'text-anchor': 'end', class: 'tick' }, svg, v.toFixed(2)); }
+  for (let i = 0; i < n; i++) el('text', { x: X(i), y: H - m.b + 18, 'text-anchor': 'middle', class: 'tick' }, svg, 'day ' + (i + 1));
+  el('line', { x1: m.l, x2: W - m.r, y1: Y(0.03), y2: Y(0.03), stroke: css('--warn'), 'stroke-dasharray': '5 4', 'stroke-width': 1.2 }, svg);
+  el('text', { x: m.l + 6, y: Y(0.03) - 6, class: 'dl', fill: css('--warn') }, svg, 'convergence criterion 0.03');
+  [[b, css('--s1'), 'Baseline'], [p, css('--s2'), 'Plan']].forEach(([s, c, name]) => {
+    el('path', { d: s.map((v, i) => (i ? 'L' : 'M') + X(i) + ' ' + Y(v)).join(' '), fill: 'none', stroke: c, 'stroke-width': 2 }, svg);
+    s.forEach((v, i) => { const g = el('g', {}, svg); el('circle', { cx: X(i), cy: Y(v), r: 12, fill: 'transparent' }, g); el('circle', { cx: X(i), cy: Y(v), r: 4.5, fill: c, stroke: css('--bg2'), 'stroke-width': 2 }, g);
+      hover(g, `<b>${name}</b>, day ${i + 1}<br><span class=tk>gap</span> ${v.toFixed(4)}`); });
+    el('text', { x: X(n - 1) + 8, y: Y(s[n - 1]) + (name === 'Plan' ? -4 : 12), class: 'dl' }, svg, name + ' ' + s[n - 1].toFixed(4));
+  });
+})();
+
+// ── Figure: calibration ──
+(function calChart() {
+  const f = $('#fig-cal'); if (!f) return;
+  const t = DATA.calibration.target, mo = DATA.calibration.modeled, tot = Object.values(mo).reduce((a, b) => a + b, 0);
+  const modes = ['car', 'transit', 'walk', 'bike'];
+  f.innerHTML = '<div class=ctitle>Figure 2. Worker mode split after calibration</div>' + legend([[css('--s1'), 'Model (baseline)'], [css('--s2'), 'Target (assumed)']]);
+  const W = 640, row = 44, H = modes.length * row + 30, l = 70, r = 60;
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Mode split model vs target' }, f);
+  const X = (v) => l + v / 0.6 * (W - l - r);
+  for (let v = 0; v <= 0.6001; v += 0.1) { el('line', { x1: X(v), x2: X(v), y1: 4, y2: H - 22, class: 'gl' }, svg); el('text', { x: X(v), y: H - 6, 'text-anchor': 'middle', class: 'tick' }, svg, (v * 100).toFixed(0) + '%'); }
+  modes.forEach((k, i) => {
+    const y = 8 + i * row; el('text', { x: l - 10, y: y + 18, 'text-anchor': 'end', class: 'tick', fill: css('--dim') }, svg, k);
+    [[mo[k] / tot, css('--s1'), 'Model'], [t[k], css('--s2'), 'Target (assumed)']].forEach(([v, c, nm], j) => {
+      const g = el('g', {}, svg); const yy = y + j * 15;
+      el('rect', { x: l, y: yy - 2, width: W - l - r, height: 15, fill: 'transparent' }, g);
+      el('rect', { x: l, y: yy, width: Math.max(1, X(v) - l), height: 12, rx: 3, fill: c }, g);
+      el('text', { x: X(v) + 6, y: yy + 10, class: 'dl' }, g, pp(v));
+      hover(g, `<b>${k}</b> · ${nm}<br>${pp(v)}`);
+    });
+  });
+})();
+
+// ── Figure: validation dumbbells ──
+(function valChart() {
+  const f = $('#fig-val'); if (!f) return;
+  const want = [['Muni speed on Market St', 'Muni speed, Market St'], ['Worst parallel-street slowdown', 'Worst parallel street'], ['Cycling on Market St', 'Cycling, Market St'],
+    ['Foot traffic on the treated street', 'Footfall, 2nd St'], ['Revenue of', 'Fronting revenue, 2nd St']];
+  const rows = want.map(([q, lab]) => { const r = DATA.validation.find((x) => x.quantity.startsWith(q)); return r ? { lab, m: r.model, t: r.target, q: r.quantity } : null; }).filter(Boolean);
+  f.innerHTML = '<div class=ctitle>Figure 5. Validation: model vs observed change (not fitted)</div>' + legend([[css('--s1'), 'Model'], [css('--s2'), 'Observed / literature']]);
+  const W = 660, row = 34, H = rows.length * row + 34, l = 185, r = 125;
+  const lo = Math.min(0, ...rows.map((d) => Math.min(d.m, d.t))), hi = Math.max(...rows.map((d) => Math.max(d.m, d.t))) * 1.08;
+  const X = (v) => l + (v - lo) / (hi - lo) * (W - l - r);
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Validation dumbbell chart' }, f);
+  for (let v = 0; v <= hi; v += 0.2) { el('line', { x1: X(v), x2: X(v), y1: 4, y2: H - 24, class: 'gl' }, svg); el('text', { x: X(v), y: H - 8, 'text-anchor': 'middle', class: 'tick' }, svg, '+' + (v * 100).toFixed(0) + '%'); }
+  rows.forEach((d, i) => {
+    const y = 16 + i * row, g = el('g', {}, svg);
+    el('rect', { x: 0, y: y - 14, width: W, height: row - 4, fill: 'transparent' }, g);
+    el('text', { x: l - 12, y: y + 4, 'text-anchor': 'end', class: 'tick', fill: css('--dim') }, g, d.lab);
+    el('line', { x1: X(d.m), x2: X(d.t), y1: y, y2: y, stroke: css('--line-hi'), 'stroke-width': 2 }, g);
+    el('circle', { cx: X(d.t), cy: y, r: 6, fill: css('--s2'), stroke: css('--bg2'), 'stroke-width': 2 }, g);
+    el('circle', { cx: X(d.m), cy: y, r: 6, fill: css('--s1'), stroke: css('--bg2'), 'stroke-width': 2 }, g);
+    el('text', { x: Math.max(X(d.m), X(d.t)) + 12, y: y + 4, class: 'dl' }, g, sgn(d.m * 100, 1) + '% vs ' + sgn(d.t * 100, 1) + '%');
+    hover(g, `<b>${d.q}</b><br><span class=tk>model</span> ${sgn(d.m * 100, 1)}% · <span class=tk>observed</span> ${sgn(d.t * 100, 1)}%`);
+  });
+})();
+
+// ── Figure: popular-times r ──
+(function popChart() {
+  const f = $('#fig-pop'); if (!f) return;
+  const rows = DATA.validation.filter((x) => x.quantity.startsWith('Hourly visit profile correlation')).map((x) => ({ c: x.quantity.split(': ')[1], r: x.model, t: x.target }));
+  f.innerHTML = '<div class=ctitle>Figure 6. Pearson r of modeled hourly visits vs Google popular times, by category</div>';
+  const W = 640, row = 28, H = rows.length * row + 30, l = 90, r = 50, X = (v) => l + v * (W - l - r);
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Popular times correlation' }, f);
+  for (let v = 0; v <= 1.0001; v += 0.2) { el('line', { x1: X(v), x2: X(v), y1: 4, y2: H - 22, class: 'gl' }, svg); el('text', { x: X(v), y: H - 6, 'text-anchor': 'middle', class: 'tick' }, svg, v.toFixed(1)); }
+  rows.forEach((d, i) => { const y = 8 + i * row, g = el('g', {}, svg);
+    el('rect', { x: 0, y: y - 4, width: W, height: row, fill: 'transparent' }, g);
+    el('text', { x: l - 10, y: y + 12, 'text-anchor': 'end', class: 'tick', fill: css('--dim') }, g, d.c.replace('_', ' '));
+    el('rect', { x: l, y: y + 2, width: X(d.r) - l, height: 14, rx: 3, fill: css('--s1') }, g);
+    el('text', { x: X(d.r) + 6, y: y + 13, class: 'dl' }, g, d.r.toFixed(2));
+    hover(g, `<b>${d.c}</b><br>r = ${d.r.toFixed(3)} <span class=tk>(reference ${d.t})</span>`); });
+  const t = rows.length ? rows[0].t : 0.8; el('line', { x1: X(t), x2: X(t), y1: 2, y2: H - 22, stroke: css('--warn'), 'stroke-dasharray': '4 3' }, svg);
+  el('text', { x: X(t) + 4, y: H - 26, class: 'dl', fill: css('--warn') }, svg, 'r = ' + t);
+})();
+
+// ── Equity: diverging scale ──
+const L = DATA.ledger;
+const maxAbs = Math.max(...L.map((g) => Math.abs(g.dcs_usd_yr_pp || 0)), 1e-9);
+function hex2rgb(h) { const n = parseInt(h.replace('#', ''), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+function mix(a, b, t) { const A = hex2rgb(a), B = hex2rgb(b); return `rgb(${A.map((x, i) => Math.round(x + (B[i] - x) * t)).join(',')})`; }
+function divColor(v) { const t = Math.max(-1, Math.min(1, v / maxAbs)); return t < 0 ? mix(css('--div-mid'), css('--div-neg'), -t) : mix(css('--div-mid'), css('--div-pos'), t); }
+function gname(g) { return `${g.region_name} · ${TIER[g.tier]}`; }
+
+// ── Equity map ──
+(function eqMap() {
+  const host = $('#eqmap'); if (!host) return;
+  const POS = { north_bay: [190, 80], sf_north: [288, 180], sf_west: [200, 252], sf_southeast_mission: [262, 326], sf_in_area: [305, 246],
+    east_bay: [480, 205], peninsula_south_bay: [330, 440], other: [562, 448] };
+  const LBL = { sf_north: 'left', sf_west: 'left', sf_in_area: 'right' };
+  const W = 640, H = 520;
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, class: 'eqm', role: 'img', 'aria-label': 'Equity map of home regions' }, host);
+  el('rect', { x: 0, y: 0, width: W, height: H, class: 'ocean', rx: 8 }, svg);
+  // schematic land masses (not to scale)
+  el('path', { class: 'land', d: 'M95 20 L330 20 L318 120 L292 150 L250 165 L214 152 L190 130 L150 140 L120 112 L100 70 Z' }, svg);               // North Bay / Marin
+  el('path', { class: 'land', d: 'M140 176 L300 168 L322 214 L326 262 L344 330 L384 400 L432 470 L452 512 L262 512 L216 450 L180 380 L150 300 Z' }, svg); // SF + Peninsula
+  el('path', { class: 'land', d: 'M360 40 L630 40 L630 512 L520 512 L470 420 L420 330 L380 250 L372 170 L350 110 Z' }, svg);                    // East Bay
+  el('path', { class: 'bay', d: 'M318 120 L350 110 L372 170 L380 250 L420 330 L470 420 L520 512 L452 512 L430 470 L380 400 L340 330 L318 260 L320 214 L300 172 L292 150 Z' }, svg);
+  el('text', { x: 40, y: 330, class: 'wl' }, svg, 'Pacific');
+  el('text', { x: 360, y: 300, class: 'wl', transform: 'rotate(60 360 300)' }, svg, 'SF Bay');
+  el('rect', { x: 279, y: 222, width: 52, height: 48, class: 'study' }, svg);
+  el('text', { x: 305, y: 284, class: 'rv', 'text-anchor': 'middle', fill: css('--hi') }, svg, 'study area');
+  el('rect', { x: 505, y: 405, width: 115, height: 96, rx: 8, fill: 'rgba(255,255,255,.03)', stroke: 'rgba(255,255,255,.12)', 'stroke-dasharray': '3 3' }, svg);
+  const by = {}; L.forEach((g) => { (by[g.region] = by[g.region] || []).push(g); });
+  const maxP = Math.max(...Object.values(by).map((a) => a.reduce((s, g) => s + g.people, 0)));
+  const regions = DATA.regions.slice().sort((a, b) => (by[b.key] || []).reduce((s, g) => s + g.people, 0) - (by[a.key] || []).reduce((s, g) => s + g.people, 0));
+  regions.forEach((r) => {
+    const gs = by[r.key] || []; if (!gs.length) return;
+    const ppl = gs.reduce((s, g) => s + g.people, 0), tot = gs.reduce((s, g) => s + (g.dcs_usd_yr_total || 0), 0), per = tot / ppl * 1;
+    const perpp = gs.reduce((s, g) => s + (g.dcs_usd_yr_pp || 0) * g.people, 0) / ppl;
+    const [x, y] = POS[r.key]; const rad = 7 + 40 * Math.sqrt(ppl / maxP);
+    const g = el('g', {}, svg);
+    el('circle', { cx: x, cy: y, r: rad, fill: divColor(perpp), class: 'bub', 'fill-opacity': .92 }, g);
+    const side = LBL[r.key], lx = side === 'left' ? x - rad - 8 : side === 'right' ? x + rad + 8 : x, ly = side ? y - 2 : y + rad + 14, an = side === 'left' ? 'end' : side === 'right' ? 'start' : 'middle';
+    el('text', { x: lx, y: ly, class: 'rl', 'text-anchor': an }, svg, r.name);
+    el('text', { x: lx, y: ly + 13, class: 'rv', 'text-anchor': an }, svg, fmt$(perpp, 2) + '/yr pp');
+    const tiers = gs.slice().sort((a, b) => ['low', 'mid', 'high'].indexOf(a.tier) - ['low', 'mid', 'high'].indexOf(b.tier));
+    const tbl = '<table><tr><th>tier</th><th>people</th><th>Δ$/yr pp</th><th>Δ min/day</th><th>car</th></tr>' + tiers.map((t) =>
+      `<tr><td><span class=swatch style="background:${divColor(t.dcs_usd_yr_pp)}"></span>${t.tier}</td><td>${fmtN(t.people)}</td><td>${fmt$(t.dcs_usd_yr_pp, 2)}</td><td>${t.dt_min_day == null ? '–' : sgn(t.dt_min_day)}</td><td>${pp(t.car_b)}→${pp(t.car_p)}</td></tr>`).join('') + '</table>';
+    hover(g, `<b>${r.name}</b> <span class=tk>${fmtN(ppl)} commuters</span><br>group total ${fmtK$(tot)}/yr · mean ${fmt$(perpp, 2)}/yr per person` + tbl);
+  });
+  const sc = document.createElement('div'); sc.className = 'dscale';
+  sc.innerHTML = `<span>${fmt$(-maxAbs, 2)}</span><span class=bar></span><span>${fmt$(maxAbs, 2)}</span><span>per person per year (symmetric scale)</span>`;
+  host.appendChild(sc);
+})();
+
+// ── Ledger table ──
+(function ledger() {
+  const t = $('#ledger'); if (!t) return;
+  const tb = t.tBodies[0]; let key = 'dcs_usd_yr_pp', dir = 1;
+  function render() {
+    const rows = L.slice().sort((a, b) => { const x = a[key], y = b[key]; return (typeof x === 'string' ? x.localeCompare(y) : (x ?? 0) - (y ?? 0)) * dir; });
+    tb.innerHTML = rows.map((g) => `<tr><td><span class=swatch style="background:${divColor(g.dcs_usd_yr_pp)}"></span>${g.region_name}</td><td>${g.tier}</td><td class=num>${fmtN(g.people)}</td>
+      <td class=num>${pp(g.car_b)} → ${pp(g.car_p)}</td><td class=num>${fmtN(g.switchers)}</td><td class=num>${g.dt_min_day == null ? '–' : sgn(g.dt_min_day)}</td>
+      <td class=num>${g.dcost_usd_day == null ? '–' : fmt$(g.dcost_usd_day, 2)}</td><td class="num ${g.dcs_usd_yr_pp < 0 ? 'neg' : g.dcs_usd_yr_pp > 0 ? 'pos' : ''}">${fmt$(g.dcs_usd_yr_pp, 2)}</td>
+      <td class="num ${g.dcs_usd_yr_total < 0 ? 'neg' : g.dcs_usd_yr_total > 0 ? 'pos' : ''}">${fmtK$(g.dcs_usd_yr_total)}</td></tr>`).join('');
+    t.querySelectorAll('th').forEach((th) => { th.classList.toggle('asc', th.dataset.k === key && dir > 0); th.classList.toggle('desc', th.dataset.k === key && dir < 0); });
+  }
+  t.querySelectorAll('th').forEach((th) => th.addEventListener('click', () => { if (key === th.dataset.k) dir = -dir; else { key = th.dataset.k; dir = 1; } render(); }));
+  render();
+})();
+
+// ── Sticky losers / winners strip ──
+(function strip() {
+  const box = $('#losers'); const s = L.filter((g) => g.dcs_usd_yr_pp != null).slice().sort((a, b) => a.dcs_usd_yr_pp - b.dcs_usd_yr_pp);
+  const line = (g, cls) => `<div class=row title="${gname(g)}: ${fmtN(g.people)} people, group ${fmtK$(g.dcs_usd_yr_total)}/yr"><span class=g>${g.region_name} <span class=sub>${g.tier}</span></span><span class="v ${cls}">${fmt$(g.dcs_usd_yr_pp, 2)}/yr, ${g.dt_min_day == null ? '' : sgn(g.dt_min_day) + ' min'}</span></div>`;
+  const lose = s.filter((g) => g.dcs_usd_yr_pp < 0).slice(0, 4), win = s.filter((g) => g.dcs_usd_yr_pp > 0).slice(-3).reverse();
+  box.innerHTML = `<div><h4><span>Biggest losers · 2nd St car-free</span><a href="#equity">ledger ↓</a></h4>${lose.map((g) => line(g, 'l')).join('')}</div>` +
+    `<div class="sep wins"><h4><span>Top winners</span></h4>${win.map((g) => line(g, 'w')).join('')}<div class=sub style="margin-top:4px">per commuter, commute surplus (Eq. 28)</div></div>`;
+})();
+
+// ── TOC highlight ──
+const links = [...document.querySelectorAll('.toc a')];
+const io = new IntersectionObserver((es) => { es.forEach((e) => { if (e.isIntersecting) links.forEach((a) => a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id)); }); }, { rootMargin: '-15% 0px -75% 0px' });
+document.querySelectorAll('main section').forEach((s) => io.observe(s));
+
+// ── KaTeX ──
+function math() { if (!window.renderMathInElement) return false;
+  renderMathInElement(document.querySelector('main'), { delimiters: [{ left: '$$', right: '$$', display: true }, { left: '\\(', right: '\\)', display: false }], throwOnError: false, strict: 'ignore' }); return true; }
+window.addEventListener('DOMContentLoaded', () => { if (!math()) window.addEventListener('load', math); });
+})();
+</script>
+</body>
+</html>

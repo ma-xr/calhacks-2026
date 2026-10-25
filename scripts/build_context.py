@@ -1,19 +1,20 @@
-"""Build the faded San Francisco context around the simulation area.
+"""Build the faded city context around the simulation area (any city in scripts/cities.py).
 
-Usage: python3 scripts/build_context.py data/raw/osm_context_2026-10-24.json data/processed/context.json
+Usage: python3 scripts/build_context.py <osm_context.json> <context.json> [--city sf|chicago|nyc]
 
-Same local-meter frame as world.json. Everything inside the simulation bbox is dropped (the
-simulation renders it). Compact encoding:
+The coastline and water polygons are read from the sibling file whose name has "osm_context" replaced
+by "osm_coast". Same local-meter frame as world.json. Buildings inside the simulation bbox are dropped
+(the simulation renders them). Compact encoding:
   buildings: [h, x0, z0, x1, z1, ...]   (meters, ints)
   roads:     [cls, nameIdx, x0, z0, ...]  (cls index into CLASSES)
-  parks / water: [x0, z0, x1, z1, ...]
+  land / parks / water: [x0, z0, x1, z1, ...]
 """
 import json
 import math
 import sys
 
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
-from build_world import BBOX, parse_height, simplify, xz  # noqa: E402
+import build_world as BW  # noqa: E402
 
 CLASSES = ["motorway", "trunk", "primary", "secondary", "tertiary", "residential", "pedestrian"]
 CLS = {"motorway": 0, "motorway_link": 0, "trunk": 1, "trunk_link": 1, "primary": 2, "primary_link": 2,
@@ -21,59 +22,188 @@ CLS = {"motorway": 0, "motorway_link": 0, "trunk": 1, "trunk_link": 1, "primary"
 MAX_R = 2600  # meters from origin; beyond this everything has faded out anyway
 
 
-def coast_land(path, S=6000):
-    """Land polygons from OSM coastline (land is left of the line). Returns flat [x0, z0, ...] lists."""
+def _chain(segs):
+    """Join polylines that share endpoints (direction kept where possible). Returns closed rings and open chains."""
+    segs = [list(s) for s in segs if len(s) >= 2]
+    out = []
+    while segs:
+        c = segs.pop(0)
+        grown = True
+        while grown and c[0] != c[-1]:
+            grown = False
+            for i, sg in enumerate(segs):
+                if sg[0] == c[-1]:
+                    c += sg[1:]
+                elif sg[-1] == c[0]:
+                    c = sg[:-1] + c
+                elif sg[-1] == c[-1]:
+                    c += sg[::-1][1:]
+                elif sg[0] == c[0]:
+                    c = sg[::-1][:-1] + c
+                else:
+                    continue
+                segs.pop(i)
+                grown = True
+                break
+        out.append(c)
+    return out
+
+
+def _clip(chain, S):
+    """Clip a polyline (x, y north-up) to the square [-S, S]^2. Returns the inside pieces; endpoints on the edge."""
+    inside = lambda p: -S <= p[0] <= S and -S <= p[1] <= S  # noqa: E731
+    pieces, cur = [], []
+    for a, b in zip(chain, chain[1:]):
+        ia, ib = inside(a), inside(b)
+        if ia and not cur:
+            cur = [a]
+        # Liang-Barsky for the segment a-b
+        t0, t1, dx, dy = 0.0, 1.0, b[0] - a[0], b[1] - a[1]
+        ok = True
+        for p, q in ((-dx, a[0] + S), (dx, S - a[0]), (-dy, a[1] + S), (dy, S - a[1])):
+            if p == 0:
+                if q < 0:
+                    ok = False
+                continue
+            r = q / p
+            if p < 0:
+                t0 = max(t0, r)
+            else:
+                t1 = min(t1, r)
+        if not ok or t0 > t1:
+            continue
+        pa = (a[0] + t0 * dx, a[1] + t0 * dy)
+        pb = (a[0] + t1 * dx, a[1] + t1 * dy)
+        if not cur:
+            cur = [pa]
+        cur.append(pb)
+        if not ib:
+            pieces.append(cur)
+            cur = []
+    if len(cur) >= 2:
+        pieces.append(cur)
+    return pieces
+
+
+def coast_land(path, S=3500):
+    """Land polygons from OSM coastline (land lies left of the line), clipped to a square of half-size S.
+    Handles any number of shorelines, e.g. both sides of Manhattan. Returns flat [x0, z0, ...] lists."""
     try:
         els = json.load(open(path))["elements"]
     except (OSError, ValueError):
         return []
-    segs = [[xz(g["lat"], g["lon"]) for g in w["geometry"]] for w in els if "geometry" in w]
-    chains = []
-    while segs:
-        c = segs.pop(0)
-        grown = True
-        while grown:
-            grown = False
-            for i, sg in enumerate(segs):
-                if sg[0] == c[-1]:
-                    c += sg[1:]; segs.pop(i); grown = True; break
-                if sg[-1] == c[0]:
-                    c = sg[:-1] + c; segs.pop(i); grown = True; break
-        chains.append(c)
+    lines = [[BW.xz(g["lat"], g["lon"]) for g in w["geometry"]] for w in els
+             if w.get("type") == "way" and w.get("tags", {}).get("natural") == "coastline" and "geometry" in w]
+    # A named lake's shoreline (e.g. Lake Michigan, mapped as a water area, not coastline): direction unknown.
+    shore = path.replace("osm_coast", "osm_shore")
+    oriented = True
+    try:
+        sw = json.load(open(shore))["elements"]
+        extra = [[BW.xz(g["lat"], g["lon"]) for g in w["geometry"]] for w in sw if w.get("type") == "way" and "geometry" in w]
+        if extra:
+            lines += extra
+            oriented = False
+    except (OSError, ValueError):
+        pass
+    if not lines:
+        return [[-S, -S, S, -S, S, S, -S, S]]   # no coast nearby: everything is land, water polygons draw on top
+    polys = _trace(lines, S)
+    if not oriented and not _covers(polys, 0.0, 0.0):  # the simulation center must be land: flip the shoreline
+        polys = _trace([l[::-1] for l in lines], S)
+    out = []
+    for ring in polys:
+        pts = BW.simplify([(x, -y) for x, y in ring], 2.0)
+        if len(pts) >= 3:
+            out.append([round(v) for p in pts for v in p])
+    return out
+
+
+def _covers(polys, x, y):
+    for ring in polys:
+        ins, n = False, len(ring)
+        for i in range(n):
+            x1, y1 = ring[i]
+            x2, y2 = ring[(i + 1) % n]
+            if (y1 > y) != (y2 > y) and x < (x2 - x1) * (y - y1) / (y2 - y1) + x1:
+                ins = not ins
+        if ins:
+            return True
+    return False
+
+
+def _trace(lines, S):
+    """Clip shorelines (land on the left) to the square and close them along its edge into land rings (north-up)."""
     polys = []
-    for c in chains:
-        if c[0] != c[-1]:
-            if len(c) < 50:
-                continue
-            # Close an open coastline through a far square, walking counter-clockwise (north-up frame) so land stays left.
-            def to_edge(p):
-                x, y = p[0], -p[1]
-                k = S / max(abs(x), abs(y), 1e-6)
-                return (x * k, y * k)
-            def ang(p):
-                return math.atan2(p[1], p[0]) % (2 * math.pi)
-            e, st = to_edge(c[-1]), to_edge(c[0])
-            path = [e]
-            corners = [(S, S), (-S, S), (-S, -S), (S, -S)]
-            a, b = ang(e), ang(st)
-            if b < a:
-                b += 2 * math.pi
-            seq = [(ang(q) + (2 * math.pi if ang(q) < a else 0), q) for q in corners]
-            seq += [(t + 2 * math.pi, q) for t, q in seq]
-            path += [q for t, q in sorted(seq) if a < t < b]
-            path.append(st)
-            ring = c + [(x, -y) for x, y in path]
-        else:
-            ring = c[:-1]
-        ring = simplify(ring, 2.0)
-        polys.append([round(v) for p in ring for v in p])
+    pieces = []
+    for c in _chain(lines):
+        xy = [(x, -z) for x, z in c]             # north-up frame
+        if xy[0] == xy[-1] and all(-S <= p[0] <= S and -S <= p[1] <= S for p in xy):
+            polys.append(xy[:-1])                  # island fully inside
+            continue
+        pieces += [p for p in _clip(xy, S) if len(p) >= 2]
+    # Walk the square counter-clockwise from each piece's exit to the next piece's entry.
+    def perim(p):
+        x, y = p
+        if abs(x - S) < 1e-6 and y < S:
+            return y + S
+        if abs(y - S) < 1e-6:
+            return 2 * S + (S - x)
+        if abs(x + S) < 1e-6:
+            return 4 * S + (S - y)
+        return 6 * S + (x + S)
+    P = 8 * S
+    corners = [(2 * S, (S, S)), (4 * S, (-S, S)), (6 * S, (-S, -S)), (0.0, (S, -S))]
+    used = set()
+    for i0 in range(len(pieces)):
+        if i0 in used:
+            continue
+        ring, i = [], i0
+        for _ in range(len(pieces) + 1):
+            used.add(i)
+            ring += pieces[i]
+            te = perim(pieces[i][-1])
+            nxt = min((j for j in range(len(pieces)) if j not in used or j == i0),
+                      key=lambda j: (perim(pieces[j][0]) - te) % P)
+            span = (perim(pieces[nxt][0]) - te) % P
+            ring += [cp for d, cp in sorted(((tc - te) % P, cp) for tc, cp in corners) if 0 < d < span]
+            if nxt == i0:
+                break
+            i = nxt
+        polys.append(ring)
     return polys
 
 
+def water_polys(path):
+    """Rivers and lakes (natural=water ways and multipolygon outers, waterway=riverbank)."""
+    try:
+        els = json.load(open(path))["elements"]
+    except (OSError, ValueError):
+        return []
+    rings = []
+    for el in els:
+        t = el.get("tags", {})
+        if not (t.get("natural") == "water" or t.get("waterway") == "riverbank"):
+            continue
+        if el["type"] == "way" and "geometry" in el:
+            rings.append([BW.xz(g["lat"], g["lon"]) for g in el["geometry"]])
+        elif el["type"] == "relation":
+            outers = [[BW.xz(g["lat"], g["lon"]) for g in m["geometry"]] for m in el.get("members", [])
+                      if m.get("role") == "outer" and m.get("geometry")]
+            rings += [r for r in _chain(outers) if r[0] == r[-1]]
+    out = []
+    for r in rings:
+        if len(r) < 4 or min(math.hypot(*p) for p in r) > MAX_R + 1500:
+            continue
+        pts = BW.simplify(r[:-1] if r[0] == r[-1] else r, 2.0)
+        if len(pts) >= 3:
+            out.append([round(v) for p in pts for v in p])
+    return out
+
+
 def main(src, dst):
-    s, w, n, e = BBOX
-    x0, z1 = xz(s, w)
-    x1, z0 = xz(n, e)
+    s, w, n, e = BW.BBOX
+    x0, z1 = BW.xz(s, w)
+    x1, z0 = BW.xz(n, e)
     inside = lambda x, z: x0 < x < x1 and z0 < z < z1  # noqa: E731
     els = json.load(open(src))["elements"]
     bld, roads, parks, water, names, nidx = [], [], [], [], [], {}
@@ -81,7 +211,7 @@ def main(src, dst):
         t = el.get("tags", {})
         if "geometry" not in el:
             continue
-        pts = [xz(g["lat"], g["lon"]) for g in el["geometry"]]
+        pts = [BW.xz(g["lat"], g["lon"]) for g in el["geometry"]]
         if "building" in t:
             cx = sum(p[0] for p in pts) / len(pts)
             cz = sum(p[1] for p in pts) / len(pts)
@@ -90,13 +220,13 @@ def main(src, dst):
             area = abs(sum(pts[i - 1][0] * pts[i][1] - pts[i][0] * pts[i - 1][1] for i in range(len(pts)))) / 2
             if area < 45:
                 continue
-            pts = simplify(pts, 1.2)
+            pts = BW.simplify(pts, 1.2)
             if pts[0] == pts[-1]:
                 pts = pts[:-1]
             if len(pts) < 3:
                 continue
-            h = parse_height(t) or (12 if area < 400 else 16)
-            bld.append([round(min(h, 300))] + [round(v) for p in pts for v in p])
+            h = BW.parse_height(t) or (12 if area < 400 else 16)
+            bld.append([round(min(h, 400))] + [round(v) for p in pts for v in p])
         elif t.get("highway") in CLS:
             if all(inside(*p) for p in pts) or min(math.hypot(*p) for p in pts) > MAX_R:
                 continue
@@ -104,17 +234,21 @@ def main(src, dst):
             if nm not in nidx:
                 nidx[nm] = len(names)
                 names.append(nm)
-            roads.append([CLS[t["highway"]], nidx[nm]] + [round(v) for p in simplify(pts, 1.5) for v in p])
+            roads.append([CLS[t["highway"]], nidx[nm]] + [round(v) for p in BW.simplify(pts, 1.5) for v in p])
         elif t.get("natural") == "water" or t.get("leisure") == "park":
             if len(pts) < 4:
                 continue
-            (water if t.get("natural") == "water" else parks).append([round(v) for p in simplify(pts, 2) for v in p])
-    land = coast_land(src.replace("osm_context", "osm_coast"))
+            (water if t.get("natural") == "water" else parks).append([round(v) for p in BW.simplify(pts, 2) for v in p])
+    coast = src.replace("osm_context", "osm_coast")
+    land = coast_land(coast)
+    water += water_polys(coast)
     out = {"classes": CLASSES, "land": land, "names": names, "buildings": bld, "roads": roads, "parks": parks, "water": water,
            "simBox": {"x0": x0, "x1": x1, "z0": z0, "z1": z1}, "attribution": "© OpenStreetMap contributors (ODbL)"}
     json.dump(out, open(dst, "w"), separators=(",", ":"))
-    print(f"context: {len(bld)} buildings, {len(roads)} roads, {len(parks)} parks, {len(water)} water")
+    print(f"context: {len(bld)} buildings, {len(roads)} roads, {len(parks)} parks, {len(water)} water, {len(land)} land")
 
 
 if __name__ == "__main__":
+    if "--city" in sys.argv:
+        BW.configure(sys.argv[sys.argv.index("--city") + 1])
     main(sys.argv[1], sys.argv[2])

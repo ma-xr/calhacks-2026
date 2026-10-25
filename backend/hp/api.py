@@ -241,7 +241,7 @@ def post_scenario(body: dict = Body(...), stream: bool = Query(False), lite: boo
 
     def work():
         try:
-            sid = S.run(edits, name, progress=lambda k, n: q.put(("progress", {"day": k, "days": n, "label": f"Replanning day {k}/{n}"})))
+            sid = S.run(edits, name, progress=lambda k, n, gap=None: q.put(("progress", {"day": k, "days": n, "gap": gap, "label": f"Replanning day {k}/{n}"})))
             q.put(("result", S.result_json(sid, lite, max_trips)))
         except Exception as e:
             q.put(("error", {"error": repr(e)}))
@@ -267,12 +267,12 @@ def agent(sid: str, aid: int):
     if not b and not p:
         raise HTTPException(404, "unknown agent")
     prof = dict(p or b)
-    for k in ("trips", "diary", "mode", "ties"):
+    for k in ("trips", "diary", "mode", "mode_probs", "ties"):
         prof.pop(k, None)
     btie = {t["agent_id"] for t in (b or {}).get("ties", [])}
     ties = [{**t, "new_in_plan": t["agent_id"] not in btie} for t in (p or {}).get("ties", [])]
-    return R._round({**prof, "baseline": {k: (b or {}).get(k) for k in ("mode", "trips", "diary")},
-                     "plan": {k: (p or {}).get(k) for k in ("mode", "trips", "diary")}, "ties": ties})
+    return R._round({**prof, "baseline": {k: (b or {}).get(k) for k in ("mode", "mode_probs", "trips", "diary")},
+                     "plan": {k: (p or {}).get(k) for k in ("mode", "mode_probs", "trips", "diary")}, "ties": ties})
 
 
 @app.get("/scenarios")

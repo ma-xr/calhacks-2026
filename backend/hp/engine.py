@@ -239,7 +239,7 @@ class Engine:
             gaps.append(float(np.abs(vol_avg - prev).sum() / max(prev.sum(), 1)))
             cong = self._bpr(vol_avg)
             if progress:
-                progress(k + 1, days)
+                progress(k + 1, days, gaps[-1])
         car.reset()
         ctx.choose(cong, ref)
         vol = ctx.load_cars(cong)
@@ -248,7 +248,7 @@ class Engine:
         res["id"] = "baseline" if is_base else key
         res["edits"] = norm
         res["settle"] = {"days": days, "ms": int((time.time() - t0) * 1000), "converged": gaps[-1] < 0.03,
-                         "gap": round(gaps[-1], 4)}
+                         "gap": round(gaps[-1], 4), "gaps": [round(g, 4) for g in gaps]}
         return res
 
     def _bpr(self, vol):

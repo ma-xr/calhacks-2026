@@ -185,10 +185,17 @@ def agent_view(res, agent_id, P, poi_names):
     ties = [{"agent_id": b if a == agent_id else a, "name": agent_name(b if a == agent_id else a), "where_poi": q, "t": t}
             for (a, b, q, t) in st["tie_pairs"] if agent_id in (a, b)]
     r = int(pop.region[i])
+    probs = None
+    if pop.kind[i] == WORKER and getattr(ctx, "V", None) is not None:
+        v = np.asarray(ctx.V[i], float)
+        ok = np.isfinite(v)
+        if ok.any():
+            ex = np.where(ok, np.exp(v - v[ok].max()), 0.0)   # multinomial logit over the deterministic utilities
+            probs = {MODE_NAMES[k]: round(float(ex[k] / ex.sum()), 3) for k in range(len(v))}
     return {"agent_id": int(agent_id), "name": agent_name(int(agent_id)), "kind": KIND_NAMES[int(pop.kind[i])],
             "income_tier": int(pop.tier[i]), "region": REGIONS[r]["name"], "work_building": int(pop.bld[i]) if pop.kind[i] == WORKER else -1,
             "home_building": int(pop.bld[i]) if pop.kind[i] == RESIDENT else -1, "car_available": bool(pop.car[i]),
-            "mode": mode, "trips": trips, "diary": diary, "ties": ties}
+            "mode": mode, "mode_probs": probs, "trips": trips, "diary": diary, "ties": ties}
 
 
 def agents_sample(res, base, must=(), n=40):

@@ -27,6 +27,13 @@ data/cache/bart/
 # Build outputs copied next to each page by scripts/build_mockup.py
 mockup/variants/*/backend-snapshot/
 mockup/variants/*/live.mjs
+mockup/cities/*/backend-snapshot/
+mockup/cities/*/live.mjs
 
 # Droid run artifacts
 backend/droid/runs/
+
+# Large context downloads for the other cities (re-fetch with scripts/fetch_city.py <city>)
+data/raw/chicago/osm_context.json
+data/raw/nyc/osm_context.json
+data/raw/*/*.tmp

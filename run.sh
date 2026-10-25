@@ -96,7 +96,7 @@ if [[ $LIVE -eq 1 ]]; then
   LAN_IP="$( (ipconfig getifaddr en0 || ipconfig getifaddr en1 || hostname -I 2>/dev/null | awk '{print $1}') 2>/dev/null | head -1)"
 fi
 
-URL="http://localhost:$WEB_PORT/variants/a1-skyline-clean/index.html"
+URL="http://localhost:$WEB_PORT/home/"
 [[ "$HP_PORT" != "8787" ]] && URL="$URL?api=http://localhost:$HP_PORT"
 say "Ready → $URL"
 say "Engine API → http://localhost:$HP_PORT  (logs in .run/)   ·   Ctrl-C to stop"

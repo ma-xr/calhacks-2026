@@ -11,7 +11,9 @@ import re
 import sys
 
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
-from build_world import simplify, xz  # noqa: E402
+import build_world as _BW  # noqa: E402
+simplify = _BW.simplify
+xz = lambda lat, lon: _BW.xz(lat, lon)  # noqa: E731  (late-bound so --city takes effect)
 
 COLOURS = {"white": "#f2f2ee", "grey": "#9a9a9a", "gray": "#9a9a9a", "black": "#2a2a2a", "red": "#9a3b2e", "brown": "#7a5a43",
            "beige": "#d8c8a8", "yellow": "#d8c060", "blue": "#5a7aa0", "silver": "#c8ccd0", "tan": "#cdb48c", "cream": "#efe6cf"}
@@ -95,4 +97,7 @@ def main(src, dst, world="data/processed/world.json"):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2])
+    import build_world as BW
+    if "--city" in sys.argv:
+        BW.configure(sys.argv[sys.argv.index("--city") + 1])
+    main(sys.argv[1], sys.argv[2], *(sys.argv[sys.argv.index("--world") + 1:sys.argv.index("--world") + 2] if "--world" in sys.argv else []))
