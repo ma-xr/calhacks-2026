@@ -316,7 +316,7 @@ def sections(D, P, V, R):
 
     # 1 ─ overview
     S.append(("overview", "System overview", fill(r"""
-<p class=lede>The Human Project simulates one weekday in San Francisco's Financial District and upper SoMa as a swarm of
+<p class=lede>CommonGround simulates one weekday in San Francisco's Financial District and upper SoMa as a swarm of
 {{agents}} software agents, each standing for \(s = {{scale}}\) real people ({{people}} people present in the baseline).
 A run is a fixed point of a MATSim-style loop {{c_matsim}}: agents choose modes on yesterday's congested travel times,
 cars are loaded onto the OpenStreetMap road graph, link costs are updated with a BPR function, and the day is replayed.
@@ -774,7 +774,7 @@ TEMPLATE = r"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Methods · The Human Project</title>
+<title>Methods · CommonGround</title>
 <meta name="description" content="Technical appendix: synthetic population, logit mode choice, BPR/MSA assignment, Huff destinations, co-presence ties, valuation, equity ledger, policy plugin gate, calibration and validation.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

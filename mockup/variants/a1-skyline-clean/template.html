@@ -1,6 +1,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Human Project · Skyline Clean</title>
+<title>CommonGround · Skyline Clean</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <script>if (/[?&]reel\b/.test(location.search)) document.documentElement.classList.add('reel-boot');   // hide the chrome before the app loads</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -569,7 +569,7 @@ body.reel-src #ilegend { display: none !important; }
   <div id="labels"></div>
 
   <header id="top" class="glass">
-    <div class="brand"><div class="logo"><svg class="ic" viewBox="0 0 24 24" data-ic="logo"></svg></div><b>The Human Project</b><span class="crumb" id="crumb" hidden></span><span class="status" id="status"></span></div>
+    <div class="brand"><div class="logo"><svg class="ic" viewBox="0 0 24 24" data-ic="logo"></svg></div><b>CommonGround</b><span class="crumb" id="crumb" hidden></span><span class="status" id="status"></span></div>
     <div class="cityseg" id="cityseg"><a data-city="sf" href="../../cities/sf/index.html" title="San Francisco">SF</a><a data-city="chicago" href="../../cities/chicago/index.html" title="Chicago">CHI</a><a data-city="nyc" href="../../cities/nyc/index.html" title="New York">NYC</a></div>
     <div class="seg" role="tablist" aria-label="Scenario">
       <button id="tab-base" role="tab" class="on" title="The city as it is today">Baseline</button>
@@ -693,7 +693,7 @@ body.reel-src #ilegend { display: none !important; }
   <div id="endcard" hidden></div>
   <div class="veil" id="intro">
     <div class="card glass intro">
-      <div class="eyebrow"><span class="logo"><svg class="ic" viewBox="0 0 24 24" data-ic="logo"></svg></span>The Human Project</div>
+      <div class="eyebrow"><span class="logo"><svg class="ic" viewBox="0 0 24 24" data-ic="logo"></svg></span>CommonGround</div>
       <h1>What if <em>2nd Street</em> belonged to people?</h1>
       <p>A simulated weekday in San Francisco, where every dot is a person: change a street or a block and watch the whole city replan.</p>
       <div class="row">
@@ -2204,7 +2204,7 @@ async function fetchPosts(id) {
   if (postsDone.has(id)) return; postsDone.set(id, true); let r = null;
   try { r = await B.narrative.posts(id, 6); } catch (e) { console.warn('posts', e); }
   const list = (r?.posts || []).filter(p => p && p.text && p.text.trim());
-  if (!list.length) { post('The Human Project', B.mode === 'live' ? 'No citizen posts came back from the engine for this plan.' : 'Citizen posts need the live engine.', null, 'engine'); return; }
+  if (!list.length) { post('CommonGround', B.mode === 'live' ? 'No citizen posts came back from the engine for this plan.' : 'Citizen posts need the live engine.', null, 'engine'); return; }
   list.forEach((p, i) => setTimeout(() => post(p.name || 'Citizen', p.text, p.agent_id ?? null, p.tag || null), 300 + i * 1800));
 }
 function afterSettle(label) {
@@ -2537,9 +2537,9 @@ async function applyEngineOption(o) {
   let r = null; ui.settling = true; showChips('<div class="chip glass">The engine is combining this with your plan…</div>'); try { r = await B.scenario(merged, { onProgress: (d) => showChips(`<div class="chip glass">The engine is replanning · ${String(d.label || '').replace(/^Replanning /, '')}</div>`) }); } catch (e) { console.warn(e); } ui.settling = false;
   if (r && r.trips && r.edges) { await loadHeroView(r.id); fillEngine(ENG.plan, r); useWorld(true); afterSettle('AI suggestion applied'); }
   else await settle('AI suggestion applied');
-  post('Human Project AI', `Applied: ${o.title}.`, null, 'plan');
+  post('CommonGround AI', `Applied: ${o.title}.`, null, 'plan');
 }
-async function applyOption(o) { clearGhost(); if (o.eng) return applyEngineOption(o); o.animate(); switchView('plan'); toggleAI(false); await settle('AI suggestion applied'); post('Human Project AI', `Applied: ${o.title}.`, null, 'plan'); }
+async function applyOption(o) { clearGhost(); if (o.eng) return applyEngineOption(o); o.animate(); switchView('plan'); toggleAI(false); await settle('AI suggestion applied'); post('CommonGround AI', `Applied: ${o.title}.`, null, 'plan'); }
 $('#ask').addEventListener('submit', (e) => { e.preventDefault(); const q = $('#ask-in').value.trim(); if (q) askAI(q, 'plan'); $('#ask-in').value = ''; });
 
 // ───────────────────────── pitch card ─────────────────────────
@@ -2553,7 +2553,7 @@ function openPitch() {
   const ap = (x) => clamp(Math.round(x), 8, 96);
   const merch = ap(55 + (p.revenue - b.revenue) / Math.max(b.revenue, 1) * 260), resi = ap(52 + (p.enc - b.enc) / Math.max(b.enc, 1) * 60 + (p.res - b.res) / Math.max(b.res, 1) * 40), drv = ap(50 - (p.delayH - b.delayH) / Math.max(b.delayH, 1) * 220 - (S.plan.ped.size ? 12 : 0)), trn = ap(58 + (p.tr - b.tr) / Math.max(b.tr, 1) * 120 + 8);
   const v2 = document.createElement('div'); v2.className = 'veil'; v2.id = 'pitch';
-  v2.innerHTML = `<div class="card glass pitch"><div class="eyebrow">The Human Project · Pitch to the Board of Supervisors</div><h2>${name}</h2>
+  v2.innerHTML = `<div class="card glass pitch"><div class="eyebrow">CommonGround · Pitch to the Board of Supervisors</div><h2>${name}</h2>
   <div class="total" style="color:${v.total < 0 ? '#ffb0b0' : ''}">${money(v.total)}<span style="font-size:22px;color:var(--dim)"> /yr</span></div>
   <div style="color:var(--dim);font-weight:700">Net value to the city versus today. One simulated day projected to ${WORKDAYS} workdays.</div>
   <div class="stack">${parts.filter(x => x[1] < 0).map(x => `<div title="${x[0]} ${money(x[1])}" style="width:${-x[1] / sumAbs * 100}%;background:repeating-linear-gradient(135deg,#ff5d5d 0 5px,#9b2b3a 5px 9px)"></div>`).join('')}${parts.some(x => x[1] < 0) ? '<div style="width:3px;background:#fff"></div>' : ''}${parts.filter(x => x[1] > 0).map(x => `<div style="width:${x[1] / sumAbs * 100}%;background:${x[2]}"></div>`).join('')}</div>
@@ -2572,7 +2572,7 @@ function openPitch() {
   <div style="display:flex;gap:8px;margin-top:16px"><button class="btn primary" id="pitch-copy">Copy summary</button><button class="btn" id="pitch-close">Close</button></div></div>`;
   stage.append(v2);
   const closeP = () => { v2.remove(); if (v2.dataset.after) toast(v2.dataset.after); }; $('#pitch-close').onclick = closeP; v2.onclick = (e) => { if (e.target === v2) closeP(); };
-  $('#pitch-copy').onclick = () => { const t = `The Human Project · ${name}: ${money(v.total)}/yr net value. Revenue ${money(p.revenue - b.revenue)}/day, car trips ${num((p.car - b.car) * SCALE)}/day, new connections ${num(p.ties - b.ties)}/day.`; navigator.clipboard?.writeText(t).then(() => toast('Summary copied'), () => toast(t)); };
+  $('#pitch-copy').onclick = () => { const t = `CommonGround · ${name}: ${money(v.total)}/yr net value. Revenue ${money(p.revenue - b.revenue)}/day, car trips ${num((p.car - b.car) * SCALE)}/day, new connections ${num(p.ties - b.ties)}/day.`; navigator.clipboard?.writeText(t).then(() => toast('Summary copied'), () => toast(t)); };
 }
 function openPitchEng() {
   $('#pitch')?.remove();
@@ -2590,7 +2590,7 @@ function openPitchEng() {
   const fq = (x) => Math.abs(x) >= 100 ? num(x) : (x > 0 ? '+' : x < 0 ? '−' : '') + Math.abs(x).toFixed(Math.abs(x) < 10 ? 2 : 1);
   const pc = { data: 0, literature: 0, assumed: 0 }; for (const k in EW.params || {}) { const st = EW.params[k].status; if (st in pc) pc[st]++; }
   const v2 = document.createElement('div'); v2.className = 'veil'; v2.id = 'pitch';
-  v2.innerHTML = `<div class="card glass pitch"><button class="x" id="pitch-x" aria-label="Close" style="top:14px;right:14px">×</button><div class="eyebrow">The Human Project · Pitch to the Board of Supervisors</div><h2>${name}</h2>
+  v2.innerHTML = `<div class="card glass pitch"><button class="x" id="pitch-x" aria-label="Close" style="top:14px;right:14px">×</button><div class="eyebrow">CommonGround · Pitch to the Board of Supervisors</div><h2>${name}</h2>
   <div class="total" style="color:${v.total < 0 ? '#ffb0b0' : ''}">${money(vTotal)}<span style="font-size:22px;color:var(--dim)"> /yr</span></div>
   <div style="color:var(--dim)">Net value to the city versus today, from the simulation engine${S.plan.estimate ? ' (estimate: this edit isn’t pre-computed)' : ''}. One weekday projected to ${WORKDAYS} workdays.</div>
   <div class="stack">${parts.filter(x => x[1] < 0).map(x => `<div title="${x[0]} ${money(x[1])}" style="width:${-x[1] / sumAbs * 100}%;background:repeating-linear-gradient(135deg,#ff5d5d 0 5px,#9b2b3a 5px 9px)"></div>`).join('')}${parts.some(x => x[1] < 0) ? '<div style="width:3px;background:#fff"></div>' : ''}${parts.filter(x => x[1] > 0).map(x => `<div style="width:${x[1] / sumAbs * 100}%;background:${x[2]}"></div>`).join('')}</div>
@@ -2610,7 +2610,7 @@ ${planPolicies.map(po => `<tr><td>Policy</td><td>${policyText(po)}</td></tr>`).j
   <div style="display:flex;gap:8px;margin-top:16px"><button class="btn primary" id="pitch-copy">Copy summary</button><button class="btn" id="pitch-close">Close</button></div></div>`;
   stage.append(v2);
   const closeP = () => { v2.remove(); if (v2.dataset.after) toast(v2.dataset.after); }; $('#pitch-close').onclick = closeP; $('#pitch-x').onclick = closeP; v2.onclick = (e) => { if (e.target === v2) closeP(); };
-  $('#pitch-copy').onclick = () => { const t = `The Human Project · ${name}: ${money(v.total)}/yr net value (simulation engine). Revenue ${money(d.revenue)}/day, car trips ${num(d.trips.car)}/day, new connections ${num(d.new_ties)}/day, CO₂ ${fq(d.co2_tonnes)} t/day.`; navigator.clipboard?.writeText(t).then(() => toast('Summary copied'), () => toast(t)); };
+  $('#pitch-copy').onclick = () => { const t = `CommonGround · ${name}: ${money(v.total)}/yr net value (simulation engine). Revenue ${money(d.revenue)}/day, car trips ${num(d.trips.car)}/day, new connections ${num(d.new_ties)}/day, CO₂ ${fq(d.co2_tonnes)} t/day.`; navigator.clipboard?.writeText(t).then(() => toast('Summary copied'), () => toast(t)); };
 }
 function spill() {  // the arterial that gains the most traffic, aggregated over its segments near the edit
   const pe = [...S.plan.ped]; const hm = pe.length ? { mx: pe.reduce((a, e) => a + EDGES[e].mx, 0) / pe.length, mz: pe.reduce((a, e) => a + EDGES[e].mz, 0) / pe.length } : heroMid(); const agg = new Map();
@@ -2633,7 +2633,7 @@ const heroMid = () => EDGES[HERO_EDGES[Math.floor(HERO_EDGES.length / 2)]] || ED
 async function runDemoLong() {
   const tok = ++demoToken; ui.demo = true; setDemoBtn(true); setDrawer(true, 'impact'); $('#intro')?.remove(); closeInspector(); toggleAI(false); toggleInfoPop(false); $('#pitch')?.remove();
   await demoReset();
-  jumpTo(435 * 60); togglePlay(true); setRate(300); flyTo('overview', 1.2); post('The Human Project', ENG ? `A simulated weekday from the engine: ${fmtK(S.base.m.people)} people in FiDi and SoMa.` : (CITY.engine ? 'A simulated weekday (in-browser estimate).' : `${CITY.name} · ${CITY.area}: placeholder traffic from the in-browser model. Engine data is coming soon.`), null, 'engine');
+  jumpTo(435 * 60); togglePlay(true); setRate(300); flyTo('overview', 1.2); post('CommonGround', ENG ? `A simulated weekday from the engine: ${fmtK(S.base.m.people)} people in FiDi and SoMa.` : (CITY.engine ? 'A simulated weekday (in-browser estimate).' : `${CITY.name} · ${CITY.area}: placeholder traffic from the in-browser model. Engine data is coming soon.`), null, 'engine');
   const hm = heroMid(); let aiDone = false;
   // Each beat starts from a known state and "commits" its end state even when skipped with Next.
   const start = () => { setTimeout(() => { try { ambientPost(); } catch (e) {} }, 1800); skip = false; setTool('select'); setCompare(false); showChips(''); spillLabel.hide = true; $('#toast').hidden = true; $('#brush').hidden = true; clearGhost(); };
@@ -2858,7 +2858,7 @@ async function playSources(tok) {
   }
   highlight([]); setInfo(null); resetSparks(); document.body.classList.remove('reel-src');
   const m = B.baseline?.metrics || {};
-  srcBanner({ mark: 'hp', wm: 'The Human Project', pub: `${list.length} sources fused · calibrated to observed mode split`, vint: 'synthetic weekday', b: 'linear-gradient(135deg,#1d5fd6,#3b9cff)', b2: '#7fd3ff',
+  srcBanner({ mark: 'hp', wm: 'CommonGround', pub: `${list.length} sources fused · calibrated to observed mode split`, vint: 'synthetic weekday', b: 'linear-gradient(135deg,#1d5fd6,#3b9cff)', b2: '#7fd3ff',
     title: 'Fused into one synthetic weekday', stats: [[m.people || 0, 'people'], [m.agents || 0, 'agents'], [EW?.inlets?.length || INLETS.length, 'entry points'], [5, 'replanning days']], feeds: 'activity demand · logit mode choice · BPR assignment' }, list.length - 1, list.length, 3200);
   $('#srcbanner .sb-eye span').innerHTML = '<b>ENGINE</b> · ALL SOURCES';
   await wait(3200, tok); el.classList.remove('in'); el.classList.add('out'); rail.classList.add('out'); await wait(400, tok); el.hidden = true; rail.hidden = true;
@@ -2970,7 +2970,7 @@ async function runReel() {
       log('dusk'); clearGhost(); setInfo(null); reveal('cams', 'end'); $('#lt').hidden = true; jumpTo(19 * 3600 + 35 * 60); setRate(30); reel.drift = .06;
       flyTo({ x: CAMS.fidi.x + 120, z: CAMS.fidi.z + 200, d: 2300, az: CAMS.fidi.az + 2.4, el: .4 }, 3.4); await wait(2600, tok);
       const m = B.baseline?.metrics || {}; const v = S.plan.value || {}; const ec = $('#endcard');
-      ec.innerHTML = `<div class="ec"><div class="lg">${svgIc('logo')}</div><h1>The Human Project</h1><p>Change a street. Watch a city of people replan.</p><div class="nums"><div><b>${num(m.people || 0, false)}</b><span>people</span></div><div><b>${num(m.agents || 0, false)}</b><span>agents</span></div><div><b>${num(EW?.pois?.length || 0, false)}</b><span>real places</span></div><div><b>6</b><span>data sources</span></div><div><b>5-day</b><span>equilibrium</span></div>${isEng() ? `<div><b class="up">${money(v.total || 0)}</b><span>plan value / yr</span></div>` : ''}</div></div>`;
+      ec.innerHTML = `<div class="ec"><div class="lg">${svgIc('logo')}</div><h1>CommonGround</h1><p>Change a street. Watch a city of people replan.</p><div class="nums"><div><b>${num(m.people || 0, false)}</b><span>people</span></div><div><b>${num(m.agents || 0, false)}</b><span>agents</span></div><div><b>${num(EW?.pois?.length || 0, false)}</b><span>real places</span></div><div><b>6</b><span>data sources</span></div><div><b>5-day</b><span>equilibrium</span></div>${isEng() ? `<div><b class="up">${money(v.total || 0)}</b><span>plan value / yr</span></div>` : ''}</div></div>`;
       ec.classList.remove('out'); ec.hidden = false; await wait(5200, tok); ec.classList.add('out'); await wait(800, tok);
     });
     log('end'); endDemo(); toast('Demo finished. Everything is live now: try painting a street.');
@@ -2992,8 +2992,8 @@ function renderStatus() {
 }
 // ── City setup: explore mode for cities without engine data ──
 document.querySelectorAll('#cityseg a').forEach(a => a.classList.toggle('on', a.dataset.city === CITY.id));
-$('.brand').title = `The Human Project · ${CITY.name} · ${CITY.area}`;
-if (!IS_SF) { document.title = `Human Project · ${CITY.name}`; const lm = (CITY.landmarks || []).slice().sort((a, b) => (b.h || 0) - (a.h || 0)); const fb = $('[data-cam="fidi"]'), sb = $('[data-cam="soma"]'); const short = (n) => (n || '').replace(/ (Building|Tower|Center|Centre)$/, '').slice(0, 16); if (lm[0]) fb.textContent = short(lm[0].name); const b2 = lm.find(l => lm[0] && Math.hypot(l.x - lm[0].x, l.z - lm[0].z) > 500) || lm[1]; if (b2) sb.textContent = short(b2.name); }
+$('.brand').title = `CommonGround · ${CITY.name} · ${CITY.area}`;
+if (!IS_SF) { document.title = `CommonGround · ${CITY.name}`; const lm = (CITY.landmarks || []).slice().sort((a, b) => (b.h || 0) - (a.h || 0)); const fb = $('[data-cam="fidi"]'), sb = $('[data-cam="soma"]'); const short = (n) => (n || '').replace(/ (Building|Tower|Center|Centre)$/, '').slice(0, 16); if (lm[0]) fb.textContent = short(lm[0].name); const b2 = lm.find(l => lm[0] && Math.hypot(l.x - lm[0].x, l.z - lm[0].z) > 500) || lm[1]; if (b2) sb.textContent = short(b2.name); }
 if (!CITY.engine) {
   for (const id of ['#demo-btn', '#intro-demo', '#pitch-btn', '#ai-btn', '#ask-dock', '#pol-dock', '#live-dock', '#plans-btn']) { const el = $(id); if (el) { el.hidden = true; el.disabled = true; } }
   document.querySelectorAll('[data-info="visits"], [data-info="rev"]').forEach(b => b.hidden = true);
@@ -3004,7 +3004,7 @@ if (!CITY.engine) {
 renderStatus();
 recomputeTargets(); drawRadar(shown.shape); drawPillars(); paintTies(V.base); paintTies(V.plan);
 jumpTo(ui.time); $('#loading').remove();
-post('The Human Project', ENG ? `A simulated weekday from the engine: ${fmtK(S.base.m.people)} people in FiDi and SoMa.` : (CITY.engine ? 'A simulated weekday (in-browser estimate).' : `${CITY.name} · ${CITY.area}: placeholder traffic from the in-browser model. Engine data is coming soon.`), null, 'engine');
+post('CommonGround', ENG ? `A simulated weekday from the engine: ${fmtK(S.base.m.people)} people in FiDi and SoMa.` : (CITY.engine ? 'A simulated weekday (in-browser estimate).' : `${CITY.name} · ${CITY.area}: placeholder traffic from the in-browser model. Engine data is coming soon.`), null, 'engine');
 function frame(now) { requestAnimationFrame(frame); tick(now); }
 function tick(now) {
   const dt = Math.min(.05, (now - last) / 1000); last = now;

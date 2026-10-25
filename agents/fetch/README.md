@@ -1,9 +1,9 @@
-# The Human Project on ASI:One: Fetch.ai agents
+# CommonGround on ASI:One: Fetch.ai agents
 
 ![tag:innovationlab](https://img.shields.io/badge/innovationlab-3D8BD3)
 ![tag:hackathon](https://img.shields.io/badge/hackathon-5F43F1)
 
-Ask, in an ASI:One chat, *"make 2nd St car-free between Market and Folsom"*. Four uAgents run the plan on the Human Project's agent-based simulation of San Francisco's Financial District and SoMa, then answer in the chat with grounded numbers: the net $/yr by pillar, where the cars go, which businesses win or lose, and who pays by income tier. No custom frontend is involved.
+Ask, in an ASI:One chat, *"make 2nd St car-free between Market and Folsom"*. Four uAgents run the plan on CommonGround's agent-based simulation of San Francisco's Financial District and SoMa, then answer in the chat with grounded numbers: the net $/yr by pillar, where the cars go, which businesses win or lose, and who pays by income tier. No custom frontend is involved.
 
 ## Agents
 
@@ -141,4 +141,4 @@ Show the payment approval, then the brief.
 > "Same question, another street, a different answer: Kearny nets only about $0.6 million, because the mobility costs are much larger. That's the point: compare before you fight about it."
 
 **4:00–4:20 Close.** Show the Agentverse profiles of the four agents.
-> "Four agents on Agentverse, the Chat Protocol, Interactive Cards and the Payment Protocol, all used inside ASI:One with no custom frontend. The Human Project."
+> "Four agents on Agentverse, the Chat Protocol, Interactive Cards and the Payment Protocol, all used inside ASI:One with no custom frontend. CommonGround."

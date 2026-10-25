@@ -30,5 +30,5 @@ The homepage lets the user pick a city. Each city is the same kind of 3D environ
   - Hidden or disabled with a clear note: scripted SF demo, AI planner, Ask, Policies, Go live, pitch, engine-only info views (revenue change, visits). Workplaces, Residents and Zoning can use building types locally.
   - Land and water: `HPContext.add(..., { inside: true })` draws the real coastline, rivers and parks inside the box too, instead of SF's Embarcadero shoreline.
   - Labels from `city.json`: districts, landmarks (name + height), the top stations. Highway badges at the city's freeway gateways, plus the per-side entry labels.
-  - Camera presets derived from the box (Overview, plus two zooms around the densest landmarks), and the brand line "The Human Project · <City> · <Area>".
+  - Camera presets derived from the box (Overview, plus two zooms around the densest landmarks), and the brand line "CommonGround · <City> · <Area>".
   - City switcher in the top bar (SF / Chicago / New York) linking to the sibling pages.

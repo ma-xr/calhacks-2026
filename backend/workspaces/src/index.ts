@@ -1,4 +1,4 @@
-// Live layer for The Human Project. People form workspaces (teams), invite each other with links and
+// Live layer for CommonGround. People form workspaces (teams), invite each other with links and
 // edit the workspace's plans together. Edits from every connected client land in street_edit /
 // block_edit; each edit bumps the plan's editVersion. A compute then POSTs the plan's merged edits to
 // the Python engine and writes the result back, so every subscriber sees the same plan and the same

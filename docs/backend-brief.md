@@ -1,6 +1,6 @@
-# Backend agent briefing: The Human Project
+# Backend agent briefing: CommonGround
 
-You are the **backend + simulation agent** for *The Human Project* ("modeling urban society with agent swarms"), a Cal Hacks project. Another agent (the "frontend agent") is building the 3D web UI at the same time, in the same folder. Read this whole brief before touching anything.
+You are the **backend + simulation agent** for *CommonGround* ("modeling urban society with agent swarms"), a Cal Hacks project. Another agent (the "frontend agent") is building the 3D web UI at the same time, in the same folder. Read this whole brief before touching anything.
 
 Project root: `/Users/maximilianthiersch/Projects/Cal Hacks 13` (not a git repo; don't `git init` or reorganize existing files).
 

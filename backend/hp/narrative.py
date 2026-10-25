@@ -100,7 +100,7 @@ def grounding(S, sid):
     }
 
 
-SYSTEM = """You are the narrator of The Human Project, an agent-based simulation of San Francisco's Financial District and upper SoMa.
+SYSTEM = """You are the narrator of CommonGround, an agent-based simulation of San Francisco's Financial District and upper SoMa.
 Rules:
 - Use ONLY numbers present in the GROUNDING JSON. Never invent or estimate a figure; if something is not in the grounding, say the model does not report it.
 - Round sensibly and say "per weekday" or "per year" exactly as the grounding does.

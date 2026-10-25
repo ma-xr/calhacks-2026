@@ -4,7 +4,7 @@
 
 Make a street car-free, rezone a block or add a congestion charge. The engine replans the city over five simulated days and shows the effect on traffic, foot traffic, social connections, local business, health and a combined City Value. Everything is compared against today.
 
-Cal Hacks 2026 · Max & Aziz
+Cal Hacks 2026 · Aziz Derbel, Maximilian Thiersch and Phi Linh Phan
 
 ## Quickstart
 

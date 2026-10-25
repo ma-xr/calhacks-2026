@@ -19,7 +19,7 @@ from .params import Params
 from .population import REGIONS, WORKER, agent_name
 from .world import World
 
-app = FastAPI(title="The Human Project — sim API", version="0.2")
+app = FastAPI(title="CommonGround — sim API", version="0.2")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.add_middleware(GZipMiddleware, minimum_size=2000)
 

@@ -13,7 +13,7 @@ CACHE = ROOT / "data" / "cache"
 OUT = ROOT / "data" / "backend"
 WORLD_PATH = ROOT / "data" / "processed" / "world.json"
 USAGE = CACHE / "USAGE.md"
-UA = "HumanProject-CalHacks/1.0 (max@thiersch.com)"
+UA = "CommonGround-CalHacks/1.0 (max@thiersch.com)"
 
 # local-meter projection used by world.json
 LON0, LAT0 = -122.3987, 37.7887

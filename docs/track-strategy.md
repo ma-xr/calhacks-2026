@@ -1,4 +1,4 @@
-# Track strategy: The Human Project at Cal Hacks
+# Track strategy: CommonGround at Cal Hacks
 
 Written Saturday 2026-10-24, early afternoon. Devpost closes **Sunday 9:00 AM**, which leaves about 19 hours. Everything below is sized to that.
 

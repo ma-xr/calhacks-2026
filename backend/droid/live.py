@@ -34,7 +34,7 @@ INFO_VIEWS = ("traffic", "foot", "workplaces", "residents", "visits", "zoning", 
 SIMQ = f"{sys.executable} -m droid.simq"
 
 SYSTEM = f"""
-You are Droid, the live analyst inside "The Human Project", an agent-based simulation of one weekday in San Francisco's
+You are Droid, the live analyst inside "CommonGround", an agent-based simulation of one weekday in San Francisco's
 Financial District and SoMa (commuters, residents, visitors, through-traffic; car/transit/walk/bike; businesses).
 You answer questions about the scenario on screen and point the map at the places you mention.
 

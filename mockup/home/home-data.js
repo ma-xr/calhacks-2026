@@ -1,11 +1,12 @@
-// The Human Project · homepage content.
+// CommonGround · homepage content.
 // Static workspace content (projects in setup, team, activity). Numbers for the live San Francisco
 // project and its scenarios are NOT here: index.html reads them from the engine (/world, /baseline,
 // /scenario). Cities other than SF are in setup and deliberately carry no results.
 window.HOME_DATA = (() => {
   const people = {
-    max: { name: 'Max', initials: 'MT', role: 'Owner', color: '#3b9cff' },
-    aziz: { name: 'Aziz', initials: 'AZ', role: 'Transport modeler', color: '#b46cff' },
+    max: { name: 'Maximilian Thiersch', initials: 'MT', role: 'Owner', color: '#3b9cff' },
+    aziz: { name: 'Aziz Derbel', initials: 'AD', role: 'Transport modeler', color: '#b46cff' },
+    phi: { name: 'Phi Linh Phan', initials: 'PP', role: 'Product designer', color: '#5fd4c4' },
     jk: { name: 'J.K.', initials: 'JK', role: 'Urban designer', color: '#ffad1f' },
     rm: { name: 'R.M.', initials: 'RM', role: 'Economist', color: '#4fdc7a' },
     st: { name: 'S.T.', initials: 'ST', role: 'Community liaison', color: '#ff4fa3' },
@@ -16,15 +17,15 @@ window.HOME_DATA = (() => {
   // status: live | ingest | calibrating | draft
   const projects = {
     sf: { id: 'sf', city: 'San Francisco', area: 'FiDi & SoMa', status: 'live', thumb: 'thumbs/sf.svg', live: true,
-      edited: 'Edited 4 min ago by Max' },
+      edited: 'Edited 4 min ago by Maximilian Thiersch' },
     oak: { id: 'oak', city: 'Oakland', area: 'Downtown', status: 'ingest', progress: 0.62, thumb: 'thumbs/oakland.svg',
       step: 'Ingesting OSM + census', detail: 'Street graph done · LODES block joins running', edited: 'Started 2 h ago by D.W.' },
     nyc: { id: 'nyc', city: 'New York', area: 'Lower Manhattan', status: 'calibrating', progress: 0.4, thumb: 'thumbs/nyc.svg',
-      step: 'Calibrating', detail: 'Fitting mode split to ACS journey-to-work · pass 2 of 5', edited: 'Started yesterday by Aziz' },
+      step: 'Calibrating', detail: 'Fitting mode split to ACS journey-to-work · pass 2 of 5', edited: 'Started yesterday by Aziz Derbel' },
     bcn: { id: 'bcn', city: 'Barcelona', area: 'Eixample', status: 'draft', thumb: 'thumbs/barcelona.svg',
-      step: 'Draft', detail: 'Study area drawn · no data requested yet', edited: 'Created Oct 12 by Max' },
+      step: 'Draft', detail: 'Study area drawn · no data requested yet', edited: 'Created Oct 12 by Maximilian Thiersch' },
     ber: { id: 'ber', city: 'Berlin', area: 'Mitte', status: 'draft', thumb: 'thumbs/berlin.svg',
-      step: 'Draft', detail: 'Study area drawn · waiting on data-sharing agreement', edited: 'Created Oct 3 by Max' },
+      step: 'Draft', detail: 'Study area drawn · waiting on data-sharing agreement', edited: 'Created Oct 3 by Maximilian Thiersch' },
   };
 
   // Scenarios with `engine` are computed live against the SF engine when the page loads.
@@ -42,9 +43,9 @@ window.HOME_DATA = (() => {
   };
 
   const workspaces = [
-    { id: 'sfp', name: 'SF Planning · Downtown', short: 'SF', color: '#3b9cff', plan: 'Team · 5 seats',
+    { id: 'sfp', name: 'SF Planning · Downtown', short: 'SF', color: '#3b9cff', plan: 'Team · 6 seats',
       projects: ['sf', 'oak', 'nyc', 'bcn'], scenarios: ['hero', 'bay', 'mkt', 'howard', 'broadway'],
-      team: ['max', 'aziz', 'jk', 'rm', 'st'],
+      team: ['max', 'aziz', 'phi', 'jk', 'rm', 'st'],
       activity: [
         { who: 'max', what: 'shared', target: '2nd St car-free', extra: 'with SFMTA reviewers', t: '4m' },
         { who: 'aziz', what: 'ran', target: 'Bay Bridge AM charge', extra: '$5 at the I-80 inlet', t: '1h' },
@@ -88,7 +89,7 @@ window.HOME_DATA = (() => {
 
   const notifications = [
     { who: 'jk', text: 'J.K. commented on Market St reopen (pre-2020)', t: '3h' },
-    { who: 'aziz', text: 'Aziz requested your review on Bay Bridge AM charge', t: '1h' },
+    { who: 'aziz', text: 'Aziz Derbel requested your review on Bay Bridge AM charge', t: '1h' },
     { who: null, text: 'Oakland · Downtown ingest passed 60%', t: '12m' },
   ];
 

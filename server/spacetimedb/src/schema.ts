@@ -213,7 +213,7 @@ const citizenPost = table(
     at: t.timestamp(),
   }
 );
-// Human-readable log of who changed what ("Max made 2nd St car-free").
+// Human-readable log of who changed what ("Maximilian Thiersch made 2nd St car-free").
 const activity = table(
   { name: 'activity', public: true },
   {

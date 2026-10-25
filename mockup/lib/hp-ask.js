@@ -1,4 +1,4 @@
-// The Human Project · "Ask the city": Droid live agent drawer (POST /droid/ask?stream=1).
+// CommonGround · "Ask the city": Droid live agent drawer (POST /droid/ask?stream=1).
 // Classic script, no imports. Defines window.HPAsk = { mount(host, opts) }.
 // Talks to the page only through the host API (docs/fully-functional-spec.md §2):
 //   { B, world, getPlanEdits, applyEdits, currentScenarioId, flyTo, highlight, setInfoView, setTime, toast, mount, theme }

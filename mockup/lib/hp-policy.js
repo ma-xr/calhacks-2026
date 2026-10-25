@@ -1,4 +1,4 @@
-// The Human Project · Policy Book: built-in levers + Droid-written levers (GET /policies, POST /policies/propose, /approve, /reject).
+// CommonGround · Policy Book: built-in levers + Droid-written levers (GET /policies, POST /policies/propose, /approve, /reject).
 // Classic script, no imports. Defines window.HPPolicy = { mount(host, opts) }.
 // Host API (docs/fully-functional-spec.md §2): { B, world, getPlanEdits, applyEdits(edits, label), currentScenarioId, toast, mount, ... }.
 // applyEdits receives the FULL new plan (this module merges the lever into getPlanEdits() itself, via B.mergeEdits).

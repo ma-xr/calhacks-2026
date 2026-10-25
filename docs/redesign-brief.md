@@ -1,12 +1,12 @@
-# The Human Project: mockup redesign brief
+# CommonGround: mockup redesign brief
 
-**Project name:** The Human Project. **Tagline:** "Modeling urban society with agent swarms."
+**Project name:** CommonGround. **Tagline:** "Modeling urban society with agent swarms."
 The current mockup (`mockup/template.html`, built to `mockup/blockwise-demo.html`) is a single-page three.js simulation of SF's FiDi + upper SoMa built from real OSM data. It is still branded "Blockwise".
 
 The user reviewed it and found it **too confusing and visually messy**. Every variant must fix all of the following:
 
 ## Required changes (all variants)
-1. **Rename** everything to *The Human Project* (title, brand, intro, pitch card, AI name, copy). Remove "Blockwise".
+1. **Rename** everything to *CommonGround* (title, brand, intro, pitch card, AI name, copy). Remove "Blockwise".
 2. **Free camera.** The user can pan, rotate, tilt and zoom (three.js `MapControls` from `three/addons/controls/MapControls.js`, damping, `zoomToCursor`, clamped polar angle and distance, target clamped to the map). Add camera presets (e.g. Overview, FiDi, SoMa, Top-down) plus a reset. The demo script uses smooth fly-to moves instead of the old fixed camera. Remove the mouse parallax. Distinguish click from drag: a click opens inspectors, a drag moves the camera. When the Pedestrianize tool starts on a road, painting must disable the controls for that stroke.
 3. **Cars and pedestrians are clearly different by color**, everywhere: 3D agents, legend, inspector, feed. Suggested: cars in a cool cyan/blue, pedestrians in a warm amber. Keep the legend always visible.
 4. **Cities: Skylines-inspired menus.** Big, clear icon tool buttons (inline SVG icons, no emoji). An **Info views** menu that switches the whole city into a data view, one at a time, each with a legend card (gradient or categories). Required info views:

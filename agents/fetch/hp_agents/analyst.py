@@ -61,7 +61,7 @@ EXAMPLES = [("2nd Street", "Market Street", "Folsom Street"),
             ("Folsom Street", "2nd Street", "5th Street")]
 SPECIALIST_TIMEOUT_S = 90
 PLAN_WORDS = re.compile(r"car.?free|pedestrian|close|closure|ban cars|plaza|street|\bst\b|avenue", re.I)
-HELP = ("I'm the **SF Street Analyst**. I run the Human Project's agent-based sim of SF's Financial District "
+HELP = ("I'm the **SF Street Analyst**. I run CommonGround's agent-based sim of SF's Financial District "
         "and SoMa (≈220k people a day) and tell you what a car-free street does to traffic, local business, "
         "health and equity, in dollars per year.\n\nTry: *make 2nd St car-free between Market and Folsom*.")
 
@@ -316,7 +316,7 @@ def make_analyst(specialists: dict[str, str], **agent_kwargs) -> Agent:
         factors = ", ".join(f"{k} = {v}" for k, v in full["value"].get("factors", {}).items())
         return "\n\n".join(x for x in [
             f"# Hearing brief: car-free {last['label']}",
-            f"_Prepared by {NAME} from Human Project engine scenario `{last['scenario_id']}`. "
+            f"_Prepared by {NAME} from CommonGround engine scenario `{last['scenario_id']}`. "
             f"Every figure below is an engine output._",
             f"## Executive summary\n{summary}" if summary else "",
             f"## Bottom line\n**{usd(last['total'])}** net value per year: "

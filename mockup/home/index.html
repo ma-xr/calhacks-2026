@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Projects · The Human Project</title>
+<title>Projects · CommonGround</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
@@ -352,7 +352,7 @@ td.muted, .muted { color: var(--mute); }
         </button>
         <div class="menu" id="notif-menu" role="menu"><div class="lbl">Notifications</div><div id="notifs"></div></div>
       </div>
-      <button class="avatar" id="me-avatar" style="background:#3b9cff" aria-label="Max · account">MT</button>
+      <button class="avatar" id="me-avatar" style="background:#3b9cff" aria-label="Maximilian Thiersch · account">MT</button>
     </header>
 
     <div class="body" id="scroll">
@@ -767,7 +767,7 @@ td.muted, .muted { color: var(--mute); }
   $('#seg').onclick = (e) => { const b = e.target.closest('[data-f]'); if (!b || b.dataset.f === filt) return; filt = b.dataset.f; $('#seg').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); renderProjects(); };
   $('#search-btn').onclick = openK;
   $('#new-btn').onclick = openNP;
-  $('#me-avatar').onclick = () => toast('Signed in as Max · SF Planning');
+  $('#me-avatar').onclick = () => toast('Signed in as Maximilian Thiersch · SF Planning');
   $('#sc-all').onclick = () => toast('Scenario library opens inside a project');
   $('#np-go').onclick = () => { const c = $('#np-city').value.trim(); closeScrims(); toast(c ? `Ingest for “${c}” queued · you'll get a notification` : 'Enter a city or study area first'); };
   document.querySelectorAll('.scrim').forEach((s) => s.addEventListener('click', (e) => { if (e.target === s || e.target.closest('[data-close]')) closeScrims(); }));

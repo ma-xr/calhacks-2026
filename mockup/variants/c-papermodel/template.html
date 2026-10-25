@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>Human Project · Paper Model</title>
+<title>CommonGround · Paper Model</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -317,7 +317,7 @@ td:last-child { text-align: right; font-family: var(--f-data); }
   <header id="top" class="card">
     <div class="brand">
       <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="1.5" y="1.5" width="27" height="27" rx="3" fill="none" stroke="#14223a" stroke-width="1.5"/><rect x="6" y="13" width="5" height="11" fill="#14223a"/><rect x="12.5" y="7" width="5" height="17" fill="#14223a"/><rect x="19" y="16" width="5" height="8" fill="#14223a"/><circle cx="21.5" cy="9.5" r="2.4" fill="#f0532d"/></svg>
-      <div><b>The Human Project</b><small>Modeling urban society with agent swarms</small></div>
+      <div><b>CommonGround</b><small>Modeling urban society with agent swarms</small></div>
     </div>
     <div class="seg" role="tablist">
       <button id="tab-base" role="tab">Today</button>
@@ -370,7 +370,7 @@ td:last-child { text-align: right; font-family: var(--f-data); }
     <div id="toast" class="float" hidden></div>
     <div class="veil" id="intro">
       <div class="sheet intro">
-        <div class="kicker"><svg width="18" height="18" viewBox="0 0 30 30" aria-hidden="true"><rect x="6" y="13" width="5" height="11" fill="#14223a"/><rect x="12.5" y="7" width="5" height="17" fill="#14223a"/><rect x="19" y="16" width="5" height="8" fill="#14223a"/><circle cx="21.5" cy="9.5" r="2.4" fill="#f0532d"/></svg>The Human Project · modeling urban society with agent swarms</div>
+        <div class="kicker"><svg width="18" height="18" viewBox="0 0 30 30" aria-hidden="true"><rect x="6" y="13" width="5" height="11" fill="#14223a"/><rect x="12.5" y="7" width="5" height="17" fill="#14223a"/><rect x="19" y="16" width="5" height="8" fill="#14223a"/><circle cx="21.5" cy="9.5" r="2.4" fill="#f0532d"/></svg>CommonGround · modeling urban society with agent swarms</div>
         <h1>What if <em>2nd Street</em> belonged to people?</h1>
         <p>This is a working model of a weekday in San Francisco's Financial District and SoMa, built from real OpenStreetMap buildings and streets. About 6,000 agents each have a commute, a lunch spot and coworkers. Change a street or a block and every agent replans its day. Each result is measured against the unchanged city.</p>
         <p style="color:var(--dim);font-size:12.5px">Design mockup. Agents follow simple rules and the numbers are illustrative.</p>
@@ -1637,7 +1637,7 @@ function clearGhost() { highlight([]); ghost = []; }
 async function typeInto(el, text, cps = 70) { el.textContent = ''; for (let i = 0; i < text.length; i++) { el.textContent += text[i]; if (i % 2 === 0) await sleep(1000 / cps); } }
 async function askAI(q, typed) {
   const box = $('#ai'); box.hidden = false; const why = /why|explain|how come/i.test(q);
-  box.innerHTML = `<button class="x" aria-label="Close">×</button><div class="mock">Human Project planner · scripted for this mockup</div><div class="q">${typed ? '' : q.replace(/</g, '&lt;')}</div><div class="a" id="ai-a"></div><div id="ai-opts"></div>`;
+  box.innerHTML = `<button class="x" aria-label="Close">×</button><div class="mock">CommonGround planner · scripted for this mockup</div><div class="q">${typed ? '' : q.replace(/</g, '&lt;')}</div><div class="a" id="ai-a"></div><div id="ai-opts"></div>`;
   box.querySelector('.x').onclick = () => { box.hidden = true; clearGhost(); };
   if (typed) await typeInto(box.querySelector('.q'), q, 34);
   const a = $('#ai-a');
@@ -1682,7 +1682,7 @@ function openPitch() {
 </div>`;
   stage.append(v2);
   $('#pitch-x').onclick = () => v2.remove(); v2.onclick = (e) => { if (e.target === v2) v2.remove(); };
-  $('#pitch-copy').onclick = () => { const t = `The Human Project · ${name}: ${money(v.total)}/yr net value. Revenue ${money(p.revenue - b.revenue)}/day, car trips ${num((p.car - b.car) * SCALE)}/day, new connections ${num(p.ties - b.ties)}/day.`; navigator.clipboard?.writeText(t).then(() => toast('Summary copied'), () => toast(t)); };
+  $('#pitch-copy').onclick = () => { const t = `CommonGround · ${name}: ${money(v.total)}/yr net value. Revenue ${money(p.revenue - b.revenue)}/day, car trips ${num((p.car - b.car) * SCALE)}/day, new connections ${num(p.ties - b.ties)}/day.`; navigator.clipboard?.writeText(t).then(() => toast('Summary copied'), () => toast(t)); };
 }
 function spill() { let best = -1, bd = 0; for (const e of EDGES) { if (!e.car || S.plan.ped.has(e.id) || e.hw || !e.name || S.base.carFlow[e.id] < 12) continue; const d = S.plan.carFlow[e.id] - S.base.carFlow[e.id]; if (d > bd) { bd = d; best = e.id; } } return best >= 0 ? { e: EDGES[best], pct: bd / S.base.carFlow[best], vph: bd * SCALE / 2.2 } : null; }
 function spillText() { const s = spill(); return s ? `${s.e.name} +${Math.round(s.vph)} cars/hr` : 'none'; }

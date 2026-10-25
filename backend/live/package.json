@@ -2,7 +2,7 @@
   "name": "human-project-live",
   "version": "1.0.0",
   "private": true,
-  "description": "SpacetimeDB live layer: shared plan, presence and results for The Human Project",
+  "description": "SpacetimeDB live layer: shared plan, presence and results for CommonGround",
   "scripts": {
     "build": "spacetime build",
     "publish:local": "spacetime publish human-live --server local --yes",

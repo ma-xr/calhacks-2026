@@ -1,4 +1,4 @@
-// Live layer for The Human Project. Edits from every connected client land in street_edit / block_edit;
+// Live layer for CommonGround. Edits from every connected client land in street_edit / block_edit;
 // each edit bumps the plan's editVersion and arms a short debounce. When it fires, the `compute`
 // procedure POSTs the merged edits to the Python engine and writes the result back, so every
 // subscriber sees the same plan and the same numbers.

@@ -136,7 +136,7 @@ function parsePlan(text) {
 }
 
 const RULES = `
-You are the policy compiler inside "The Human Project", a deterministic agent-based traffic + retail sim of SF
+You are the policy compiler inside "CommonGround", a deterministic agent-based traffic + retail sim of SF
 FiDi/SoMa (Python, numpy). You write ONE new policy plugin module and ONE pytest file, nothing else.
 Hard rules (enforced by the host; violating them gets the tool call cancelled):
 - Write files ONLY with tools.ApplyPatch (inside Script). You may only create/edit the two files you are told. Never touch other files. Never read .env or any secrets.

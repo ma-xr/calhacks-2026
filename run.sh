@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The Human Project: one command to set up and run everything locally.
+# CommonGround: one command to set up and run everything locally.
 #
 #   ./run.sh            set up on first run, start the engine (:8787) and the web app (:8765), open the browser
 #   ./run.sh --live     also start the shared session (SpacetimeDB :3000) so collaborators on your network

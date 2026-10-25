@@ -12,8 +12,8 @@ from .models import AnalyzeRequest, AnalyzeResponse
 from .streets import load_index
 
 SPECS = {
-    "mobility": ("Mobility", "Traffic, transit and mode shift for SF street closures, from the Human Project sim."),
-    "economy": ("Local Economy", "Foot traffic and revenue for SF businesses on a car-free street, from the Human Project sim."),
+    "mobility": ("Mobility", "Traffic, transit and mode shift for SF street closures, from the CommonGround sim."),
+    "economy": ("Local Economy", "Foot traffic and revenue for SF businesses on a car-free street, from the CommonGround sim."),
     "equity": ("Equity", "Who gains and who pays (income tiers, health, social ties, rent) for SF street plans."),
 }
 

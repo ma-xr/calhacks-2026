@@ -1,4 +1,4 @@
-# Research: The Human Project
+# Research: CommonGround
 
 This folder holds the evidence base behind the simulation of SF FiDi and upper SoMa: what every number in the model is and where it comes from.
 

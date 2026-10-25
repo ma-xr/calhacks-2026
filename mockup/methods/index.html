@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Methods · The Human Project</title>
+<title>Methods · CommonGround</title>
 <meta name="description" content="Technical appendix: synthetic population, logit mode choice, BPR/MSA assignment, Huff destinations, co-presence ties, valuation, equity ledger, policy plugin gate, calibration and validation.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -191,7 +191,7 @@ ol.refs .url { display: block; font-family: var(--mono); font-size: 11px; word-b
   <div class="meta">Engine v0.2 · numbers generated 2026-10-24 22:10 by <code>scripts/build_methods.py</code> from the engine, <code>research/parameters/parameters.json</code> and <code>research/validation/validation.json</code></div>
 </header>
 <section id="overview"><h2><span class=sn>1</span>System overview</h2>
-<p class=lede>The Human Project simulates one weekday in San Francisco's Financial District and upper SoMa as a swarm of
+<p class=lede>CommonGround simulates one weekday in San Francisco's Financial District and upper SoMa as a swarm of
 14,140 software agents, each standing for \(s = 21\) real people (270,942 people present in the baseline).
 A run is a fixed point of a MATSim-style loop <span class=cite>[<a href="#ref-1">1</a>]</span>: agents choose modes on yesterday's congested travel times,
 cars are loaded onto the OpenStreetMap road graph, link costs are updated with a BPR function, and the day is replayed.

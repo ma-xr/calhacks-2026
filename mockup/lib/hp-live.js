@@ -1,4 +1,4 @@
-// The Human Project · Live multiplayer (SpacetimeDB on :3000, client backend/live/client/dist/live.mjs).
+// CommonGround · Live multiplayer (SpacetimeDB on :3000, client backend/live/client/dist/live.mjs).
 // Classic script, no imports. Defines window.HPLive = { mount(host, opts) }.
 // The ES-module client is loaded lazily with import(opts.liveUrl || './live.mjs'), resolved against the page URL.
 //

@@ -50,7 +50,7 @@ def fetch(q, out):
     tmp = out.with_suffix(".tmp")
     for attempt in range(6):
         for url in MIRRORS:
-            r = subprocess.run(["curl", "-s", "-m", "330", "-A", "HumanProject-hackathon/0.1", "--data-urlencode", f"data={q}",
+            r = subprocess.run(["curl", "-s", "-m", "330", "-A", "CommonGround-hackathon/0.1", "--data-urlencode", f"data={q}",
                                 url, "-o", str(tmp)], capture_output=True)
             try:
                 data = tmp.read_bytes()

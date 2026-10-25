@@ -30,7 +30,7 @@ if (-not (Test-Path backend\.venv\Scripts\uvicorn.exe)) {
 }
 if (-not (Test-Path .env)) { Say 'No .env found: the engine runs fully; AI features (planner text, Ask the city) stay off. See .env.example.' }
 
-# 3 - The website (the 3D simulator pages are Max's and are used as committed)
+# 3 - The website (the 3D simulator pages are Maximilian Thiersch's and are used as committed)
 if (-not (Test-Path mockup\site\shared\city.json)) { & backend\.venv\Scripts\python.exe -X utf8 scripts\build_site_map.py | Out-Null }
 Copy-Item backend\workspaces\client\dist\live.mjs mockup\site\live.mjs -Force
 

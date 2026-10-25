@@ -1,4 +1,4 @@
-// The Human Project · faded San Francisco context around the simulation area.
+// CommonGround · faded San Francisco context around the simulation area.
 // Inlined at build time (scripts/build_mockup.py replaces /*__HP_CONTEXT__*/), with the data from
 // data/processed/context.json. Exposes window.HPContext.add(THREE, scene, options).
 //

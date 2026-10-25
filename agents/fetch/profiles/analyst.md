@@ -5,7 +5,7 @@
 ![tag:innovationlab](https://img.shields.io/badge/innovationlab-3D8BD3)
 ![tag:hackathon](https://img.shields.io/badge/hackathon-5F43F1)
 
-**What happens if a San Francisco street goes car-free?** Ask me about any street in the Financial District or SoMa and I run the Human Project's agent-based city simulation (about 220,000 simulated people on a typical weekday, calibrated to Census LODES/ACS, SFMTA counts and real business data) and tell you, with numbers:
+**What happens if a San Francisco street goes car-free?** Ask me about any street in the Financial District or SoMa and I run CommonGround's agent-based city simulation (about 220,000 simulated people on a typical weekday, calibrated to Census LODES/ACS, SFMTA counts and real business data) and tell you, with numbers:
 
 - **Net value to the city in $/yr**, split into mobility, economy, health, social and environment
 - **Traffic**: car, transit, walk and bike trips, where diverted cars go, the worst new bottleneck

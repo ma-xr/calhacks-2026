@@ -345,7 +345,7 @@ export function createCore({ onRender = () => {}, onToast = () => {} } = {}) {
   const core = {
     view, act, go, render, toast, ui,
     inviteUrl: (code) => `${location.origin}${location.pathname}#/join/${code}`,
-    // The 3D simulator is Max's (mockup/cities/); the site only links to it.
+    // The 3D simulator is Maximilian Thiersch's (mockup/cities/); the site only links to it.
     simUrl: () => {
       const u = new URL(simBase);
       if (params.get('api')) u.searchParams.set('api', params.get('api'));

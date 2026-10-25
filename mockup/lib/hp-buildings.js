@@ -1,4 +1,4 @@
-// The Human Project · recognizable San Francisco buildings.
+// CommonGround · recognizable San Francisco buildings.
 // Inlined at build time (scripts/build_mockup.py replaces /*__HP_BUILDINGS__*/) with
 // data/processed/buildings_detail.json (OSM building:part, roof shapes, colours, materials).
 //

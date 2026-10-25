@@ -1,4 +1,4 @@
-// The Human Project · San Francisco–Oakland Bay Bridge, west span (decorative model).
+// CommonGround · San Francisco–Oakland Bay Bridge, west span (decorative model).
 // Inlined at build time via /*__HP_LIB:hp-bridge__*/. window.HPBridge.add(THREE, scene, { a: [x, z], b: [x, z] })
 // builds it between the SF shore (a) and Yerba Buena Island (b) in world.json meters and returns
 // { group, yAt(x, z), setNight(n) }: yAt gives the upper-deck height for cars driving on it (0 off the bridge).

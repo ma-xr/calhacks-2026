@@ -1,4 +1,4 @@
-# Backend: The Human Project simulation engine + API
+# Backend: CommonGround simulation engine + API
 
 Python 3.9 · numpy · scipy · FastAPI. The API contract is `docs/contracts/sim-api.md`.
 

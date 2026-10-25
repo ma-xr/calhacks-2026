@@ -1,4 +1,4 @@
-// The Human Project · backend connector for the mockup pages.
+// CommonGround · backend connector for the mockup pages.
 // Inlined into each page at build time (scripts/build_mockup.py replaces /*__HP_BACKEND__*/).
 // Talks to the simulation API (docs/contracts/sim-api.md). Falls back to a bundled snapshot
 // (./backend-snapshot/) when the API is unreachable, e.g. on a published artifact.

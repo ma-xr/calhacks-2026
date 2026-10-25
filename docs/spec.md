@@ -1,4 +1,4 @@
-# Project Spec: **The Human Project**: modeling urban society with agent swarms
+# Project Spec: **CommonGround**: modeling urban society with agent swarms
 
 ## Context
 Cal Hacks project. An interactive 3D view of **FiDi + upper SoMa** where thousands of simple agents ("sims") live, commute, shop and meet. The user paints changes onto the city (pedestrianize a street, densify or rezone a block) and watches the city re-settle. They see, against a live baseline, what happened to traffic, street life, social ties, local business, health and the city's bottom line, and *who* won or lost.

@@ -1,4 +1,4 @@
-// Reducers for The Human Project. Edits mark a scenario dirty and schedule the settle loop;
+// Reducers for CommonGround. Edits mark a scenario dirty and schedule the settle loop;
 // each scheduled run is one MATSim-style replanning day, so every client watches the city re-settle.
 import { SenderError, t, type InferSchema, type ReducerCtx } from 'spacetimedb/server';
 import { ScheduleAt } from 'spacetimedb';
