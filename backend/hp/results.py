@@ -62,11 +62,9 @@ def valuation(P, base, plan):
     # Environment
     dco2 = pm["co2_tonnes"] - bm["co2_tonnes"]
     env = line("environment", "CO₂ (social cost of carbon)", -dco2, "t/day", -dco2 * P["scc_usd_per_tonne"] * D)
-    dvmt = pm["vmt_total"] - bm["vmt_total"]
-    env += line("environment", "Crash costs", -dvmt, "VMT/day", -dvmt * P["crash_cost_usd_per_vmt"] * D)
-    # Health (WHO HEAT)
-    dd = pm["deaths_averted_per_yr"] - bm["deaths_averted_per_yr"]
-    hea = line("health", "Premature deaths avoided by walking/cycling (WHO HEAT × VSL)", dd, "deaths/yr", dd * P["vsl_usd"])
+    # Crash costs and health (WHO HEAT x VSL) are deliberately not monetized: product decision, they dominated the total.
+    # deaths_averted_per_yr and walking minutes stay available as plain metrics.
+    hea = 0.0
     # Economy
     drev = pm["revenue"] - bm["revenue"]
     eco = line("economy", "Local value added from business revenue (net new share)", drev, "$/day",
@@ -87,7 +85,7 @@ def valuation(P, base, plan):
                                  "retail_value_added_share", "city_share_of_sales_tax", "sf_property_tax_rate", "value_of_weak_tie_usd_per_yr",
                                  "value_per_encounter_usd", "heat_walk_rr", "co2_kg_per_vmt")}
     return {"mobility": mob, "social": soc, "economy": eco, "health": hea, "environment": env,
-            "total": mob + soc + eco + hea + env, "factors": factors, "lines": lines}
+            "total": mob + soc + eco + env, "factors": factors, "lines": lines}
 
 
 def rent_pressure(P, base, plan):

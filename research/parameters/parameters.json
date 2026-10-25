@@ -100,14 +100,14 @@
     "notes": "Typical passenger vehicle ~400 g CO2/mile. Congested low-speed SF driving emits more per mile (not modeled)."
   },
   "scc_usd_per_tonne": {
-    "value": 190,
+    "value": 120,
     "low": 120,
     "high": 340,
     "unit": "USD(2020)/tCO2",
     "status": "literature",
     "source": "https://www.rff.org/publications/reports/adopting-the-social-cost-of-carbon-for-state-benefit-cost-analysis-a-primer-for-practitioners/",
     "source_title": "EPA 2023 SC-GHG report (via RFF primer)",
-    "notes": "Central 2% discount, 2020 emissions year; range 2.5%-1.5% discount. Federal use withdrawn by Executive Order 14154 (Jan 2025); USDOT matrix shows CO2 $0 federally. Keep as a user slider."
+    "notes": "Central 2% discount, 2020 emissions year; range 2.5%-1.5% discount. Federal use withdrawn by Executive Order 14154 (Jan 2025); USDOT matrix shows CO2 $0 federally. Keep as a user slider. Engine uses the low bound ($120/t) of the EPA 2023 range as a conservative central value (product decision, Oct 2026)."
   },
   "vehicle_operating_cost_usd_per_mile": {
     "value": 0.58,

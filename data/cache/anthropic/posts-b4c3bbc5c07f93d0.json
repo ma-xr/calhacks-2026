@@ -1,0 +1,11 @@
+{
+ "posts": [
+  {
+   "agent_id": null,
+   "name": "Citizen",
+   "text": "",
+   "tag": "social"
+  }
+ ],
+ "model": "claude-haiku-5-5"
+}

@@ -157,7 +157,7 @@ def cmd_summary(c, a):
                    "blocks": ed.get("blocks", {}), "policies": ed.get("policies", [])},
          "metrics": {k: m.get(k) for k in keep if k in m},
          "delta_vs_baseline": {k: d.get(k) for k in keep if k in d},
-         "value_usd_per_yr": {k: v.get(k) for k in ("mobility", "social", "economy", "health", "environment", "total")},
+         "value_usd_per_yr": {k: v.get(k) for k in ("mobility", "social", "economy", "environment", "total")},
          "scale_people_per_agent": c.W["scale_people_per_agent"],
          "baseline_note": "baseline = 2026 reality; Market St (10th to Main) car-free since 2020 (edges " + str(len(c.W["base_car_free_edges"])) + ")"}
     if a.time:
@@ -399,7 +399,7 @@ def cmd_hour(c, a, ret=False):
 
 def cmd_value(c, a):
     v = c.P["value"]
-    out({k: v.get(k) for k in ("mobility", "social", "economy", "health", "environment", "total")} | {"lines": v.get("lines", [])})
+    out({k: v.get(k) for k in ("mobility", "social", "economy", "environment", "total")} | {"lines": v.get("lines", [])})
 
 
 def cmd_assumptions(c, a):

@@ -91,7 +91,7 @@ def grounding(S, sid):
         "scenario": {"id": sid, "name": plan.get("name"), "edits": j["edits"],
                      "edited_streets": sorted({w.edge_name[e] for e in j["edits"]["pedestrianized"] if w.edge_name[e]})},
         "metrics_plan": {k: m.get(k) for k in keep}, "delta_vs_baseline": {k: d.get(k) for k in keep if k in d},
-        "value_usd_per_yr": {k: j["value"][k] for k in ("mobility", "social", "economy", "health", "environment", "total")},
+        "value_usd_per_yr": {k: j["value"][k] for k in ("mobility", "social", "economy", "environment", "total")},
         "value_lines": j["value"]["lines"],
         "car_traffic_change_by_street": by_street(dcar), "foot_traffic_change_by_street": by_street(dped),
         "biggest_business_changes": top_poi,
@@ -259,7 +259,7 @@ def planner(body: dict = Body(...)):
                         j = S.result_json(sid, True)
                         d = j["delta"]
                         out = {"result_id": sid, "value_total_usd_per_yr": j["value"]["total"],
-                               "value_by_pillar": {k: j["value"][k] for k in ("mobility", "social", "economy", "health", "environment")},
+                               "value_by_pillar": {k: j["value"][k] for k in ("mobility", "social", "economy", "environment")},
                                "delta": {k: d.get(k) for k in ("commuters", "delay_hours_total", "revenue", "new_ties", "co2_tonnes", "rent_pressure_index")},
                                "edges_closed": len(edits["pedestrianized"])}
                         evaluated[sid] = {"title": b.input.get("title"), "edits": edits, "value_total": j["value"]["total"], "deltas": out["delta"]}

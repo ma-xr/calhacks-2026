@@ -20,7 +20,7 @@ DEFAULTS = {
     "us_crude_mortality_20_74": (0.0045, A, "all-cause deaths per person-year, ages 20-74"),
     "crash_cost_usd_per_vmt": (0.10, A, "external crash cost, urban"),
     "co2_kg_per_vmt": (0.40, L, "EPA average passenger vehicle ~400 g/mi"),
-    "scc_usd_per_tonne": (190, L, "EPA 2023 central (2% discount); slider"),
+    "scc_usd_per_tonne": (120, L, "EPA 2023 range low bound, used as a conservative value"),
     "vehicle_operating_cost_usd_per_mile": (0.30, A, "fuel + maintenance + tires"),
     "retail_value_added_share": (0.35, A, "GDP share of food-service/retail revenue"),
     "sf_sales_tax_rate": (0.08625, D, "SF combined sales tax"),

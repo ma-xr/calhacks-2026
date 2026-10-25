@@ -1,0 +1,11 @@
+{
+ "posts": [
+  {
+   "agent_id": null,
+   "name": "Citizen",
+   "text": "[\n{\"agent_id\": 342, \"name\": \"Yuki M.\", \"text\": \"I switched from driving to transit in the model. The plan adds 378 transit commuters overall, and it cuts car commuters by 609. Good for my commute if t",
+   "tag": "social"
+  }
+ ],
+ "model": "claude-haiku-5-5"
+}

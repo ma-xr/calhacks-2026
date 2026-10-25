@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 
-PILLARS = ["mobility", "economy", "health", "social", "environment"]
+PILLARS = ["mobility", "economy", "social", "environment"]
 
 
 def usd(x: float, per: str = "/yr") -> str:
@@ -126,25 +126,24 @@ def equity(plan: dict, base: dict, world: dict, index, edges: list[int]) -> dict
                      f"travel {signed(dt['travel_min'], 2)} min/day, walking {signed(dt['walk_min'], 2)} min/day")
     burden = max(("low", "mid", "high"), key=lambda k: d["by_income"][k]["travel_min"])
     md = [
-        f"**Equity & wellbeing** (health {usd(v['health'])}, social {usd(v['social'])}, "
+        f"**Equity & wellbeing** (social {usd(v['social'])}, "
         f"environment {usd(v['environment'])})",
         *[f"- {t}." for t in tiers],
         f"- Largest added travel time falls on the **{burden}**-income group "
         f"({signed(d['by_income'][burden]['travel_min'], 2)} min/day each).",
-        f"- Health: {d['deaths_averted_per_yr']:.2f} premature deaths avoided per year from extra walking "
-        f"and cycling (+{d['active_minutes_per_person']:.2f} active min/person/day).",
+        f"- Activity: +{d['active_minutes_per_person']:.2f} active min/person/day from extra walking and cycling (not monetized).",
         f"- Social: {signed(d['new_ties'])} new acquaintances/yr, {signed(d['encounters'])} chance encounters/day; "
         f"neighbour ties on streets that get diverted traffic {signed(d['neighbor_ties'])}.",
         f"- Rent pressure index {signed(d['rent_pressure_index'], 2)}% (displacement risk), "
         f"CO₂ {signed(d['co2_tonnes'], 2)} t/day.",
     ]
-    md += [_line_md(l) for p in ("health", "social", "environment") for l in _lines(plan, p)]
+    md += [_line_md(l) for p in ("social", "environment") for l in _lines(plan, p)]
     return {"markdown": "\n".join(md), "facts": {
         "metrics.by_income": m["by_income"], "delta.by_income": d["by_income"],
         "delta.deaths_averted_per_yr": d["deaths_averted_per_yr"], "delta.new_ties": d["new_ties"],
         "delta.encounters": d["encounters"], "delta.neighbor_ties": d["neighbor_ties"],
         "delta.rent_pressure_index": d["rent_pressure_index"], "delta.co2_tonnes": d["co2_tonnes"],
-        "value.health": v["health"], "value.social": v["social"], "value.environment": v["environment"],
+        "value.social": v["social"], "value.environment": v["environment"],
     }}
 
 

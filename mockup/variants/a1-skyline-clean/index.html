@@ -495,7 +495,7 @@ td:last-child { text-align: right; font-weight: 600; }
     <section class="pane" id="pane-impact">
       <div class="cvbig" id="cvbig"><div><small>City value · per year</small><b id="cv2">$0</b></div><div class="note" id="settle-note">Plan A vs baseline</div></div>
       <svg id="radar" viewBox="-60 4 420 212" role="img" aria-label="Radar chart of six city metrics, baseline versus plan"></svg>
-      <div class="radnote">Dashed ring = today · edge = ±5% change in the engine’s delay, encounters, revenue, walking, CO₂ and residents</div>
+      <div class="radnote">Dashed ring = today · edge = ±5% change in the engine’s delay, encounters, revenue, CO₂ and residents</div>
       <div class="pillars" id="pillars"></div>
       <div id="planlist" hidden></div>
       <div class="srcline" id="srcline"></div>
@@ -572,7 +572,12 @@ td:last-child { text-align: right; font-weight: 600; }
 // (./backend-snapshot/) when the API is unreachable, e.g. on a published artifact.
 // Exposes window.HPBackend.
 (() => {
-  const DEFAULT_API = 'http://localhost:8787';
+  // Engine URL: ?api=<url> wins; otherwise the host that served this page, port 8787 (works on localhost and LAN).
+  const DEFAULT_API = (() => {
+    try { const q = new URLSearchParams(location.search).get('api'); if (q) return q.replace(/\/$/, '');
+      if (/^https?:$/.test(location.protocol) && location.hostname) return `${location.protocol}//${location.hostname}:8787`; } catch (_) {}
+    return 'http://localhost:8787';
+  })();
   const SNAP = './backend-snapshot/';
 
   const timeout = (ms) => new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms));
@@ -2394,7 +2399,7 @@ function fillEngine(s, r) {
   s.anchors = anchorsOf(s.trips); s.ties = r.ties_sample || []; s.tieTimes = Float64Array.from(s.ties.map(t => t.t)).sort();
   const M = r.metrics;
   s.m = { ...M, delayPerTrip: (M.delay_hours_total ?? M.delay_hours) / Math.max(1, M.trips.car) * 3600, ties: M.new_ties, car: M.commuters.car, tr: M.commuters.transit, gone: M.commuters.gone, delayH: M.delay_hours_total ?? M.delay_hours, vmt: M.vmt_total ?? M.vmt, walkMin: M.walk_minutes, enc: M.encounters, res: M.residents, tripMin: (M.delay_hours_total ?? M.delay_hours) / Math.max(1, M.trips.car) * 60, carTrips: M.trips.car };
-  s.delta = r.delta; s.value = r.value; s.version = (s.version || 0) + 1;
+  s.delta = r.delta; { const v = r.value || {}; s.value = { ...v, health: 0, lines: (v.lines || []).filter(l => l.pillar !== 'health'), total: (v.mobility || 0) + (v.social || 0) + (v.economy || 0) + (v.environment || 0) }; }   // health is not valued; total = the 4 pillars s.version = (s.version || 0) + 1;
 }
 function engScenario(name, isPlan, r, shared) { const s = { name, isPlan, ped: shared.ped, blocks: shared.blocks, cache: new Map(), clearCarTrees() {} }; fillEngine(s, r); return s; }
 const ENG = ENGINE_OK ? { base: engScenario('Baseline', false, B.baseline, TOY.base), plan: engScenario('Plan A', true, B.baseline, TOY.plan) } : null;
@@ -2427,10 +2432,10 @@ function fillEstimate(s) {
     trips: { car: M.trips.car * rel('carTrips'), transit: M.trips.transit * rel('tr'), walk: M.trips.walk * rel('walkMin'), bike: 0, gone: 0 },
     commuters: { car: M.commuters.car * rel('car'), transit: M.commuters.transit * rel('tr'), walk: 0, bike: 0, gone: Math.max(0, M.commuters.car * rel('car') * -.08) },
     delay_hours_total: (M.delay_hours_total ?? M.delay_hours) * (onlyStreets ? Math.max(0, rel('delayH')) : rel('delayH')), delay_hours: M.delay_hours * (onlyStreets ? Math.max(0, rel('delayH')) : rel('delayH')), revenue: M.revenue * rel('revenue'), encounters: M.encounters * rel('enc'),
-    new_ties: onlyStreets ? Math.max(0, dTies) : dTies, walk_minutes: M.walk_minutes * rel('walkMin'), co2_tonnes: M.co2_tonnes * rel('vmt'), deaths_averted_per_yr: 0, residents: M.residents * rel('res'), rent_pressure_index: 0, charges_paid_usd: 0, by_income: {} };
+    new_ties: onlyStreets ? Math.max(0, dTies) : dTies, walk_minutes: M.walk_minutes * rel('walkMin'), co2_tonnes: M.co2_tonnes * rel('vmt'), residents: M.residents * rel('res'), rent_pressure_index: 0, charges_paid_usd: 0, by_income: {} };
   const tv = valueOf(tb, tp); const k = ratio(M.revenue, tb.revenue) ? Math.max(1, M.people / Math.max(1, TOY.base.persons.length * SCALE)) : 1;
-  const v = { mobility: (onlyStreets ? Math.min(0, tv.mob) : tv.mob) * k, social: (onlyStreets ? Math.max(0, tv.soc) : tv.soc) * k, economy: tv.eco * k, health: tv.hea * k, environment: tv.env * k, lines: [], factors: eb.value.factors };
-  v.total = v.mobility + v.social + v.economy + v.health + v.environment;
+  const v = { mobility: (onlyStreets ? Math.min(0, tv.mob) : tv.mob) * k, social: (onlyStreets ? Math.max(0, tv.soc) : tv.soc) * k, economy: tv.eco * k, health: 0, environment: tv.env * k, lines: [], factors: eb.value.factors };
+  v.total = v.mobility + v.social + v.economy + v.environment;
   s.delta = d; s.value = v;
   s.m = { ...eb.m, ties: M.new_ties + d.new_ties, car: M.commuters.car + d.commuters.car, tr: M.commuters.transit + d.commuters.transit, delayH: eb.m.delayH + d.delay_hours_total, vmt: eb.m.vmt * (1 + rel('vmt')), walkMin: M.walk_minutes + d.walk_minutes, enc: M.encounters + d.encounters, revenue: M.revenue + d.revenue, res: M.residents + d.residents, co2_tonnes: M.co2_tonnes + d.co2_tonnes, tripMin: eb.m.tripMin * (onlyStreets ? Math.max(1, tp.tripMin / Math.max(tb.tripMin, 1e-6)) : tp.tripMin / Math.max(tb.tripMin, 1e-6)), trips: { ...M.trips, car: M.trips.car + d.trips.car }, commuters: { ...M.commuters, car: M.commuters.car + d.commuters.car, transit: M.commuters.transit + d.commuters.transit } };
   s.version = (s.version || 0) + 1;
@@ -3075,8 +3080,8 @@ function updateInletLabels() {
 }
 
 // ───────────────────────── metrics, value, radar ─────────────────────────
-const AXES = ['Mobility', 'Street life', 'Economy', 'Health', 'Environment', 'Housing'];
-const BASE_SHAPE = [62, 46, 68, 50, 55, 34];
+const AXES = ['Mobility', 'Street life', 'Economy', 'Environment', 'Housing'];
+const BASE_SHAPE = [62, 46, 68, 55, 34];
 const VALUE = { vtt: 19.6, voc: .62, tie: 9, encounter: .1, va: .35, propTax: 11, healthPerMin: 25.1 };
 function driveTxt(b = S.base.m, p = S.plan.m) { if (isEng()) { const ds = (p.tripMin - b.tripMin) * 60; return `delay per car trip <b>${ds >= 0 ? '+' : '−'}${Math.abs(ds).toFixed(1)} s</b>`; } return `drive time <b>${pct(driveDelta(b, p))}</b>`; }
 const driveDelta = (b, p) => p.tripMin / Math.max(b.tripMin, 1e-6) - 1;  // per car trip, so fewer cars don't read as 'faster'
@@ -3084,9 +3089,9 @@ function valueOf(b, p) {
   const mob = (-(p.delayH - b.delayH) * VALUE.vtt - (p.vmt - b.vmt) * VALUE.voc) * WORKDAYS;
   const soc = ((p.ties - b.ties) * VALUE.tie + (p.enc - b.enc) * VALUE.encounter) * WORKDAYS;
   const eco = (p.revenue - b.revenue) * VALUE.va * WORKDAYS + p.floorDelta * VALUE.propTax * .15;
-  const hea = (p.walkMin - b.walkMin) * VALUE.healthPerMin;
+  const hea = 0;   // health is not valued
   const env = -(p.vmt - b.vmt) * .05 * WORKDAYS;   // toy: ~$0.05/vehicle-mile of CO₂ and pollution
-  return { mob, soc, eco, hea, env, total: mob + soc + eco + hea + env };
+  return { mob, soc, eco, env, total: mob + soc + eco + env };
 }
 function shapeOf(b, p) {
   const rel = (x, y) => (y - x) / Math.max(Math.abs(x), 1e-6);
@@ -3095,19 +3100,18 @@ function shapeOf(b, p) {
     BASE_SHAPE[0] - rel(b.delayH, p.delayH) * 45 - rel(b.vmt, p.vmt) * 40,
     BASE_SHAPE[1] + rel(b.enc, p.enc) * 55 + rel(b.ties, p.ties) * 25,
     BASE_SHAPE[2] + rel(b.revenue, p.revenue) * 90,
-    BASE_SHAPE[3] + rel(b.walkMin, p.walkMin) * 70,
-    BASE_SHAPE[4] - rel(b.vmt, p.vmt) * 60,
-    BASE_SHAPE[5] + (jh(p) - jh(b)) * 160 + rel(b.res, p.res) * 20,
+    BASE_SHAPE[3] - rel(b.vmt, p.vmt) * 60,
+    BASE_SHAPE[4] + (jh(p) - jh(b)) * 160 + rel(b.res, p.res) * 20,
   ].map(v => clamp(v, 6, 98));
 }
-let shown = { val: { mob: 0, soc: 0, eco: 0, hea: 0, env: 0, total: 0 }, shape: BASE_SHAPE.slice() };
+let shown = { val: { mob: 0, soc: 0, eco: 0, env: 0, total: 0 }, shape: BASE_SHAPE.slice() };
 let target = { val: shown.val, shape: shown.shape };
 function engShape(s) {
   const b = ENG.base.result.metrics, m = s.m, pc = (x, y) => (y - x) / Math.max(Math.abs(x), 1e-6), sc = (x) => 50 + clamp(x / .05, -1, 1) * 45;
-  return [sc(-pc(b.delay_hours_total ?? b.delay_hours, m.delayH)), sc(pc(b.encounters, m.enc)), sc(pc(b.revenue, m.revenue)), sc(pc(b.walk_minutes, m.walkMin)), sc(-pc(b.co2_tonnes, m.co2_tonnes ?? b.co2_tonnes)), sc(pc(b.residents, m.res))];
+  return [sc(-pc(b.delay_hours_total ?? b.delay_hours, m.delayH)), sc(pc(b.encounters, m.enc)), sc(pc(b.revenue, m.revenue)), sc(-pc(b.co2_tonnes, m.co2_tonnes ?? b.co2_tonnes)), sc(pc(b.residents, m.res))];
 }
 function engShapeOld(s) { const v = s.value, k = (x) => Math.sign(x) * Math.sqrt(Math.abs(x) / 1e6) * 10; return [62 + k(v.mobility), 46 + k(v.social), 68 + k(v.economy), 50 + k(v.health), 55 + k(v.environment), 34 + (s.delta.residents || 0) / Math.max(1, s.m.residents) * 200].map(x => clamp(x, 6, 98)); }
-function recomputeTargets() { if (isEng()) { const v = S.plan.value; target = { val: { mob: v.mobility, soc: v.social, eco: v.economy, hea: v.health, env: v.environment, total: v.total }, shape: engShape(S.plan) }; return; } const b = S.base.m, p = S.plan.m; target = { val: valueOf(b, p), shape: shapeOf(b, p) }; }
+function recomputeTargets() { if (isEng()) { const v = S.plan.value; target = { val: { mob: v.mobility, soc: v.social, eco: v.economy, env: v.environment, total: v.mobility + v.social + v.economy + v.environment }, shape: engShape(S.plan) }; return; } const b = S.base.m, p = S.plan.m; target = { val: valueOf(b, p), shape: shapeOf(b, p) }; }
 function drawRadar(shape) {
   const cx = 150, cy = 112, R = 80; const pt = (i, v) => { const a = -Math.PI / 2 + i * 2 * Math.PI / AXES.length; return [cx + Math.cos(a) * R * v / 100, cy + Math.sin(a) * R * v / 100]; };
   let s = '';
@@ -3126,10 +3130,10 @@ function drawPillars() {
   if (ui.view === 'base' && !ui.compare) { const m = S.base.m; $('#pillars').innerHTML = `<div class="empty"><b>Baseline: the city today.</b> ${fmtK(m.people)} people, ${fmtK(m.trips?.car ?? m.carTrips ?? 0)} car trips and ${money(m.revenue, false)} of local business revenue per day. Switch to <b>Plan A</b> to see what your changes do.</div>`; setCV(0); return; }
   const b = S.base.m, p = S.plan.m; let sub;
   const ecoLine = (k) => { const L = (S.plan.value.lines || []).filter(l => l.pillar === k).sort((a, b) => Math.abs(b.usd_per_yr) - Math.abs(a.usd_per_yr))[0]; return L ? L.label.replace(/\s*\(.*?\)/g, '').slice(0, 30) + ' ' + money(L.usd_per_yr) : ''; };
-  if (isEng()) { const d = S.plan.delta; const toll = Math.max(d.charges_paid_usd || 0, S.plan.m.charges_paid_usd || 0); sub = { mob: `${toll > 1 ? `tolls −${money(toll, false)}/day · ` : `${num(d.trips.car)} car trips · `}delay ${num(d.delay_hours_total ?? d.delay_hours)} veh-h`, soc: `new ties ${num(d.new_ties)}/day`, eco: (S.plan.value.economy > Math.abs(d.revenue) * WORKDAYS * 2 && ecoLine('economy')) ? `incl. ${ecoLine('economy')}` : `revenue ${money(d.revenue)}/day`, hea: `walking ${num(d.walk_minutes / 60)} h/day`, env: `CO₂ ${d.co2_tonnes > 0 ? '+' : '−'}${Math.abs(d.co2_tonnes).toFixed(1)} t/day · ${d.deaths_averted_per_yr >= 0 ? '' : '−'}${Math.abs(d.deaths_averted_per_yr || 0).toFixed(2)} deaths averted/yr` }; }
-  else sub = { mob: `${num((p.car - b.car) * SCALE)} car trips · ${pct(driveDelta(b, p))} drive`, soc: `ties ${num(p.ties - b.ties)}/day`, eco: `revenue ${money(p.revenue - b.revenue)}/day`, hea: `walking ${num((p.walkMin - b.walkMin) / 60)} h/day`, env: `${num(b.vmt - p.vmt)} fewer vehicle-miles/day · estimate` };
+  if (isEng()) { const d = S.plan.delta; const toll = Math.max(d.charges_paid_usd || 0, S.plan.m.charges_paid_usd || 0); sub = { mob: `${toll > 1 ? `tolls −${money(toll, false)}/day · ` : `${num(d.trips.car)} car trips · `}delay ${num(d.delay_hours_total ?? d.delay_hours)} veh-h`, soc: `new ties ${num(d.new_ties)}/day · walking ${num(d.walk_minutes / 60)} h/day`, eco: (S.plan.value.economy > Math.abs(d.revenue) * WORKDAYS * 2 && ecoLine('economy')) ? `incl. ${ecoLine('economy')}` : `revenue ${money(d.revenue)}/day`, env: `CO₂ ${d.co2_tonnes > 0 ? '+' : '−'}${Math.abs(d.co2_tonnes).toFixed(1)} t/day` }; }
+  else sub = { mob: `${num((p.car - b.car) * SCALE)} car trips · ${pct(driveDelta(b, p))} drive`, soc: `ties ${num(p.ties - b.ties)}/day`, eco: `revenue ${money(p.revenue - b.revenue)}/day`, env: `${num(b.vmt - p.vmt)} fewer vehicle-miles/day · estimate` };
   const tip = (k) => isEng() ? (S.plan.value.lines || []).filter(l => l.pillar === k).map(l => `${l.label}: ${money(l.usd_per_yr)}/yr`).join('\n') : 'In-browser estimate';
-  $('#pillars').innerHTML = [['Mobility', '#8fa6d6', 'mob', 'mobility'], ['Street life', 'var(--social)', 'soc', 'social'], ['Economy', 'var(--good)', 'eco', 'economy'], ['Health', 'var(--walk)', 'hea', 'health'], ['Environment', '#5fd4c4', 'env', 'environment']].map(([n, c, k, pk], i) => `<div class="pill${i === 4 ? ' wide' : ''}" style="--pc:${c}" title="${tip(pk).replace(/"/g, '&quot;')}"><small>${n}</small>${f(v[k] || 0)}<span>${sub[k]}</span></div>`).join('');
+  $('#pillars').innerHTML = [['Mobility', '#8fa6d6', 'mob', 'mobility'], ['Street life', 'var(--social)', 'soc', 'social'], ['Economy', 'var(--good)', 'eco', 'economy'], ['Environment', '#5fd4c4', 'env', 'environment']].map(([n, c, k, pk], i) => `<div class="pill" style="--pc:${c}" title="${tip(pk).replace(/"/g, '&quot;')}"><small>${n}</small>${f(v[k] || 0)}<span>${sub[k]}</span></div>`).join('');
   setCV(v.total);
 }
 function tickMetrics(dt) {
@@ -3613,10 +3617,10 @@ $('#ask').addEventListener('submit', (e) => { e.preventDefault(); const q = $('#
 function openPitch() {
   if (isEng()) return openPitchEng();
   $('#pitch')?.remove();
-  recomputeTargets(); const b = S.base.m, p = S.plan.m, v = target.val; const parts = [['Mobility', v.mob, '#8fa6d6'], ['Street life', v.soc, '#ff4fa3'], ['Local economy', v.eco, '#4fdc7a'], ['Health', v.hea, '#ffad1f']];
+  recomputeTargets(); const b = S.base.m, p = S.plan.m, v = target.val; const parts = [['Mobility', v.mob, '#8fa6d6'], ['Street life', v.soc, '#ff4fa3'], ['Local economy', v.eco, '#4fdc7a'], ['Environment', v.env || 0, '#5fd4c4']];
   const sumAbs = parts.reduce((a, x) => a + Math.abs(x[1]), 0) || 1; const eb = [...S.plan.blocks.keys()]; const grp = []; for (const id of eb) { const g = grp.find(g => g.some(o => Math.hypot(BLD[o].c[0] - BLD[id].c[0], BLD[o].c[1] - BLD[id].c[1]) < 140)); g ? g.push(id) : grp.push([id]); } const nBlk = grp.length;  // edits applied together count as one block
   const name = [S.plan.ped.size ? (HERO_EDGES.some(e => S.plan.ped.has(e)) ? '2nd Street Promenade' : 'Street changes') : null, nBlk ? `${nBlk} rezoned block${nBlk > 1 ? 's' : ''}` : null].filter(Boolean).join(' + ') || 'No changes yet';
-  const tier = [0, 1, 2].map(i => { const dt = (p.tierTime[i] - b.tierTime[i]); const dw = p.tierWalk[i] - b.tierWalk[i]; return -dt * VALUE.vtt / 60 * WORKDAYS + dw * VALUE.healthPerMin / SCALE * 12; });
+  const tier = [0, 1, 2].map(i => { const dt = (p.tierTime[i] - b.tierTime[i]); const dw = p.tierWalk[i] - b.tierWalk[i]; return -dt * VALUE.vtt / 60 * WORKDAYS + 0 * dw * 12; });
   const ap = (x) => clamp(Math.round(x), 8, 96);
   const merch = ap(55 + (p.revenue - b.revenue) / Math.max(b.revenue, 1) * 260), resi = ap(52 + (p.enc - b.enc) / Math.max(b.enc, 1) * 60 + (p.res - b.res) / Math.max(b.res, 1) * 40), drv = ap(50 - (p.delayH - b.delayH) / Math.max(b.delayH, 1) * 220 - (S.plan.ped.size ? 12 : 0)), trn = ap(58 + (p.tr - b.tr) / Math.max(b.tr, 1) * 120 + 8);
   const v2 = document.createElement('div'); v2.className = 'veil'; v2.id = 'pitch';
@@ -3635,7 +3639,7 @@ function openPitch() {
     ${['Lower-income third', 'Middle third', 'Upper third'].map((l, i) => `<tr><td>${l}</td><td class="${tier[i] >= 0 ? 'up' : 'down'}">${money(tier[i])}</td></tr>`).join('')}</table></div>
   <div>${typeof d !== 'undefined' && d && d.commuters ? `<h4>How commuters change mode · per day</h4><table>${[['Car', d.commuters.car], ['Transit', d.commuters.transit], ['Walk', d.commuters.walk], ['Bike', d.commuters.bike], ['Skip the trip', d.commuters.gone]].map(([k, x]) => `<tr><td>${k}</td><td class="${Math.abs(x) < .5 ? '' : (k === 'Car' ? x < 0 : x > 0) ? 'up' : 'down'}">${num(x || 0)}</td></tr>`).join('')}</table>` : ''}
   <h4 style="margin-top:16px">Trade-offs to address</h4><table><tr><td>Spillover onto parallel streets</td><td>${spillText()}</td></tr><tr><td>Rent pressure near the promenade</td><td>${S.plan.ped.size ? 'moderate' : 'low'}</td></tr></table></div></div>
-  <div class="foot">How we count: drivers' time is valued at $19.60 an hour and driving costs $0.62 a mile (US DOT). Extra walking is valued with the WHO's health-benefit method. Local businesses keep about 35% of new revenue. Each new connection counts $9.${parts.some(x => x[1] < 0) ? ' Hatched red = a cost.' : ''} 1 agent = 6 people. Mockup with illustrative numbers.</div>
+  <div class="foot">How we count: drivers' time is valued at $19.60 an hour and driving costs $0.62 a mile (US DOT). Local businesses keep about 35% of new revenue. Each new connection counts $9.${parts.some(x => x[1] < 0) ? ' Hatched red = a cost.' : ''} 1 agent = 6 people. Mockup with illustrative numbers.</div>
   <div style="display:flex;gap:8px;margin-top:16px"><button class="btn primary" id="pitch-copy">Copy summary</button><button class="btn" id="pitch-close">Close</button></div></div>`;
   stage.append(v2);
   const closeP = () => { v2.remove(); if (v2.dataset.after) toast(v2.dataset.after); }; $('#pitch-close').onclick = closeP; v2.onclick = (e) => { if (e.target === v2) closeP(); };
@@ -3644,7 +3648,7 @@ function openPitch() {
 function openPitchEng() {
   $('#pitch')?.remove();
   const b = S.base.m, p = S.plan.m, d = S.plan.delta, v = S.plan.value;
-  const parts = [['Mobility', v.mobility, '#8fa6d6'], ['Street life', v.social, '#ff4fa3'], ['Local economy', v.economy, '#4fdc7a'], ['Health', v.health, '#ffad1f'], ['Environment', v.environment, '#5fd4c4']];
+  const parts = [['Mobility', v.mobility, '#8fa6d6'], ['Street life', v.social, '#ff4fa3'], ['Local economy', v.economy, '#4fdc7a'], ['Environment', v.environment, '#5fd4c4']]; const vTotal = parts.reduce((a, x) => a + x[1], 0);
   const sumAbs = parts.reduce((a, x) => a + Math.abs(x[1]), 0) || 1; const nBlk = new Set([...S.plan.blocks.keys()].map(b => BLOCK_OF[b])).size;
   const cnt = new Map(); for (const id of S.plan.ped) { const e = EDGES[id]; if (e.name) cnt.set(e.name, (cnt.get(e.name) || 0) + e.l); } const streets = [...cnt].sort((a, b) => b[1] - a[1]).map(x => x[0].replace(' Street', ''));
   const heroOn = HERO_EDGES.every(e => S.plan.ped.has(e)); const others = streets.filter(n => n !== '2nd'); const name = [S.plan.ped.size ? (heroOn ? '2nd Street Promenade' + (others.length ? ` + ${others.slice(0, 2).join(' + ')} St car-free` : '') : streets.length ? `${streets.slice(0, 3).join(' + ')} car-free` : 'Street changes') : null, nBlk ? `${nBlk} rezoned block${nBlk > 1 ? 's' : ''}` : null, ...planPolicies.map(po => policyText(po))].filter(Boolean).join(' + ') || 'No changes yet';
@@ -3658,7 +3662,7 @@ function openPitchEng() {
   const pc = { data: 0, literature: 0, assumed: 0 }; for (const k in EW.params || {}) { const st = EW.params[k].status; if (st in pc) pc[st]++; }
   const v2 = document.createElement('div'); v2.className = 'veil'; v2.id = 'pitch';
   v2.innerHTML = `<div class="card glass pitch"><button class="x" id="pitch-x" aria-label="Close" style="top:14px;right:14px">×</button><div class="eyebrow">The Human Project · Pitch to the Board of Supervisors</div><h2>${name}</h2>
-  <div class="total" style="color:${v.total < 0 ? '#ffb0b0' : ''}">${money(v.total)}<span style="font-size:22px;color:var(--dim)"> /yr</span></div>
+  <div class="total" style="color:${v.total < 0 ? '#ffb0b0' : ''}">${money(vTotal)}<span style="font-size:22px;color:var(--dim)"> /yr</span></div>
   <div style="color:var(--dim)">Net value to the city versus today, from the simulation engine${S.plan.estimate ? ' (estimate: this edit isn’t pre-computed)' : ''}. One weekday projected to ${WORKDAYS} workdays.</div>
   <div class="stack">${parts.filter(x => x[1] < 0).map(x => `<div title="${x[0]} ${money(x[1])}" style="width:${-x[1] / sumAbs * 100}%;background:repeating-linear-gradient(135deg,#ff5d5d 0 5px,#9b2b3a 5px 9px)"></div>`).join('')}${parts.some(x => x[1] < 0) ? '<div style="width:3px;background:#fff"></div>' : ''}${parts.filter(x => x[1] > 0).map(x => `<div style="width:${x[1] / sumAbs * 100}%;background:${x[2]}"></div>`).join('')}</div>
   <div class="legend2">${parts.map(x => `<span><i style="background:${x[2]}"></i>${x[0]} <b class="${x[1] >= 0 ? 'up' : 'down'}">${money(x[1])}</b></span>`).join('')}</div>
@@ -3668,10 +3672,10 @@ function openPitchEng() {
     <tr><td>Local business revenue</td><td class="${d.revenue >= 0 ? 'up' : 'down'}">${money(d.revenue)}</td></tr>
     <tr><td><span style="color:var(--social)">●</span> New connections</td><td>${num(d.new_ties)}</td></tr>
     <tr><td>CO₂</td><td class="${d.co2_tonnes <= 0 ? 'up' : 'down'}">${fq(d.co2_tonnes)} t</td></tr>
-    <tr><td>Deaths averted per year</td><td class="${(d.deaths_averted_per_yr || 0) >= 0 ? 'up' : 'down'}">${fq(d.deaths_averted_per_yr || 0)}</td></tr>${planPolicies.map(po => `<tr><td>Policy</td><td>${policyText(po)}</td></tr>`).join('')}</table>
+${planPolicies.map(po => `<tr><td>Policy</td><td>${policyText(po)}</td></tr>`).join('')}</table>
     <h4 style="margin-top:16px">Biggest value lines · per year</h4><table>${lines.map(l => { const avoided = l.usd_per_yr > 0 && l.qty > 0 && !/\$/.test(l.unit) && !/avoided/i.test(l.label) && /cost|delay|crash|co₂|co2|emission|noise|pollut|death/i.test(l.label); return `<tr><td>${l.label.replace(/\s*\(.*?\)/g, '')}<div style="font-size:11px;color:var(--mute)">${avoided ? Math.abs(l.qty) >= 100 ? num(Math.abs(l.qty), false) : Math.abs(l.qty).toFixed(2) : fq(l.qty)} ${l.unit}${avoided ? ' avoided' : ''}</div></td><td class="${l.usd_per_yr >= 0 ? 'up' : 'down'}">${money(l.usd_per_yr)}</td></tr>`; }).join('')}</table></div>
   <div>${typeof d !== 'undefined' && d && d.commuters ? `<h4>How commuters change mode · per day</h4><table>${[['Car', d.commuters.car], ['Transit', d.commuters.transit], ['Walk', d.commuters.walk], ['Bike', d.commuters.bike], ['Skip the trip', d.commuters.gone]].map(([k, x]) => `<tr><td>${k}</td><td class="${Math.abs(x) < .5 ? '' : (k === 'Car' ? x < 0 : x > 0) ? 'up' : 'down'}">${num(x || 0)}</td></tr>`).join('')}</table>` : ''}
-  <h4 style="margin-top:16px">Who gains · travel time per person per year</h4><table>${['Lower-income third', 'Middle third', 'Upper third'].map((l, i) => `<tr><td>${l}</td><td class="${Math.abs(tier[i]) < 5 ? '' : tier[i] >= 0 ? 'up' : 'down'}">${Math.abs(tier[i]) < 5 ? '≈ $0' : money(tier[i])}</td></tr>`).join('')}</table><div style="font-size:11px;color:var(--mute);margin-top:4px">Travel time at $${vot}/h (engine parameter). Health${(p.charges_paid_usd || 0) > 1 ? ', toll revenue' : ''} and business gains are city-wide and not split per person.</div>
+  <h4 style="margin-top:16px">Who gains · travel time per person per year</h4><table>${['Lower-income third', 'Middle third', 'Upper third'].map((l, i) => `<tr><td>${l}</td><td class="${Math.abs(tier[i]) < 5 ? '' : tier[i] >= 0 ? 'up' : 'down'}">${Math.abs(tier[i]) < 5 ? '≈ $0' : money(tier[i])}</td></tr>`).join('')}</table><div style="font-size:11px;color:var(--mute);margin-top:4px">Travel time at $${vot}/h (engine parameter). Business gains${(p.charges_paid_usd || 0) > 1 ? ' and toll revenue' : ''} are city-wide and not split per person.</div>
   <h4 style="margin-top:16px">Trade-offs to address</h4><table><tr><td>Spillover onto parallel streets</td><td>${spillText()}</td></tr><tr><td>Rent pressure index</td><td>${(d.rent_pressure_index >= 0 ? '+' : '−') + Math.abs(d.rent_pressure_index || 0).toFixed(2)}%</td></tr>${planPolicies.length && Math.max(d.charges_paid_usd || 0, p.charges_paid_usd || 0) > 1 ? `<tr><td>Drivers pay tolls</td><td>${money(-Math.max(d.charges_paid_usd || 0, p.charges_paid_usd || 0))}/day</td></tr>` : ''}</table></div></div>
   <div class="pfoot"><div class="foot">Every number here comes from the simulation engine (${B.mode === 'live' ? 'live' : 'snapshot of engine results'}), calibrated to LODES jobs, ACS residents, BART exits and Google popular times. ${pc.data} parameters come from data, ${pc.literature} from the literature and ${pc.assumed} are assumed; sources are listed in research/ in the repo. 1 agent = ${EW.scale} people, ${fmtK(p.people)} people in the area on a weekday.${parts.some(x => x[1] < 0) ? ' Hatched red = a cost.' : ''}</div>
   <div style="display:flex;gap:8px;margin-top:16px"><button class="btn primary" id="pitch-copy">Copy summary</button><button class="btn" id="pitch-close">Close</button></div></div>`;
@@ -3836,8 +3840,8 @@ $('#plans-btn').onclick = (e) => { e.stopPropagation(); openPlans(); };
 document.addEventListener('pointerdown', (e) => { const pop = $('#planspop'); if (!pop.hidden && !e.target.closest('#planspop') && !e.target.closest('#plans-btn')) pop.hidden = true; });
 // ───────────────────────── About the numbers (world.params + result.assumptions) ─────────────────────────
 function openAbout() {
-  $('#about')?.remove(); const P = EW ? EW.params || {} : {}; const pc = { data: 0, literature: 0, assumed: 0 }; for (const k in P) if (P[k].status in pc) pc[P[k].status]++;
-  const as = S.plan.result?.assumptions || B.baseline?.assumptions || []; const esc = (t) => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  $('#about')?.remove(); const P = Object.fromEntries(Object.entries(EW ? EW.params || {} : {}).filter(([k]) => !/health|heat|vsl|death|mortal|crash|who_/i.test(k))); const pc = { data: 0, literature: 0, assumed: 0 }; for (const k in P) if (P[k].status in pc) pc[P[k].status]++;
+  const as = (S.plan.result?.assumptions || B.baseline?.assumptions || []).filter(a => !/health|heat|vsl|death|mortal|crash|who_/i.test(a.key || '')); const esc = (t) => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
   const v2 = document.createElement('div'); v2.className = 'veil'; v2.id = 'about';
   v2.innerHTML = `<div class="card glass about" style="position:relative"><button class="x" id="about-x" aria-label="Close" style="top:14px;right:14px">×</button><div class="eyebrow" style="color:var(--hi);font-weight:600;font-size:12px">About the numbers</div>
   <h2 style="margin:6px 0 4px;font-size:22px">${EW ? `${Object.keys(P).length} parameters: ${pc.data} from data, ${pc.literature} from the literature, ${pc.assumed} assumed` : 'Engine offline'}</h2>
