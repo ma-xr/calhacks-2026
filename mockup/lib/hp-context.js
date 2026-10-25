@@ -24,7 +24,7 @@
     if (!DATA) return null;
     const box = DATA.simBox;
     const o = {
-      fadeStart: 40, fadeEnd: 1300,
+      fadeStart: 0, fadeEnd: 1700,
       fadeColor: 0xdfe6ec, buildingColor: 0xd6d3cc, roadColor: 0xa9adb3, landColor: 0xcdc8bf, parkColor: 0xa9c29a, waterColor: 0x9cc3da,
       accent: 0x39d5ff, outline: 0xffffff,
       inside: false,   // true: also draw the real land / water / parks inside the simulation box (cities without a hand-made shoreline)
@@ -137,9 +137,9 @@
       uniforms: { ...U, uCol: { value: col(o.buildingColor) } },
       vertexShader: GLSL_BOX + `attribute float aShade; varying float vF; varying float vS;
         void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vF = fadeAt(w.xz); vS = aShade;
-          w.y *= mix(0.5, 0.03, smoothstep(0.0, 0.9, vF)); gl_Position = projectionMatrix * viewMatrix * w; }`,   // context stays visibly lower than the simulated city
+          w.y *= mix(0.9, 0.03, smoothstep(0.0, 0.95, vF)); gl_Position = projectionMatrix * viewMatrix * w; }`,   // eases down from near full height: no step at the edge
       fragmentShader: `uniform vec3 uCol; uniform vec3 uFadeColor; varying float vF; varying float vS;
-        void main(){ gl_FragColor = vec4(mix(uCol * vS, uFadeColor, 0.28 + 0.72 * vF), 1.0); }`,   // and paler from the first block on
+        void main(){ gl_FragColor = vec4(mix(uCol * vS, uFadeColor, 0.08 + 0.92 * vF), 1.0); }`,   // and pales gradually with distance
     });
     const buildings = new THREE.Mesh(bGeo, bMat); buildings.renderOrder = 3; group.add(buildings);
 

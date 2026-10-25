@@ -708,6 +708,7 @@ body.reel-src #ilegend { display: none !important; }
 <script id="world" type="application/json">__WORLD__</script>
 <script>/*__HP_BACKEND__*/</script>
 <script>/*__HP_LIB:hp-ask__*/</script>
+<script>/*__HP_LIB:hp-bridge__*/</script>
 <script>/*__HP_LIB:hp-policy__*/</script>
 <script>/*__HP_LIB:hp-live__*/</script>
 <script>/*__HP_CONTEXT__*/</script>
@@ -1421,7 +1422,9 @@ const water = new THREE.Mesh(new THREE.PlaneGeometry(30000, 30000), new THREE.Sh
 water.rotation.x = -Math.PI / 2; water.position.y = -1.5; scene.add(water);
 // The rest of San Francisco: real OSM context that sinks and fades into haze away from the simulated blocks.
 const CTX_LAND = new THREE.Color(0xe2d5b8), CTX_FADE = new THREE.Color();
-const CTX = window.HPContext?.add(THREE, scene, { fadeColor: 0xdfe6e4, buildingColor: 0xe9e2d6, roadColor: 0xc3bdb2, landColor: 0xe2d5b8, parkColor: 0x9fcf7e, waterColor: 0x5fb0de, accent: 0x39d5ff, outline: 0xffffff, fadeStart: 40, fadeEnd: 1300, inside: !IS_SF });
+const CTX = window.HPContext?.add(THREE, scene, { fadeColor: 0xdfe6e4, buildingColor: 0xe9e2d6, roadColor: 0xc3bdb2, landColor: 0xe2d5b8, parkColor: 0x9fcf7e, waterColor: 0x5fb0de, accent: 0x39d5ff, outline: 0xffffff, fadeStart: 0, fadeEnd: 1700, inside: !IS_SF });
+// Bay Bridge (west span), decorative, SF only. Cars on I-80 drive up on its deck (BRIDGE.yAt).
+const BRIDGE = IS_SF && window.HPBridge ? window.HPBridge.add(THREE, scene, { a: [731, 244], b: [2764, -2141] }) : null;
 // HPContext skips its water polygons when a city has no coastline land (e.g. Chicago's river and lake): draw them here.
 const CTX_WATER = (!IS_SF && window.HPContext?.data && !(window.HPContext.data.land || []).length && (window.HPContext.data.water || []).length) ? (() => {
   const shapes = window.HPContext.data.water.map(f => { const sh = new THREE.Shape(); for (let i = 0; i < f.length; i += 2) (i ? sh.lineTo(f[i], -f[i + 1]) : sh.moveTo(f[i], -f[i + 1])); return sh; });
@@ -1446,7 +1449,7 @@ function ribbonInto(pos, pts, w, y) {
   }
   return added;
 }
-const clipPts = (p) => p.filter(([x, z]) => Math.hypot(x, z) < 3200);
+const clipPts = (p) => p.filter(([x, z]) => Math.hypot(x, z) < 3200 && !(BRIDGE && BRIDGE.yAt(x, z) > 30));   // the bridge deck replaces the flat road over the water
 function buildRoadLayer(widthAdd, yBase, withRanges) {
   const pos = []; const ranges = new Map(); let v = 0;
   for (const e of ROAD_EDGES) { const pts = clipPts(e.p); if (pts.length < 2) continue; const y = yBase + (e.c === 'pedestrian' ? 0 : e.hw ? .06 : .03); const n = ribbonInto(pos, pts, e.w + widthAdd, y); if (withRanges) ranges.set(e.id, [v, n]); v += n; }
@@ -1832,9 +1835,9 @@ function drawAgents(vis) {
   for (const a of vis.active) {
     posAt(a.t, a.s, tmp); const isF = follow && a.t.p.id === follow;
     if (a.t.mode === 'car') {
-      if (nc >= MAX_CARS) continue; const s = a.born < 1 ? backOut(a.born) : 1; _q.setFromAxisAngle(_up, Math.atan2(-tmp.dz, tmp.dx)); _sc.set(s, s, s); _p3.set(tmp.x, .8, tmp.z); _m4.compose(_p3, _q, _sc); vis.cars.setMatrixAt(nc++, _m4);
+      if (nc >= MAX_CARS) continue; const s = a.born < 1 ? backOut(a.born) : 1; _q.setFromAxisAngle(_up, Math.atan2(-tmp.dz, tmp.dx)); _sc.set(s, s, s); _p3.set(tmp.x, .8 + (BRIDGE ? BRIDGE.yAt(tmp.x, tmp.z) : 0), tmp.z); _m4.compose(_p3, _q, _sc); vis.cars.setMatrixAt(nc++, _m4);
       if (a.s > 14) { _p3.set(tmp.x - tmp.dx * 13, .8, tmp.z - tmp.dz * 13); _m4.compose(_p3, _q, _sc); vis.cars.setMatrixAt(nc++, _m4); }  // short platoon: one agent = 6 people
-      if (!a.hist) a.hist = []; a.hist.unshift([tmp.x, 3.2, tmp.z]); if (a.hist.length > TRAIL) a.hist.length = TRAIL;
+      if (!a.hist) a.hist = []; a.hist.unshift([tmp.x, 3.2 + (BRIDGE && a.t.mode === 'car' ? BRIDGE.yAt(tmp.x, tmp.z) : 0), tmp.z]); if (a.hist.length > TRAIL) a.hist.length = TRAIL;
       for (let k = 1; k < a.hist.length; k++) { if (nt >= MAX_CARS * TRAIL) break; tp.position.array.set(a.hist[k], nt * 3); tp.aColor.array.set(CAR_TRAIL, nt * 3); tp.aSize.array[nt] = 16 * (1 - k / TRAIL); tp.aAlpha.array[nt] = (1 - k / TRAIL) * (.12 + night * .5); nt++; }
     } else {
       if (np >= MAX_PEDS) continue; pp.position.array.set([tmp.x, 2.4, tmp.z], np * 3);
@@ -1958,7 +1961,7 @@ function applyTime() {
   const dayT = clamp((m - 350) / (1200 - 350), 0, 1); const ang = Math.PI * dayT; const el = Math.max(.14, Math.sin(ang) * 1.0);
   sun.position.set(Math.cos(ang) * 2600, Math.sin(el) * 2600 + 300, 1000 + Math.sin(ang) * 500); sun.target.position.set(0, 0, 0);
   sun.color.setHSL(.09, clamp(1 - el, .15, .75), .86);
-  const night = clamp(1 - si / 1.2, 0, 1); bU.uNight.value = night; waterU.uNight.value = night;
+  const night = clamp(1 - si / 1.2, 0, 1); bU.uNight.value = night; waterU.uNight.value = night; BRIDGE?.setNight(night);
   waterU.uDeep.value.setHex(0x3f97cf).lerp(cB.setHex(0x0b1a30), night); waterU.uLite.value.setHex(0x8fd0ee).lerp(cB.setHex(0x1a3050), night);
   hemi.color.setHex(0xe6f1ff).lerp(cB.setHex(0x5a6aa0), night);
   if (CTX_WATER) CTX_WATER.material.color.copy(waterU.uDeep.value).lerp(waterU.uLite.value, .35);

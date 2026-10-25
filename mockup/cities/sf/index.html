@@ -1356,6 +1356,91 @@ border:1px solid rgba(127,211,255,.18);text-align:left;transition:background .15
   window.HPAsk = { mount, _md: md };
 })();
 </script>
+<script>// The Human Project · San Francisco–Oakland Bay Bridge, west span (decorative model).
+// Inlined at build time via /*__HP_LIB:hp-bridge__*/. window.HPBridge.add(THREE, scene, { a: [x, z], b: [x, z] })
+// builds it between the SF shore (a) and Yerba Buena Island (b) in world.json meters and returns
+// { group, yAt(x, z), setNight(n) }: yAt gives the upper-deck height for cars driving on it (0 off the bridge).
+//
+// Real layout, simplified: two back-to-back suspension bridges joined at a concrete center anchorage,
+// four steel towers (~160 m above the water), a double deck at ~58 m, catenary main cables with hangers,
+// and the Bay Lights (white LEDs along the cables) at night.
+(() => {
+  function add(THREE, scene, opt = {}) {
+    const [ax, az] = opt.a, [bx, bz] = opt.b;
+    const L = Math.hypot(bx - ax, bz - az), ux = (bx - ax) / L, uz = (bz - az) / L, nx = -uz, nz = ux;
+    const ang = Math.atan2(-uz, ux);
+    const group = new THREE.Group(); group.name = 'bay-bridge'; scene.add(group);
+    const steel = new THREE.MeshStandardMaterial({ color: opt.color ?? 0xc9cfd5, roughness: 0.55, metalness: 0.12 });   // silver-grey; low metalness so it isn't black without an env map
+    const concrete = new THREE.MeshStandardMaterial({ color: 0xc9c3b6, roughness: 0.9 });
+    const deckMat = new THREE.MeshStandardMaterial({ color: 0x9fa5ab, roughness: 0.75, metalness: 0.1 });
+    const at = (t, lat = 0) => [ax + ux * L * t + nx * lat, az + uz * L * t + nz * lat];
+    const DECK = 58, LOWER = 47, TOWER = 160, HALF = 13;
+    const deckY = (t) => 25 + (DECK - 25) * Math.min(1, Math.max(0, t / 0.1)) ** 0.7;
+    // A box aligned with the bridge: from t0 to t1 along it, centered at `lat`, between heights y0 and y1.
+    function box(t0, t1, lat, w, y0, y1, mat) {
+      const len = Math.max(0.5, (t1 - t0) * L);
+      const m = new THREE.Mesh(new THREE.BoxGeometry(len, y1 - y0, w), mat);
+      const [cx, cz] = at((t0 + t1) / 2, lat);
+      m.position.set(cx, (y0 + y1) / 2, cz); m.rotation.y = ang; m.castShadow = true; group.add(m); return m;
+    }
+    // Decks (upper + lower) and the side trusses between them, in short pieces so the approach can rise.
+    const N = 40;
+    for (let i = 0; i < N; i++) {
+      const t0 = i / N, t1 = (i + 1) / N, y = deckY((t0 + t1) / 2);
+      box(t0, t1, 0, 24, y - 1.5, y + 1.0, deckMat);
+      box(t0, t1, 0, 22, y - (DECK - LOWER) - 1.2, y - (DECK - LOWER) + 0.8, deckMat);
+      for (const s of [-1, 1]) box(t0, t1, s * 11.6, 0.9, y - (DECK - LOWER), y, steel);
+    }
+    // Towers: two legs with cross beams, on concrete piers.
+    const towers = [0.14, 0.38, 0.62, 0.86];
+    for (const t of towers) {
+      for (const s of [-1, 1]) box(t - 0.0025, t + 0.0025, s * HALF, 6, 0, TOWER, steel);
+      for (const y of [LOWER - 8, 95, 128, TOWER - 6]) box(t - 0.002, t + 0.002, 0, HALF * 2 + 6, y, y + 5, steel);
+      box(t - 0.008, t + 0.008, 0, 44, -2, 9, concrete);
+    }
+    // Center anchorage and the shore / island anchorages.
+    box(0.485, 0.515, 0, 42, -2, 72, concrete);
+    box(0.0, 0.02, 0, 34, -2, 40, concrete);
+    box(0.975, 1.0, 0, 34, -2, 62, concrete);
+    // Main cables: anchorage -> tower -> tower -> anchorage, for each of the two suspension units, both sides.
+    const units = [[0.02, 0.14, 0.38, 0.485], [0.515, 0.62, 0.86, 0.975]];
+    const cablePts = [];
+    function cableY(t, u) {
+      const [a0, t1, t2, a1] = u; const anchorY = 66, top = TOWER - 3, mid = DECK + 7;
+      if (t <= t1) { const k = (t - a0) / (t1 - a0); return anchorY + (top - anchorY) * k - 18 * k * (1 - k); }
+      if (t <= t2) { const k = (t - t1) / (t2 - t1); return top - 4 * (top - mid) * k * (1 - k); }
+      const k = (t - t2) / (a1 - t2); return top + (anchorY - top) * k - 18 * k * (1 - k);
+    }
+    const cableMat = new THREE.MeshStandardMaterial({ color: 0xc2c8ce, roughness: 0.5, metalness: 0.15 });
+    const hangers = [];
+    for (const u of units) for (const s of [-1, 1]) {
+      const pts = [];
+      for (let k = 0; k <= 120; k++) { const t = u[0] + (u[3] - u[0]) * k / 120; const [x, z] = at(t, s * HALF); pts.push(new THREE.Vector3(x, cableY(t, u), z)); }
+      const tube = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 240, 1.1, 5, false), cableMat); group.add(tube);
+      cablePts.push(pts);
+      for (let d = 0; d <= (u[3] - u[0]) * L; d += 22) {
+        const t = u[0] + d / L; const y = cableY(t, u), dy = deckY(t) + 1; if (y - dy < 2) continue;
+        const [x, z] = at(t, s * HALF); hangers.push(x, y, z, x, dy, z);
+      }
+    }
+    const hg = new THREE.BufferGeometry(); hg.setAttribute('position', new THREE.Float32BufferAttribute(hangers, 3));
+    group.add(new THREE.LineSegments(hg, new THREE.LineBasicMaterial({ color: 0x9aa1a8, transparent: true, opacity: 0.55 })));
+    // The Bay Lights: white LEDs along the cables, visible at night.
+    const lp = []; for (const pts of cablePts) for (let i = 0; i < pts.length; i += 1) lp.push(pts[i].x, pts[i].y + 0.5, pts[i].z);
+    const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(lp, 3));
+    const lightMat = new THREE.PointsMaterial({ color: new THREE.Color(2.6, 2.6, 2.8), size: 10, sizeAttenuation: true, transparent: true, opacity: 0, depthWrite: false, toneMapped: false });
+    const lights = new THREE.Points(lg, lightMat); group.add(lights);
+
+    function yAt(x, z) {
+      const dx = x - ax, dz = z - az, t = (dx * ux + dz * uz) / L, lat = Math.abs(dx * nx + dz * nz);
+      if (t < 0.0 || t > 1.02 || lat > 30) return 0;
+      return deckY(Math.min(1, t)) + 1.2;
+    }
+    return { group, yAt, length: L, setNight(n) { lightMat.opacity = Math.min(1, Math.max(0, n * 1.2)); lights.visible = n > 0.05; } };
+  }
+  window.HPBridge = { add };
+})();
+</script>
 <script>// The Human Project · Policy Book: built-in levers + Droid-written levers (GET /policies, POST /policies/propose, /approve, /reject).
 // Classic script, no imports. Defines window.HPPolicy = { mount(host, opts) }.
 // Host API (docs/fully-functional-spec.md §2): { B, world, getPlanEdits, applyEdits(edits, label), currentScenarioId, toast, mount, ... }.
@@ -2052,7 +2137,7 @@ background:var(--hpx-glass);box-shadow:var(--hpx-sh);backdrop-filter:blur(18px) 
     if (!DATA) return null;
     const box = DATA.simBox;
     const o = {
-      fadeStart: 40, fadeEnd: 1300,
+      fadeStart: 0, fadeEnd: 1700,
       fadeColor: 0xdfe6ec, buildingColor: 0xd6d3cc, roadColor: 0xa9adb3, landColor: 0xcdc8bf, parkColor: 0xa9c29a, waterColor: 0x9cc3da,
       accent: 0x39d5ff, outline: 0xffffff,
       inside: false,   // true: also draw the real land / water / parks inside the simulation box (cities without a hand-made shoreline)
@@ -2165,9 +2250,9 @@ background:var(--hpx-glass);box-shadow:var(--hpx-sh);backdrop-filter:blur(18px) 
       uniforms: { ...U, uCol: { value: col(o.buildingColor) } },
       vertexShader: GLSL_BOX + `attribute float aShade; varying float vF; varying float vS;
         void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vF = fadeAt(w.xz); vS = aShade;
-          w.y *= mix(0.5, 0.03, smoothstep(0.0, 0.9, vF)); gl_Position = projectionMatrix * viewMatrix * w; }`,   // context stays visibly lower than the simulated city
+          w.y *= mix(0.9, 0.03, smoothstep(0.0, 0.95, vF)); gl_Position = projectionMatrix * viewMatrix * w; }`,   // eases down from near full height: no step at the edge
       fragmentShader: `uniform vec3 uCol; uniform vec3 uFadeColor; varying float vF; varying float vS;
-        void main(){ gl_FragColor = vec4(mix(uCol * vS, uFadeColor, 0.28 + 0.72 * vF), 1.0); }`,   // and paler from the first block on
+        void main(){ gl_FragColor = vec4(mix(uCol * vS, uFadeColor, 0.08 + 0.92 * vF), 1.0); }`,   // and pales gradually with distance
     });
     const buildings = new THREE.Mesh(bGeo, bMat); buildings.renderOrder = 3; group.add(buildings);
 
@@ -3128,7 +3213,9 @@ const water = new THREE.Mesh(new THREE.PlaneGeometry(30000, 30000), new THREE.Sh
 water.rotation.x = -Math.PI / 2; water.position.y = -1.5; scene.add(water);
 // The rest of San Francisco: real OSM context that sinks and fades into haze away from the simulated blocks.
 const CTX_LAND = new THREE.Color(0xe2d5b8), CTX_FADE = new THREE.Color();
-const CTX = window.HPContext?.add(THREE, scene, { fadeColor: 0xdfe6e4, buildingColor: 0xe9e2d6, roadColor: 0xc3bdb2, landColor: 0xe2d5b8, parkColor: 0x9fcf7e, waterColor: 0x5fb0de, accent: 0x39d5ff, outline: 0xffffff, fadeStart: 40, fadeEnd: 1300, inside: !IS_SF });
+const CTX = window.HPContext?.add(THREE, scene, { fadeColor: 0xdfe6e4, buildingColor: 0xe9e2d6, roadColor: 0xc3bdb2, landColor: 0xe2d5b8, parkColor: 0x9fcf7e, waterColor: 0x5fb0de, accent: 0x39d5ff, outline: 0xffffff, fadeStart: 0, fadeEnd: 1700, inside: !IS_SF });
+// Bay Bridge (west span), decorative, SF only. Cars on I-80 drive up on its deck (BRIDGE.yAt).
+const BRIDGE = IS_SF && window.HPBridge ? window.HPBridge.add(THREE, scene, { a: [731, 244], b: [2764, -2141] }) : null;
 // HPContext skips its water polygons when a city has no coastline land (e.g. Chicago's river and lake): draw them here.
 const CTX_WATER = (!IS_SF && window.HPContext?.data && !(window.HPContext.data.land || []).length && (window.HPContext.data.water || []).length) ? (() => {
   const shapes = window.HPContext.data.water.map(f => { const sh = new THREE.Shape(); for (let i = 0; i < f.length; i += 2) (i ? sh.lineTo(f[i], -f[i + 1]) : sh.moveTo(f[i], -f[i + 1])); return sh; });
@@ -3153,7 +3240,7 @@ function ribbonInto(pos, pts, w, y) {
   }
   return added;
 }
-const clipPts = (p) => p.filter(([x, z]) => Math.hypot(x, z) < 3200);
+const clipPts = (p) => p.filter(([x, z]) => Math.hypot(x, z) < 3200 && !(BRIDGE && BRIDGE.yAt(x, z) > 30));   // the bridge deck replaces the flat road over the water
 function buildRoadLayer(widthAdd, yBase, withRanges) {
   const pos = []; const ranges = new Map(); let v = 0;
   for (const e of ROAD_EDGES) { const pts = clipPts(e.p); if (pts.length < 2) continue; const y = yBase + (e.c === 'pedestrian' ? 0 : e.hw ? .06 : .03); const n = ribbonInto(pos, pts, e.w + widthAdd, y); if (withRanges) ranges.set(e.id, [v, n]); v += n; }
@@ -3539,9 +3626,9 @@ function drawAgents(vis) {
   for (const a of vis.active) {
     posAt(a.t, a.s, tmp); const isF = follow && a.t.p.id === follow;
     if (a.t.mode === 'car') {
-      if (nc >= MAX_CARS) continue; const s = a.born < 1 ? backOut(a.born) : 1; _q.setFromAxisAngle(_up, Math.atan2(-tmp.dz, tmp.dx)); _sc.set(s, s, s); _p3.set(tmp.x, .8, tmp.z); _m4.compose(_p3, _q, _sc); vis.cars.setMatrixAt(nc++, _m4);
+      if (nc >= MAX_CARS) continue; const s = a.born < 1 ? backOut(a.born) : 1; _q.setFromAxisAngle(_up, Math.atan2(-tmp.dz, tmp.dx)); _sc.set(s, s, s); _p3.set(tmp.x, .8 + (BRIDGE ? BRIDGE.yAt(tmp.x, tmp.z) : 0), tmp.z); _m4.compose(_p3, _q, _sc); vis.cars.setMatrixAt(nc++, _m4);
       if (a.s > 14) { _p3.set(tmp.x - tmp.dx * 13, .8, tmp.z - tmp.dz * 13); _m4.compose(_p3, _q, _sc); vis.cars.setMatrixAt(nc++, _m4); }  // short platoon: one agent = 6 people
-      if (!a.hist) a.hist = []; a.hist.unshift([tmp.x, 3.2, tmp.z]); if (a.hist.length > TRAIL) a.hist.length = TRAIL;
+      if (!a.hist) a.hist = []; a.hist.unshift([tmp.x, 3.2 + (BRIDGE && a.t.mode === 'car' ? BRIDGE.yAt(tmp.x, tmp.z) : 0), tmp.z]); if (a.hist.length > TRAIL) a.hist.length = TRAIL;
       for (let k = 1; k < a.hist.length; k++) { if (nt >= MAX_CARS * TRAIL) break; tp.position.array.set(a.hist[k], nt * 3); tp.aColor.array.set(CAR_TRAIL, nt * 3); tp.aSize.array[nt] = 16 * (1 - k / TRAIL); tp.aAlpha.array[nt] = (1 - k / TRAIL) * (.12 + night * .5); nt++; }
     } else {
       if (np >= MAX_PEDS) continue; pp.position.array.set([tmp.x, 2.4, tmp.z], np * 3);
@@ -3665,7 +3752,7 @@ function applyTime() {
   const dayT = clamp((m - 350) / (1200 - 350), 0, 1); const ang = Math.PI * dayT; const el = Math.max(.14, Math.sin(ang) * 1.0);
   sun.position.set(Math.cos(ang) * 2600, Math.sin(el) * 2600 + 300, 1000 + Math.sin(ang) * 500); sun.target.position.set(0, 0, 0);
   sun.color.setHSL(.09, clamp(1 - el, .15, .75), .86);
-  const night = clamp(1 - si / 1.2, 0, 1); bU.uNight.value = night; waterU.uNight.value = night;
+  const night = clamp(1 - si / 1.2, 0, 1); bU.uNight.value = night; waterU.uNight.value = night; BRIDGE?.setNight(night);
   waterU.uDeep.value.setHex(0x3f97cf).lerp(cB.setHex(0x0b1a30), night); waterU.uLite.value.setHex(0x8fd0ee).lerp(cB.setHex(0x1a3050), night);
   hemi.color.setHex(0xe6f1ff).lerp(cB.setHex(0x5a6aa0), night);
   if (CTX_WATER) CTX_WATER.material.color.copy(waterU.uDeep.value).lerp(waterU.uLite.value, .35);
@@ -4527,7 +4614,7 @@ function reelSources() {
       feeds: 'resident population · household size', fx: () => setInfo('res') },
     { key: 'datasf', mark: 'datasf', wm: 'Data<span style="color:#4fb3e8">SF</span>', pub: 'City & County of San Francisco', vint: 'Land Use · 2026', b: '#0e2a47', b2: '#4fb3e8', bp: GRID,
       title: 'Floor area by use, building by building', stats: [[2173, 'building records'], [86.2, 'M sq ft office', 1], [11.4, 'M sq ft retail', 1], [31939, 'housing units']],
-      feeds: 'job capacity · shop floor space · homes', fx: () => { setInfo(null); highlight(office, .9); } },
+      feeds: 'job capacity · shop floor space · homes', fx: () => { setInfo(null); highlight(office, .4); } },
     { key: 'google', mark: 'google', wm: '<span style="color:#4285f4">G</span><span style="color:#ea4335">o</span><span style="color:#fbbc05">o</span><span style="color:#4285f4">g</span><span style="color:#34a853">l</span><span style="color:#ea4335">e</span> <span style="color:#5f6368;font-weight:600">Maps</span>', pub: 'Places + Popular times · via Apify', vint: 'fetched Oct 2026', b: '#ffffff', bf: '#202124', b2: '#4285f4',
       title: 'Real businesses, and when people visit them', stats: [[868, 'places'], [344, 'with popular times'], [57792, 'hourly occupancy readings']],
       feeds: 'destination choice · hourly visit profiles', fx: () => { highlight([]); setInfo('visits'); return setInterval(() => { for (let i = 0; i < 6; i++) { const p = pois[Math.floor(Math.random() * pois.length)]; if (p) brandSpark(p.x, p.z, 0x4285f4); } }, 160); } },
