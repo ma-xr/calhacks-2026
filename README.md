@@ -49,7 +49,7 @@ If macOS asks whether Python, spacetime or node may accept incoming connections,
 ## Using it
 - **Projects home** (`/home/`): the San Francisco project shows live numbers from the engine (people, agents, inlets, POIs), its recent scenarios run against the engine, and the engine's calibration against ACS. Other cities are shown in setup, without results. `/home/?reel=1` clicks into San Francisco by itself and starts the guided demo.
 - **Play demo** walks through a 2-minute story: the morning rush, making 2nd St car-free, comparing to today, following one commuter, the AI planner, and the pitch.
-- **Edit tools:** make a street car-free (drag along it), change density, rezone a block. Every edit runs the real engine.
+- **Edit tools:** drag along a street to make it car-free, a slow street, a protected bike lane or a road diet; click a freeway ramp to close it; change density or rezone a block; turn one building into a park or plaza, or open a café, restaurant, bar, grocery or shop in it. Every edit runs the real engine (the newer edits need the live engine; the offline snapshot only replays the demo plans).
 - **Info views:** traffic, foot traffic, workplaces, residents, visits, zoning, connections, revenue change.
 - **Compare:** swipe between today and your plan.
 - **Policies:** congestion charge on any entry road, parking price, reopening Market St (pre-2020).

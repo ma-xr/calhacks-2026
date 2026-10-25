@@ -302,6 +302,16 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 #toolhint { position: absolute; bottom: 62px; z-index: 6; transform: translateX(-50%); padding: 7px 12px; border-radius: var(--r-sm); background: var(--glass-strong); box-shadow: var(--sh-sm); font-size: 12px; font-weight: 500; color: var(--fg); white-space: nowrap; pointer-events: none; animation: rise .2s ease-out; }
 #toolhint::after { content: ""; position: absolute; left: 50%; top: 100%; margin-left: -5px; border: 5px solid transparent; border-top-color: var(--glass-strong); }
 #toolhint b { color: var(--hi); font-weight: 600; }
+#streetkinds { position: absolute; bottom: 62px; left: 50%; transform: translateX(-50%); z-index: 7; display: flex; gap: 4px; padding: 5px; border-radius: 12px; box-shadow: var(--sh-sm); animation: rise .2s ease-out; }
+#streetkinds button { height: 30px; padding: 0 11px; border-radius: var(--r-sm); background: var(--fill); font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; color: var(--fg); white-space: nowrap; }
+#streetkinds button:hover { background: var(--fill-hi); }
+#streetkinds button.on { background: var(--hi); color: #0b1020; }
+#streetkinds button i { width: 9px; height: 9px; border-radius: 3px; }
+body.sk-on #toolhint { bottom: 108px; }
+.bldopts { display: flex; flex-wrap: wrap; gap: 5px; margin: 6px 0 10px; }
+.bldopts button { height: 28px; padding: 0 10px; border-radius: var(--r-sm); background: var(--fill); font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
+.bldopts button:hover { background: var(--fill-hi); }
+.bldopts button.on { background: var(--hi); color: #0b1020; }
 @keyframes rise { from { opacity: 0; transform: translate(-50%, 4px); } }
 
 #infopop { position: absolute; left: 50%; bottom: 62px; transform: translateX(-50%); z-index: 7; padding: 12px; width: 404px; }
@@ -648,7 +658,7 @@ body.reel-src #ilegend { display: none !important; }
   <nav id="dock" class="glass" aria-label="Tools">
     <div class="tools" role="toolbar" aria-label="Edit tools">
       <button class="dk on" data-tool="select" data-tip="Select · V" title="Select (V)"><svg class="ic" viewBox="0 0 24 24" data-ic="select"></svg><span>Select</span></button>
-      <button class="dk" data-tool="ped" data-tip="Car-free street · P" title="Make a street car-free (P)"><svg class="ic" viewBox="0 0 24 24" data-ic="ped"></svg><span>Car-free street</span></button>
+      <button class="dk" data-tool="ped" data-tip="Streets · P" title="Streets: car-free, slow street, bike lane, road diet, close a freeway ramp (P)"><svg class="ic" viewBox="0 0 24 24" data-ic="ped"></svg><span>Streets</span></button>
       <button class="dk" data-tool="density" data-tip="Density · D" title="Change density (D)"><svg class="ic" viewBox="0 0 24 24" data-ic="density"></svg><span>Density</span></button>
       <button class="dk" data-tool="zoning" data-tip="Zoning · Z" title="Rezone a block (Z)"><svg class="ic" viewBox="0 0 24 24" data-ic="zoning"></svg><span>Zoning</span></button>
     </div>
@@ -662,6 +672,12 @@ body.reel-src #ilegend { display: none !important; }
     <button class="dk slot" id="live-dock" data-tip="Go live: edit one plan together" title="Go live: edit one plan together" hidden><svg class="ic" viewBox="0 0 24 24" data-ic="live"></svg></button>
   </nav>
   <div id="toolhint" hidden></div>
+  <div id="streetkinds" class="glass" role="toolbar" aria-label="Street type" hidden>
+    <button data-sk="car_free" class="on" title="Closed to cars"><i style="background:#b46cff"></i>Car-free</button>
+    <button data-sk="slow" title="Cars allowed but slowed, local access only (SF Slow Streets)"><i style="background:#ffb23f"></i>Slow street</button>
+    <button data-sk="bike_lane" title="One general lane becomes a protected bike lane"><i style="background:#3ddc84"></i>Bike lane</button>
+    <button data-sk="road_diet" title="One general lane removed"><i style="background:#e8ecf5"></i>Road diet</button>
+  </div>
   <div id="infopop" class="glass" hidden>
     <div class="ph"><span>Info views</span><span>keys 1–8 · 0 off</span></div>
     <div class="igrid" id="igrid"></div>
@@ -916,21 +932,31 @@ body.reel-src #ilegend { display: none !important; }
   const sortedIds = (a) => [...new Set(a)].map(Number).sort((x, y) => x - y);
 
   // Canonical edits payload (contract §POST /scenario) from page state.
-  function editsFrom({ ped = [], blocks = new Map(), policies = [], reopened = [] } = {}) {
+  // treatments: Map/object edge id -> 'slow' | 'bike_lane' | 'road_diet'; closedRoads: freeway ramp edge ids.
+  // Newer fields are only included when used, so older plans keep the same payload and cache key.
+  function editsFrom({ ped = [], blocks = new Map(), policies = [], reopened = [], treatments = new Map(), closedRoads = [] } = {}) {
     const b = {};
     for (const [bid, e] of (blocks instanceof Map ? blocks : new Map(Object.entries(blocks)))) {
-      b[String(bid)] = { scale: +(e.scale ?? e.s ?? 1), ...(e.zone ?? e.z ? { zone: e.zone ?? e.z } : {}) };
+      const shops = e.shops ?? e.sh;
+      b[String(bid)] = { scale: +(e.scale ?? e.s ?? 1), ...(e.zone ?? e.z ? { zone: e.zone ?? e.z } : {}), ...(shops ? { shops } : {}) };
     }
-    return { pedestrianized: sortedIds([...ped]), blocks: b, policies, reopened: sortedIds(reopened) };
+    const out = { pedestrianized: sortedIds([...ped]), blocks: b, policies, reopened: sortedIds(reopened) };
+    const t = treatments instanceof Map ? [...treatments] : Object.entries(treatments || {});
+    if (t.length) out.street_treatments = Object.fromEntries(t.map(([k, v]) => [String(k), v]).sort((x, y) => x[0] - y[0]));
+    if (closedRoads.length) out.closed_roads = sortedIds(closedRoads);
+    return out;
   }
   const sortKeys = (o) => o && typeof o === 'object' && !Array.isArray(o) ? Object.keys(o).sort().reduce((r, k) => (r[k] = sortKeys(o[k]), r), {}) : o;
   const normPolicy = (p) => ({ kind: p.kind, target: p.target ?? null, amount: +(p.amount ?? 0), params: sortKeys(p.params ?? null) });
   const editsKey = (e) => JSON.stringify({
     p: sortedIds(e.pedestrianized || []),
-    b: Object.keys(e.blocks || {}).sort((x, y) => x - y).map(k => [String(k), +(e.blocks[k].scale ?? e.blocks[k].s ?? 1), e.blocks[k].zone ?? e.blocks[k].z ?? null]),
+    b: Object.keys(e.blocks || {}).sort((x, y) => x - y).map(k => [String(k), +(e.blocks[k].scale ?? e.blocks[k].s ?? 1), e.blocks[k].zone ?? e.blocks[k].z ?? null,
+      ...(e.blocks[k].shops ?? e.blocks[k].sh ? [e.blocks[k].shops ?? e.blocks[k].sh] : [])]),
     po: (e.policies || []).map(normPolicy).sort((x, y) => JSON.stringify(x) < JSON.stringify(y) ? -1 : 1),
     r: sortedIds(e.reopened || []),
     rm: e.reopen_mode || '',
+    ...(Object.keys(e.street_treatments || {}).length ? { t: Object.entries(e.street_treatments).map(([k, v]) => [+k, v]).sort((x, y) => x[0] - y[0]) } : {}),
+    ...(e.closed_roads?.length ? { c: sortedIds(e.closed_roads) } : {}),
   });
   // Union of two edit sets: an AI planner option is applied ON TOP of the current plan (b wins on conflicts).
   function mergeEdits(a = {}, b = {}) {
@@ -942,9 +968,12 @@ body.reel-src #ilegend { display: none !important; }
       policies: [...pol.values()],
       reopened: sortedIds([...(a.reopened || []), ...(b.reopened || [])]),
       reopen_mode: b.reopen_mode || a.reopen_mode || '',
+      street_treatments: { ...(a.street_treatments || {}), ...(b.street_treatments || {}) },
+      closed_roads: sortedIds([...(a.closed_roads || []), ...(b.closed_roads || [])]),
     };
   }
-  const isEmpty = (e) => !(e.pedestrianized?.length || Object.keys(e.blocks || {}).length || e.policies?.length || e.reopened?.length);
+  const isEmpty = (e) => !(e.pedestrianized?.length || Object.keys(e.blocks || {}).length || e.policies?.length || e.reopened?.length
+    || Object.keys(e.street_treatments || {}).length || e.closed_roads?.length);
 
   // Trip geometry: contract "Rebuilding a trip polyline".
   // Returns { pts: [[x,z]...], segE: [edgeId per segment], cum: Float32Array, len }.
@@ -1082,7 +1111,7 @@ body.reel-src #ilegend { display: none !important; }
   }
   const inletByKey = (world, key) => (world?.inlets || []).find(g => g.key === key) || null;
 
-  window.HPBackend = { connect, editsFrom, editsKey, mergeEdits, tripPolyline, expandTrips, inletCountsAt, edgeHour, mergeInlets, inletByKey };
+  window.HPBackend = { connect, editsFrom, editsKey, mergeEdits, isEmpty, tripPolyline, expandTrips, inletCountsAt, edgeHour, mergeInlets, inletByKey };
 })();
 </script>
 <script>// The Human Project · "Ask the city": Droid live agent drawer (POST /droid/ask?stream=1).
@@ -2721,6 +2750,7 @@ const CAT = {
   fast_food: { w: 1.1, ticket: 13, capture: .02, lunch: 1.1, label: 'Quick bite' },
   bar: { w: 1, ticket: 30, capture: .008, lunch: .2, label: 'Bar' },
   shop: { w: .8, ticket: 38, capture: .009, lunch: 0, label: 'Shop' },
+  park: { w: .6, ticket: 0, capture: 0, lunch: .4, label: 'Park / plaza' },   // engine-made only (a building turned into a park)
 };
 const POI_FIX = { 'Sweet greens': 'Sweetgreen', 'sweetgreen': 'Sweetgreen' };
 const BASE_POIS = W.pois.filter(p => CAT[p.c] && inBox(p.x, p.z, 40)).map((p, i) => ({ ...p, n: POI_FIX[p.n] || p.n, id: i, node: nearestNode(p.x, p.z, isPed), q: .6 + hash2(i, 7) * .8 }));
@@ -2828,12 +2858,12 @@ const BLOCK_SIZE = new Int32Array(NBLOCK); for (let i = 0; i < BLD.length; i++) 
 function bldNear(x, z, r = 80) { let best = -1, bd = r; const cx = Math.floor(x / BG), cz = Math.floor(z / BG); for (let dx = -2; dx <= 2; dx++) for (let dz = -2; dz <= 2; dz++) { const l = bldGrid.get((cx + dx) + ',' + (cz + dz)); if (l) for (const j of l) { const d = Math.hypot(BLD[j].c[0] - x, BLD[j].c[1] - z); if (d < bd) { bd = d; best = j; } } } return best; }
 // Display zoning: OSM tags most buildings "mixed", so split by height and use for the Zoning view.
 const ZKEYS = ['res', 'com', 'office', 'mixed', 'civic'];
-const ZLABEL = { res: 'Residential', com: 'Commercial', office: 'Office', mixed: 'Mixed use', civic: 'Civic' };
-const ZHEX = { res: '#5cc94a', com: '#ff8a5c', office: '#6f86b8', mixed: '#f2b33d', civic: '#b8a9c9' };
+const ZLABEL = { res: 'Residential', com: 'Commercial', office: 'Office', mixed: 'Mixed use', civic: 'Civic', park: 'Park / plaza' };
+const ZHEX = { res: '#5cc94a', com: '#ff8a5c', office: '#6f86b8', mixed: '#f2b33d', civic: '#b8a9c9', park: '#3fbf6a' };
 const CIVIC_RE = /museum|moma|yerba buena|moscone|center for the arts|library|school|college|university|academy|institute|church|cathedral|temple|synagogue|courthouse|court of|city hall|federal|post office|station|terminal|ferry building|theat(er|re)|hospital|mint|jewish|asian art|exploratorium|gallery|convention|auditorium|fire house|police/i;
 const HOTEL_RE = /hotel|marriott|hyatt|hilton|westin|four seasons|palace|regis|intercontinental|ritz|omni|park central|w san francisco|inn\b|metreon|westfield|shops at/i;
 BLD.forEach(b => { b.zone = b.n && CIVIC_RE.test(b.n) ? 'civic' : b.n && HOTEL_RE.test(b.n) ? 'com' : b.k === 'res' ? 'res' : b.k === 'office' ? 'office' : (b.k === 'retail' || b.k === 'hotel') ? 'com' : (b.k === 'civic' || b.k === 'parking') ? 'civic' : 'mixed'; /* OSM tags only */ if (b.n && b.zone === 'res' && b.k !== 'res') b.zone = b.h > 30 ? 'office' : 'mixed'; if (b.n && b.zone === 'res' && b.k !== 'res') b.zone = b.h > 30 ? 'office' : 'mixed'; });
-const EDIT_ZONE = { res: 'res', office: 'office', retail: 'com', mixed: 'mixed' };
+const EDIT_ZONE = { res: 'res', office: 'office', retail: 'com', mixed: 'mixed', park: 'park' };
 function zoneOf(bid, scn) { const ed = scn.blocks.get(bid); return ed && ed.z !== BLD[bid].k ? EDIT_ZONE[ed.z] || 'mixed' : BLD[bid].zone; }
 function blockValues(scn) {
   const jobs = new Float32Array(NBLOCK), res = new Float32Array(NBLOCK), visits = new Float32Array(NBLOCK), rev = new Float32Array(NBLOCK);
@@ -3081,6 +3111,15 @@ if (!TOY_LAZY) bootToy();
 // The toy engine above stays as a clearly labelled fallback (TOY) for edits the engine can't compute (snapshot/offline).
 const TOY = { base: S.base, plan: S.plan };
 let planPolicies = [];
+// Engine-only edits: street treatments (edge -> kind), closed freeway ramps (ids from GET /world → ramps), and per-building
+// parks and businesses, kept in TOY.plan.blocks as { s, z: 'park' } or { s, z, sh: 'cafe' }.
+const TREAT = { slow: { label: 'Slow street', hex: '#ffb23f', col: 0xffb23f }, bike_lane: { label: 'Protected bike lane', hex: '#3ddc84', col: 0x3ddc84 }, road_diet: { label: 'Road diet', hex: '#e8ecf5', col: 0xe8ecf5 } };
+const SHOP_LABEL = { cafe: 'Café', restaurant: 'Restaurant', bar: 'Bar', grocery: 'Grocery', shop: 'Shop' };
+const RAMPS = (ENGINE_OK && EW.ramps) || []; const RAMP_OF = new Map(); for (const r of RAMPS) for (const e of r.edges) RAMP_OF.set(e, r);
+let planTreat = new Map(), planRamps = new Set();
+const liveOn = () => !!(LIVE && LIVE.isLive && LIVE.isLive());
+function newEditAllowed(what) { if (!ENG) { toast(`${what} needs the simulation engine.`); return false; } if (liveOn()) { toast(`${what} isn’t shared in Go live yet. Leave Go live to try it.`); return false; } return true; }
+const rampEdges = () => [...planRamps].flatMap(id => RAMPS[id]?.edges || []);
 const ENG_SCALE = EW ? EW.scale : SCALE;
 const ENG_POIS = ENGINE_OK ? EW.pois.map(p => ({ id: p.id, x: p.x, z: p.z, n: p.name, c: p.category, q: p.quality || 1, rating: p.rating, reviews: p.reviews, price: p.price_level, bld: p.building >= 0 ? p.building : bldNear(p.x, p.z), edges: [] })) : [];
 const ENG_POI_BY = new Map(ENG_POIS.map(p => [p.id, p]));
@@ -3367,7 +3406,7 @@ const PAL = {
   low: [[0.70, 0.36, 0.28], [0.80, 0.47, 0.33], [0.91, 0.76, 0.52], [0.95, 0.89, 0.74], [0.60, 0.73, 0.82], [0.65, 0.78, 0.56], [0.96, 0.71, 0.56], [0.60, 0.82, 0.74]],
 };
 const BASE_COL = {}; // per-building facade colour, filled below
-const ZONE_TINT = { res: [0.55, 0.85, 0.45], office: [0.52, 0.62, 0.82], retail: [1.0, 0.62, 0.48], mixed: [1.0, 0.80, 0.38] };
+const ZONE_TINT = { res: [0.55, 0.85, 0.45], office: [0.52, 0.62, 0.82], retail: [1.0, 0.62, 0.48], mixed: [1.0, 0.80, 0.38], park: [0.36, 0.80, 0.44] };
 const EDIT_TINT = [0.80, 0.66, 1.0];  // "Your edits" outside info views
 const bU = { uPlan: { value: 1 }, uNight: { value: 0 }, uDesat: FX.uDesat, uInfo: FX.uInfo };
 const bRanges = []; let bGeo;
@@ -3542,7 +3581,9 @@ const puffs = []; for (let i = 0; i < 60; i++) { const m = new THREE.Mesh(sparkG
 let mariaTrail = null; let ghost = []; let spillPulse = [];
 // Edited streets get a purple outline ("Your edits") under the pale paving.
 const editGlow = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: 0xb46cff, transparent: true, opacity: .95, depthWrite: false, toneMapped: false })); editGlow.renderOrder = 1; planGroup.add(editGlow);
-function refreshEditGlow() { const pos = []; for (const id of S.plan.ped) { const e = EDGES[id]; const pts = clipPts(e.p); if (pts.length > 1) ribbonInto(pos, pts, e.w + 7, .95); } editGlow.geometry.dispose(); editGlow.geometry = new THREE.BufferGeometry(); editGlow.geometry.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); }
+const treatGlow = {}; for (const [k, t] of Object.entries({ ...TREAT, ramp: { col: 0xff4d4d } })) { treatGlow[k] = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: t.col, transparent: true, opacity: .95, depthWrite: false, toneMapped: false })); treatGlow[k].renderOrder = 1; planGroup.add(treatGlow[k]); }
+function setRibbons(mesh, ids, wAdd, y) { const pos = []; for (const id of ids) { const e = EDGES[id]; const pts = clipPts(e.p); if (pts.length > 1) ribbonInto(pos, pts, e.w + wAdd, y); } mesh.geometry.dispose(); mesh.geometry = new THREE.BufferGeometry(); mesh.geometry.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); }
+function refreshEditGlow() { setRibbons(editGlow, S.plan.ped, 7, .95); for (const k of Object.keys(TREAT)) setRibbons(treatGlow[k], [...planTreat].filter(([, v]) => v === k).map(([id]) => id), 5, .96); setRibbons(treatGlow.ramp, rampEdges(), 6, 6.5); }
 const followRing = new THREE.Mesh(new THREE.RingGeometry(6, 8.5, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, depthWrite: false, toneMapped: false })); followRing.renderOrder = 8; followRing.visible = false; scene.add(followRing);
 function spark(world, x, z, big) { const m = sparks.find(s => s.userData.t >= 1); if (!m) return; m.userData = { t: 0, w: world, big }; m.position.set(x, 3, z); m.visible = true; }
 function puff(x, z) { const m = puffs.find(s => s.userData.t >= 1); if (!m) return; m.userData = { t: 0 }; m.position.set(x, 3, z); m.visible = true; }
@@ -3918,7 +3959,7 @@ function setCV(tot) { const t = money(tot); for (const id of ['#cv', '#cv2', '#c
 function drawPillars() {
   const v = shown.val, f = (x) => `<b class="${Math.abs(x) < 1000 ? '' : x >= 0 ? 'up' : 'down'}">${Math.abs(x) < 1000 ? '$0' : money(x)}</b>`;
   if (ui.settling) { document.querySelectorAll('#pillars .pill').forEach(el => el.style.opacity = .45); return; } document.querySelectorAll('#pillars .pill').forEach(el => el.style.opacity = '');
-  if (!S.plan.ped.size && !S.plan.blocks.size && !planPolicies.length && Math.abs(v.total) < 500) { $('#pillars').innerHTML = ui.demo ? '<div class="empty">Waiting for the first change…</div>' : (CITY.engine ? '<div class="empty">No changes yet. Make a street <b>car-free</b> or rezone a block, or press <b>Play demo</b>.</div>' : '<div class="empty">Explore mode. Make a street <b>car-free</b> or rezone a block to see a rough in-browser estimate. Engine results for this city are coming soon.</div>'); setCV(0); return; }
+  if (!S.plan.ped.size && !S.plan.blocks.size && !planPolicies.length && !planTreat.size && !planRamps.size && Math.abs(v.total) < 500) { $('#pillars').innerHTML = ui.demo ? '<div class="empty">Waiting for the first change…</div>' : (CITY.engine ? '<div class="empty">No changes yet. Make a street <b>car-free</b> or rezone a block, or press <b>Play demo</b>.</div>' : '<div class="empty">Explore mode. Make a street <b>car-free</b> or rezone a block to see a rough in-browser estimate. Engine results for this city are coming soon.</div>'); setCV(0); return; }
   if (ui.view === 'base' && !ui.compare) { const m = S.base.m; $('#pillars').innerHTML = `<div class="empty"><b>Baseline: the city today.</b> ${fmtK(m.people)} people, ${fmtK(m.trips?.car ?? m.carTrips ?? 0)} car trips and ${money(m.revenue, false)} of local business revenue per day. Switch to <b>Plan A</b> to see what your changes do.</div>`; setCV(0); return; }
   const b = S.base.m, p = S.plan.m; let sub;
   const ecoLine = (k) => { const L = (S.plan.value.lines || []).filter(l => l.pillar === k).sort((a, b) => Math.abs(b.usd_per_yr) - Math.abs(a.usd_per_yr))[0]; return L ? L.label.replace(/\s*\(.*?\)/g, '').slice(0, 30) + ' ' + money(L.usd_per_yr) : ''; };
@@ -3998,7 +4039,9 @@ let settleRun = null, settleAgain = false, settleLabel = 'Plan edit', retryEdits
 let ENGINE_API = B.api || 'http://localhost:8787';
 const engineCache = new Map(); let planName = 'Plan A';
 const editsKeyOf = (e) => HPBackend.editsKey(e);
-const editsEmpty = (e) => !(e.pedestrianized?.length || Object.keys(e.blocks || {}).length || e.policies?.length || e.reopened?.length);
+const editsEmpty = (e) => HPBackend.isEmpty(e);
+// Slow streets, bike lanes, road diets, ramp closures, parks and new businesses exist only in the engine (the in-browser model can't estimate them).
+const needsEngine = (e) => !!(Object.keys(e.street_treatments || {}).length || e.closed_roads?.length || Object.values(e.blocks || {}).some(v => v.zone === 'park' || v.shops));
 async function runEngine(edits, onProgress) {
   if (editsEmpty(edits)) return { result: B.baseline };
   if (B.mode !== 'live') { try { return { result: await B.scenario(edits, { onProgress }) }; } catch (e) { return { result: null }; } }
@@ -4032,6 +4075,7 @@ async function settleOnce(label) {
     if (editsKeyOf(currentEdits()) !== key) { settleAgain = true; return; }   // stale: newer edits are queued
     if (r && r.trips && r.edges) { await loadHeroView(r.id); if (editsKeyOf(currentEdits()) !== key) { settleAgain = true; return; } retryEdits = null; fillEngine(ENG.plan, r); useWorld(true); afterSettle(label); return; }
     if (B.mode === 'live') { engineError(error || 'The engine returned no result', edits, label); return; }   // never fall back to the toy model in live mode
+    if (needsEngine(edits)) { engineError('This edit needs the live engine (the offline snapshot only has the demo plans)', edits, label); return; }
     bootToy(); for (let d = 1; d <= 5; d++) { chip(d, `Quick estimate · this edit isn’t pre-computed · day ${d}/5`); await sleep(d === 1 ? 40 : 120); if (d === 1) TOY.plan.settle(baseCarRoutes(), 5); }
     if (editsKeyOf(currentEdits()) !== key) { settleAgain = true; return; }
     useWorld(false); afterSettle(label); return;
@@ -4052,8 +4096,9 @@ function restoreEdits(e) {
   for (const id of [...TOY.plan.ped]) TOY.plan.ped.delete(id); for (const id of e.pedestrianized || []) if (!BASE_CF.has(id)) TOY.plan.ped.add(id);
   const want = e.blocks || {};
   for (const [bid] of [...TOY.plan.blocks]) if (!want[bid]) setBlock([+bid], 1, BLD[+bid].k);
-  for (const [bid, v] of Object.entries(want)) { const cur = TOY.plan.blocks.get(+bid); const sc = +(v.scale ?? v.s ?? 1), z = v.zone ?? v.z ?? BLD[+bid].k; if (!cur || cur.s !== sc || cur.z !== z) setBlock([+bid], sc, z); }
+  for (const [bid, v] of Object.entries(want)) { const cur = TOY.plan.blocks.get(+bid); const sc = +(v.scale ?? v.s ?? 1), z = v.zone || v.z || BLD[+bid].k, sh = v.shops || v.sh || ''; if (!cur || cur.s !== sc || cur.z !== z || (cur.sh || '') !== sh) setBlock([+bid], sc, z, false, sh); }
   planPolicies = (e.policies || []).slice(); planReopened = (e.reopened || []).slice(); planReopenMode = e.reopen_mode || '';
+  planTreat = new Map(Object.entries(e.street_treatments || {}).map(([k, v]) => [+k, v])); planRamps = new Set((e.closed_roads || []).map(x => RAMP_OF.get(x)?.id).filter(x => x != null));
   TOY.plan.cache.clear(); refreshEditGlow(); refreshTables(); updateStreetLabel(); renderPlanList();
 }
 function applyEdits(edits, label) { restoreEdits(edits); switchView('plan'); if (LIVE && LIVE.isLive && LIVE.isLive()) liveSync(edits); return settle(label || 'Plan edit').then(() => S.plan.result); }
@@ -4074,7 +4119,7 @@ function afterSettle(label) {
   resetAgents(V.base, ui.time, true); resetAgents(V.plan, ui.time, true); paintTies(V.base); paintTies(V.plan); refreshTables(); recomputeTargets(); shown = { val: { ...target.val }, shape: target.shape.slice() }; ui.settling = false; drawPillars(); drawRadar(shown.shape); paintInfo(); renderLegend(); updateStreetLabel(); renderPlanList();
   const b = S.base.m, p = S.plan.m; let dCar, toBart, evap;
   if (isEng()) { const d = S.plan.delta; dCar = -d.trips.car; evap = Math.max(0, d.commuters.gone); toBart = Math.max(0, d.commuters.transit); } else { dCar = (b.car - p.car) * SCALE; evap = (p.gone - b.gone) * SCALE; toBart = dCar - evap; }
-  showChips(`<div class="chip glass" id="evap"><div class="sum"><b>${label}</b>${estimate ? '<span class="estchip">Estimate (engine offline)</span>' : ''}${S.plan.ped.size ? `<span>foot traffic <em class="big">${pedStreetDelta()}</em></span>` : ''}<span>car trips <b class="${dCar >= 0 ? 'up' : 'down'}">${num(-dCar)}</b>/day</span><span>${driveTxt(b, p)}</span></div><div class="detail"><div class="row"><span>Car trips / day</span><b class="${dCar >= 0 ? 'up' : 'down'}">${num(-dCar)}</b></div>${toBart > 0 ? `<div class="row"><span>more commuters ride BART</span><b>${num(toBart, false)}</b></div>` : ''}${evap > 0 ? `<div class="row"><span>trips skipped</span><b>${num(evap, false)}</b></div>` : ''}<div class="row"><span>Foot traffic on ${label.includes('2nd') ? '2nd St' : 'edited streets'}</span><b>${pedStreetDelta()}</b></div><div class="row"><span>Source</span><b>${isEng() ? (S.plan.estimate ? 'estimate' : B.mode === 'live' ? 'live engine' : 'engine snapshot') : 'in-browser estimate'}</b></div></div></div>`);
+  showChips(`<div class="chip glass" id="evap"><div class="sum"><b>${label}</b>${estimate ? '<span class="estchip">Estimate (engine offline)</span>' : ''}${S.plan.ped.size || planTreat.size ? `<span>foot traffic <em class="big">${pedStreetDelta()}</em></span>` : ''}<span>car trips <b class="${dCar >= 0 ? 'up' : 'down'}">${num(-dCar)}</b>/day</span><span>${driveTxt(b, p)}</span></div><div class="detail"><div class="row"><span>Car trips / day</span><b class="${dCar >= 0 ? 'up' : 'down'}">${num(-dCar)}</b></div>${toBart > 0 ? `<div class="row"><span>more commuters ride BART</span><b>${num(toBart, false)}</b></div>` : ''}${evap > 0 ? `<div class="row"><span>trips skipped</span><b>${num(evap, false)}</b></div>` : ''}<div class="row"><span>Foot traffic on ${label.includes('2nd') ? '2nd St' : 'edited streets'}</span><b>${pedStreetDelta()}</b></div><div class="row"><span>Source</span><b>${isEng() ? (S.plan.estimate ? 'estimate' : B.mode === 'live' ? 'live engine' : 'engine snapshot') : 'in-browser estimate'}</b></div></div></div>`);
   const st = S.plan.result?.settle; $('#settle-note').textContent = estimate ? 'Estimate · not pre-computed' : st && st.converged === false ? `Plan A vs today · not fully converged (gap ${Math.round((st.gap || 0) * 100)}%)` : 'Plan A vs today · converged';
   const mine = $('#chips').innerHTML; setTimeout(() => { if ($('#chips').innerHTML === mine) showChips(''); }, 7000);
   if (isEng() && !S.plan.estimate) schedulePosts(S.plan.id);
@@ -4083,7 +4128,8 @@ function afterSettle(label) {
 // The purple pill names what's actually in the plan (and disappears when nothing is).
 function updateStreetLabel() {
   if (!streetLabel) return; const cnt = new Map(); for (const id of TOY.plan.ped) { const e = EDGES[id]; if (e.name) cnt.set(e.name, (cnt.get(e.name) || 0) + e.l); }
-  const srt = [...cnt].sort((a, b) => (b[0] === '2nd Street') - (a[0] === '2nd Street') || b[1] - a[1]); if (!srt.length) { streetLabel.hide = true; return; }
+  const srt = [...cnt].sort((a, b) => (b[0] === '2nd Street') - (a[0] === '2nd Street') || b[1] - a[1]);
+  if (!srt.length) { const t = [...planTreat].find(([id]) => EDGES[id].name); if (!t) { streetLabel.hide = true; return; } const e = EDGES[t[0]]; streetLabel.el.textContent = `${e.name.replace(' Street', ' St')} · ${streetKindLabel(t[1])}`; streetLabel.p.set(e.mx, 10, e.mz); streetLabel.hide = false; return; }
   const e = EDGES[[...TOY.plan.ped].find(id => EDGES[id].name === srt[0][0])]; streetLabel.el.textContent = srt.slice(0, 2).map(x => x[0].replace(' Street', ' St')).join(' + ') + (cnt.size > 2 ? ` + ${cnt.size - 2} more` : '') + ' · car-free' + (planPolicies.length ? ` · + ${planPolicies.map(po => '$' + (+po.amount) + ' charge').join(', ')}` : '');
   streetLabel.p.set(e.mx, 10, e.mz); streetLabel.hide = false;
 }
@@ -4092,7 +4138,10 @@ function renderPlanList() {
   const el = $('#planlist'); if (!el) return; const items = [];
   const byName = new Map(); for (const id of TOY.plan.ped) { const n = EDGES[id].name || 'Unnamed street'; if (!byName.has(n)) byName.set(n, []); byName.get(n).push(id); }
   for (const [n, ids] of byName) items.push({ t: `${n.replace(' Street', ' St')} car-free`, rm: () => { ids.forEach(id => TOY.plan.ped.delete(id)); } });
-  const blk = new Map(); for (const [bid, v] of TOY.plan.blocks) { const k = BLOCK_OF[bid]; if (!blk.has(k)) blk.set(k, { ids: [], v }); blk.get(k).ids.push(bid); }
+  const byTreat = new Map(); for (const [id, k] of planTreat) { const key = (EDGES[id].name || 'Unnamed street') + '|' + k; if (!byTreat.has(key)) byTreat.set(key, []); byTreat.get(key).push(id); }
+  for (const [key, ids] of byTreat) { const [n, k] = key.split('|'); items.push({ t: `${n.replace(' Street', ' St')} · ${streetKindLabel(k)}`, rm: () => ids.forEach(id => planTreat.delete(id)) }); }
+  for (const rid of planRamps) items.push({ t: `${RAMPS[rid]?.name || 'Ramp'} closed`, rm: () => planRamps.delete(rid) });
+  const blk = new Map(); for (const [bid, v] of TOY.plan.blocks) { if (v.z === 'park' || v.sh) { const at = nearestStreetName(BLD[bid].c[0], BLD[bid].c[1]).replace(' Street', ' St'); items.push({ t: v.z === 'park' ? `${BLD[bid].area > 1500 ? 'Park' : 'Plaza'} on ${at}` : `New ${SHOP_LABEL[v.sh].toLowerCase()} on ${at}`, rm: () => setBlock([bid], 1, BLD[bid].k) }); continue; } const k = BLOCK_OF[bid]; if (!blk.has(k)) blk.set(k, { ids: [], v }); blk.get(k).ids.push(bid); }
   for (const [, g] of blk) items.push({ t: `Block near ${nearestStreetName(BLD[g.ids[0]].c[0], BLD[g.ids[0]].c[1]).replace(' Street', ' St')} · ${ZONES[g.v.z] || g.v.z} ${g.v.s.toFixed(1)}×`, rm: () => setBlock(g.ids, 1, BLD[g.ids[0]].k) });
   planPolicies.forEach((po, i) => items.push({ t: policyText(po), pol: true, rm: () => { planPolicies = planPolicies.filter((_, j) => j !== i); } }));
   if (planReopened.length) items.push({ t: `Market St reopened to cars${planReopenMode === 'pre2020' ? ' (pre-2020 turns)' : ''}`, pol: true, rm: () => { planReopened = []; planReopenMode = ''; } });
@@ -4103,18 +4152,23 @@ function renderPlanList() {
   $('#plan-reset').onclick = resetPlan;
 }
 function resetPlan() { if (LIVE && LIVE.isLive && LIVE.isLive() && LIVE.reset() !== false) {} restoreEdits({}); settle('Reset to today'); }
-function pedStreetDelta() { let a = 0, b = 0; for (const e of S.plan.ped) { a += S.plan.pedFlow[e]; b += S.base.pedFlow[e]; } return b ? pct((a - b) / b) : '—'; }
+function pedStreetDelta() { let a = 0, b = 0; for (const e of [...S.plan.ped, ...planTreat.keys()]) { a += S.plan.pedFlow[e]; b += S.base.pedFlow[e]; } return b ? pct((a - b) / b) : '—'; }
 function refreshTables() {
   tableList.length = 0; const c = new THREE.Color(); const cols = [0xe8453c, 0xf7efe0, 0x43a047, 0xe8453c];
   for (const id of S.plan.ped) { const e = EDGES[id]; const pts = e.p; let acc = 0; for (let j = 0; j < pts.length - 1; j++) { const [x1, z1] = pts[j], [x2, z2] = pts[j + 1]; const L = Math.hypot(x2 - x1, z2 - z1); const nx = -(z2 - z1) / L, nz = (x2 - x1) / L; for (let s = 9 - acc; s < L; s += 16) { for (const side of [-1, 1]) { if (hash2(id * 100 + j, Math.round(s) * side) < .25) continue; tableList.push({ x: x1 + (x2 - x1) * s / L + nx * side * e.w * .28, z: z1 + (z2 - z1) * s / L + nz * side * e.w * .28, c: cols[(tableList.length * 7) % 4], t0: tableList.length * .015 }); } } acc = (acc + L) % 16; } }
   tables.count = Math.min(tableList.length, 900); tableList.slice(0, 900).forEach((t, i) => { tables.setColorAt(i, c.setHex(t.c)); t.age = 0; }); if (tables.instanceColor) tables.instanceColor.needsUpdate = true;
 }
 function animTables(dt) { const m4 = new THREE.Matrix4(); for (let i = 0; i < tables.count; i++) { const t = tableList[i]; t.age = Math.min(1.5, (t.age || 0) + dt); const k = clamp((t.age - t.t0) / .45, 0, 1); const s = k <= 0 ? .001 : backOut(k); m4.makeScale(s, s, s); m4.setPosition(t.x, .8, t.z); tables.setMatrixAt(i, m4); } tables.instanceMatrix.needsUpdate = true; }
-function togglePed(id, on) { const e = EDGES[id]; if (!e || e.hw) return false; if (BASE_CF.has(id)) { if (stroke == null || stroke.touched.size < 2) toast(`${e.name || 'This street'} is car-free since 2020. Reopen it from Policies.`); return false; } if (on && EDITABLE && !EDITABLE.has(id)) return false; if (on) S.plan.ped.add(id); else S.plan.ped.delete(id); S.plan.cache.clear(); refreshEditGlow(); return true; }
+function togglePed(id, on) { const e = EDGES[id]; if (!e || e.hw) return false; if (BASE_CF.has(id)) { if (stroke == null || stroke.touched.size < 2) toast(`${e.name || 'This street'} is car-free since 2020. Reopen it from Policies.`); return false; } if (on && EDITABLE && !EDITABLE.has(id)) return false; if (on) { S.plan.ped.add(id); planTreat.delete(id); } else S.plan.ped.delete(id); S.plan.cache.clear(); refreshEditGlow(); return true; }
+// A street keeps one treatment at a time; car-free replaces it and vice versa.
+function toggleTreat(id, kind, on) { const e = EDGES[id]; if (!e || e.hw) return false; if (BASE_CF.has(id)) { if (stroke == null || stroke.touched.size < 2) toast(`${e.name || 'This street'} is car-free since 2020.`); return false; } if (on && EDITABLE && !EDITABLE.has(id)) return false; if (on) { planTreat.set(id, kind); S.plan.ped.delete(id); } else if (planTreat.get(id) === kind) planTreat.delete(id); S.plan.cache.clear(); refreshEditGlow(); return true; }
+function toggleRamp(r) { const on = !planRamps.has(r.id); if (on) planRamps.add(r.id); else planRamps.delete(r.id); refreshEditGlow(); renderPlanList(); toast(`${r.name} ${on ? 'closed' : 'reopened'}`); switchView('plan'); settle(on ? 'Ramp closed' : 'Ramp reopened'); }
+const streetKindLabel = (k) => k === 'car_free' ? 'car-free' : TREAT[k].label.toLowerCase();
 const scaleAnim = new Map();
-function setBlock(bids, s, z, pop) {
-  for (const bid of bids) { const b = BLD[bid]; const prev = S.plan.blocks.get(bid); const from = (scaleAnim.has(bid) ? scaleAnim.get(bid).cur : prev ? prev.s : 1) * (pop ? .55 : 1); if (s === 1 && z === b.k) S.plan.blocks.delete(bid); else S.plan.blocks.set(bid, { s, z }); scaleAnim.set(bid, { from, to: s, t: 0, cur: from });
-    setBuildingAttr('aTint', bid, z !== b.k ? ZONE_TINT[z] : BASE_COL[bid]); }
+function setBlock(bids, s, z, pop, sh) {
+  const vis = (e) => e ? (e.z === 'park' ? .03 : e.s) : 1;   // a park flattens the building to a green pad
+  for (const bid of bids) { const b = BLD[bid]; const prev = S.plan.blocks.get(bid); const from = (scaleAnim.has(bid) ? scaleAnim.get(bid).cur : vis(prev)) * (pop ? .55 : 1); if (s === 1 && z === b.k && !sh) S.plan.blocks.delete(bid); else S.plan.blocks.set(bid, sh ? { s, z, sh } : { s, z }); scaleAnim.set(bid, { from, to: vis(S.plan.blocks.get(bid)), t: 0, cur: from });
+    setBuildingAttr('aTint', bid, z !== b.k ? (ZONE_TINT[z] || ZONE_TINT.mixed) : BASE_COL[bid]); }
 }
 function animScales(dt) { for (const [bid, a] of scaleAnim) { a.t = Math.min(1, a.t + dt / .9); a.cur = lerp(a.from, a.to, backOut(a.t)); setBuildingAttr('aScale', bid, a.cur); if (a.t >= 1) scaleAnim.delete(bid); } }
 function blockOf(bid) {
@@ -4137,9 +4191,12 @@ function inspectStreet(id) {
     showInsp(ihead('street', '#cfe3ff', e.name || 'Unnamed street', `${e.c.replace('_', ' ')} · ${e.lanes} lane${e.lanes > 1 ? 's' : ''} · ${Math.round(e.l)} m${cf ? ' · <b style="color:#ffe2b8">car-free since 2020</b>' : sp.ped.has(id) ? ' · <b style="color:#d8b3ff">car-free in Plan A</b>' : ''}`) + `
     <div class="kv"><span class="h"></span><span class="h">Baseline</span><span class="h">Plan A</span>${row('<span style="color:var(--car)">●</span> Car trips / day', sb.carFlow[id], sp.carFlow[id], undefined, -1)}${row('<span style="color:var(--walk)">●</span> Walkers / day', sb.pedFlow[id], sp.pedFlow[id])}${row('<span style="color:var(--bike)">●</span> Cyclists / day', sb.bikeFlow[id], sp.bikeFlow[id])}${row('AM peak travel time ×', sb.cong[id], sp.cong[id], (x) => x.toFixed(2), -1)}${row('PM peak travel time ×', sb.congPm[id], sp.congPm[id], (x) => x.toFixed(2), -1)}</div>
     <div class="hint">Simulation engine (${B.mode === 'live' ? 'live' : 'snapshot'}) · people per day, both directions.</div>
-    <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap"><button class="btn sm" id="div-btn">${ui.diversion ? 'Hide' : 'Show'} where traffic went</button>${e.hw || cf ? '' : `<button class="btn sm" id="ped-one">${sp.ped.has(id) ? 'Reopen to cars' : 'Make car-free'}</button>`}</div>`);
+    <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap"><button class="btn sm" id="div-btn">${ui.diversion ? 'Hide' : 'Show'} where traffic went</button>${e.hw || cf ? '' : `<button class="btn sm" id="ped-one">${sp.ped.has(id) ? 'Reopen to cars' : 'Make car-free'}</button>`}${e.hw || cf ? '' : Object.entries(TREAT).map(([k, t]) => `<button class="btn sm" data-tr="${k}"><i style="display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;background:${t.hex}"></i>${planTreat.get(id) === k ? 'Remove ' + t.label.toLowerCase() : t.label}</button>`).join('')}${e.hw && RAMP_OF.has(id) ? `<button class="btn sm" id="ramp-one">${planRamps.has(RAMP_OF.get(id).id) ? 'Reopen' : 'Close'} ${RAMP_OF.get(id).name}</button>` : ''}</div>`);
     $('#div-btn').onclick = () => { ui.diversion = !ui.diversion; inspectStreet(id); };
     const pb2 = $('#ped-one'); if (pb2) pb2.onclick = async () => { togglePed(id, !S.plan.ped.has(id)); switchView('plan'); await settle('Street edit'); inspectStreet(id); };
+    const sameStreet = () => { const n = e.name; return n ? EDGES.filter(x => x.name === n && !x.hw && !BASE_CF.has(x.id) && (!EDITABLE || EDITABLE.has(x.id)) && Math.hypot(x.mx - e.mx, x.mz - e.mz) < 260).map(x => x.id) : [id]; };
+    insp.querySelectorAll('[data-tr]').forEach(btn => btn.onclick = async () => { const k = btn.dataset.tr; if (!newEditAllowed(TREAT[k].label)) return; const on = planTreat.get(id) !== k; for (const x of sameStreet()) toggleTreat(x, k, on); renderPlanList(); updateStreetLabel(); switchView('plan'); await settle('Street edit'); inspectStreet(id); });
+    const rb = $('#ramp-one'); if (rb) rb.onclick = async () => { if (!newEditAllowed('Closing a freeway ramp')) return; toggleRamp(RAMP_OF.get(id)); await settleRun; inspectStreet(id); };
     return;
   }
   const e = EDGES[id]; const hrs = 2.2; const cb = S.base.carFlow[id] * SCALE / hrs, cp = S.plan.carFlow[id] * SCALE / hrs, pb = S.base.pedFlow[id] * SCALE, pp = S.plan.pedFlow[id] * SCALE;
@@ -4165,6 +4222,14 @@ function inspectBlock(bid) {
   <input type="range" id="dens" min="0.5" max="3" step="0.1" value="${ed.s}">
   ${zNow === 'office' ? `<div class="hint">Office conversions assume vacant floors convert first${EW && EW.params.fidi_office_vacancy_rate ? ` (FiDi office vacancy ${Math.round(EW.params.fidi_office_vacancy_rate.value * 100)}%, engine parameter)` : ''}.</div>` : ''}`}`);
   insp.querySelectorAll('[data-poi]').forEach(btn => btn.onclick = () => { const q = S.plan.pois.find(p => p.id === +btn.dataset.poi); if (q) inspectPoi(q); });
+  if (S.plan.engine && !civic && b.inside) {
+    // This one building: replace it with a park or plaza, or open a business on its ground floor.
+    const mine = S.plan.blocks.get(bid) || {}; const isPark = mine.z === 'park';
+    [...insp.querySelectorAll('.lab')].find(x => x.textContent.trim() === 'Zoning')?.insertAdjacentHTML('beforebegin', `<div class="lab"><span>This building</span></div><div class="bldopts"><button data-park class="${isPark ? 'on' : ''}"><i style="width:8px;height:8px;border-radius:2px;background:${ZHEX.park}"></i>${isPark ? 'Park / plaza ✓' : (b.area > 1500 ? 'Make it a park' : 'Make it a plaza')}</button>${isPark ? '' : Object.entries(SHOP_LABEL).map(([k, v]) => `<button data-sh="${k}" class="${mine.sh === k ? 'on' : ''}">${mine.sh === k ? '✓ ' : '+ '}${v}</button>`).join('')}</div>${isPark ? '<div class="hint">The building, its jobs, homes and floor area are gone; people use the open space at lunch and in the evening.</div>' : ''}`);
+    const apply = async (s1, z1, sh1, label) => { if (!newEditAllowed(label)) return; highlight([]); setBlock([bid], s1, z1, true, sh1); paintInfo(); renderPlanList(); switchView('plan'); await settle(label); inspectBlock(bid); };
+    insp.querySelector('[data-park]').onclick = () => isPark ? apply(1, b.k, '', 'Park removed') : apply(1, 'park', '', b.area > 1500 ? 'New park' : 'New plaza');
+    insp.querySelectorAll('[data-sh]').forEach(btn => btn.onclick = () => { const k = btn.dataset.sh; apply(mine.s || 1, mine.z || b.k, mine.sh === k ? '' : k, mine.sh === k ? 'Business removed' : `New ${SHOP_LABEL[k].toLowerCase()}`); });
+  }
   let cur = { s: ed.s, z }; let timer;
   const commit = () => { clearTimeout(timer); timer = setTimeout(async () => { switchView('plan'); if (LIVE && LIVE.isLive && LIVE.isLive() && LIVE.setBlock(bids, cur.s, cur.z) !== false) return; await settle('Block edit'); inspectBlock(bid); }, 450); };
   insp.querySelectorAll('[data-z]').forEach(btn => btn.onclick = () => { cur.z = btn.dataset.z; highlight([]); setBlock(bids, cur.s, cur.z, true); paintInfo(); insp.querySelectorAll('[data-z]').forEach(x => x.classList.toggle('on', x === btn)); commit(); });
@@ -4275,12 +4340,13 @@ stage.addEventListener('pointerdown', (ev) => {
   down = ev.button === 0 ? { x: ev.clientX, y: ev.clientY, t: performance.now() } : null;
   if (ui.demo || ev.button !== 0 || ui.tool !== 'ped') return;
   const g = groundAt(ev); const id = g ? edgeAt(g.x, g.z) : -1; if (id < 0) return;
-  if (EDGES[id].hw) { toast('Freeways can’t be pedestrianized.'); return; }
-  controls.enabled = false; stroke = { erase: S.plan.ped.has(id), touched: new Set() }; paintEdge(id); cv.setPointerCapture(ev.pointerId); down = null;
+  if (EDGES[id].hw) { const r = RAMP_OF.get(id); if (r && newEditAllowed('Closing a freeway ramp')) { toggleRamp(r); down = null; } else if (!r) toast('Freeway lanes can’t be edited; click one of the ramps to close it.'); return; }
+  const kind = ui.streetKind || 'car_free'; if (kind !== 'car_free' && !newEditAllowed(TREAT[kind].label)) return;
+  controls.enabled = false; stroke = { kind, erase: kind === 'car_free' ? S.plan.ped.has(id) : planTreat.get(id) === kind, touched: new Set() }; paintEdge(id); cv.setPointerCapture(ev.pointerId); down = null;
 }, true);
-function paintEdge(id) { if (!stroke || stroke.touched.has(id)) return; stroke.touched.add(id); togglePed(id, !stroke.erase); if (!stroke.erase) { const e0 = EDGES[id]; streetLabel.el.textContent = (e0.name ? e0.name.replace(' Street', ' St') : 'Street') + ' · car-free'; streetLabel.p.set(e0.mx, 10, e0.mz); streetLabel.hide = false; } if (ui.view !== 'plan' && !ui.compare) switchView('plan'); const e = EDGES[id]; for (let k = 0; k < 3; k++) { const p = e.p[Math.floor(k / 2 * (e.p.length - 1))]; puff(p[0], p[1]); } }
+function paintEdge(id) { if (!stroke || stroke.touched.has(id)) return; stroke.touched.add(id); if (stroke.kind === 'car_free') togglePed(id, !stroke.erase); else toggleTreat(id, stroke.kind, !stroke.erase); if (!stroke.erase) { const e0 = EDGES[id]; streetLabel.el.textContent = (e0.name ? e0.name.replace(' Street', ' St') : 'Street') + ' · ' + streetKindLabel(stroke.kind); streetLabel.p.set(e0.mx, 10, e0.mz); streetLabel.hide = false; } if (ui.view !== 'plan' && !ui.compare) switchView('plan'); const e = EDGES[id]; for (let k = 0; k < 3; k++) { const p = e.p[Math.floor(k / 2 * (e.p.length - 1))]; puff(p[0], p[1]); } }
 cv.addEventListener('pointerup', async (ev) => {
-  if (stroke) { const n = stroke.touched.size; if (n && !stroke.erase) { const cnt = new Map(); for (const id of stroke.touched) { const e = EDGES[id]; if (e.name) cnt.set(e.name, (cnt.get(e.name) || 0) + e.l); } const top = [...cnt].sort((a, b) => b[1] - a[1])[0]; if (top) streetLabel.el.textContent = top[0].replace(' Street', ' St') + ' · car-free'; } const touched = [...stroke.touched], erase = stroke.erase; stroke = null; controls.enabled = true; if (n) { if (LIVE && LIVE.isLive && LIVE.isLive() && LIVE.setPedestrian(touched, !erase) !== false) { showChips('<div class="chip glass">Sent to the shared live plan…</div>'); } else await settle('Street edit'); } return; }
+  if (stroke) { const n = stroke.touched.size, kind = stroke.kind; if (n && !stroke.erase) { const cnt = new Map(); for (const id of stroke.touched) { const e = EDGES[id]; if (e.name) cnt.set(e.name, (cnt.get(e.name) || 0) + e.l); } const top = [...cnt].sort((a, b) => b[1] - a[1])[0]; if (top) streetLabel.el.textContent = top[0].replace(' Street', ' St') + ' · ' + streetKindLabel(kind); } const touched = [...stroke.touched], erase = stroke.erase; stroke = null; controls.enabled = true; if (n) { if (kind === 'car_free' && LIVE && LIVE.isLive && LIVE.isLive() && LIVE.setPedestrian(touched, !erase) !== false) { showChips('<div class="chip glass">Sent to the shared live plan…</div>'); } else await settle('Street edit'); } return; }
   const d = down; down = null;
   if (d && Math.hypot(ev.clientX - d.x, ev.clientY - d.y) < 6 && performance.now() - d.t < 700) handleClick(ev);
 });
@@ -4305,16 +4371,20 @@ cv.addEventListener('pointermove', (ev) => {
   const tip = $('#tip'); if (ui.demo || ev.buttons) { tip.hidden = true; return; }
   let html = '';
   const b = buildingAt(ev);
-  if (ui.tool === 'ped' || ui.tool === 'select' || ui.info === 'traffic' || ui.info === 'foot') { if (b < 0) { const g = groundAt(ev); const id = g ? edgeAt(g.x, g.z, 8) : -1; if (id >= 0) { const e = EDGES[id]; const vis = V[activeWorld()]; html = `<b>${e.name || 'Street'}</b>` + (ui.tool === 'ped' ? `<em> · ${BASE_CF.has(id) ? 'car-free since 2020' : S.plan.ped.has(id) ? 'click to reopen to cars' : 'click or drag to make car-free'}</em>` : ui.info === 'traffic' && e.car ? (vis.s.engine ? `<em> · ${vis.liveFac[id] < 1.25 ? 'free-flowing' : vis.liveFac[id] < 1.8 ? 'slow' : 'jammed'} · ${vis.liveFac[id].toFixed(1)}× travel time</em>` : `<em> · congestion ${vis.liveCong[id] < 1 ? 'low' : vis.liveCong[id] < 2.5 ? 'moderate' : 'heavy'}</em>`) : ui.info === 'foot' ? `<em> · ${num(S[activeWorld()].pedFlow[id] * flowScale(S[activeWorld()]), false)} walkers/day</em>` : ''); } } }
+  if (ui.tool === 'ped' || ui.tool === 'select' || ui.info === 'traffic' || ui.info === 'foot') { if (b < 0) { const g = groundAt(ev); const id = g ? edgeAt(g.x, g.z, 8) : -1; if (id >= 0) { const e = EDGES[id]; const vis = V[activeWorld()]; html = `<b>${e.hw && RAMP_OF.has(id) ? RAMP_OF.get(id).name : e.name || 'Street'}</b>` + (ui.tool === 'ped' ? `<em> · ${e.hw ? (RAMP_OF.has(id) ? (planRamps.has(RAMP_OF.get(id).id) ? 'closed in Plan A · click to reopen' : 'click to close this ramp') : 'freeway') : BASE_CF.has(id) ? 'car-free since 2020' : streetTip(id)}</em>` : ui.info === 'traffic' && e.car ? (vis.s.engine ? `<em> · ${vis.liveFac[id] < 1.25 ? 'free-flowing' : vis.liveFac[id] < 1.8 ? 'slow' : 'jammed'} · ${vis.liveFac[id].toFixed(1)}× travel time</em>` : `<em> · congestion ${vis.liveCong[id] < 1 ? 'low' : vis.liveCong[id] < 2.5 ? 'moderate' : 'heavy'}</em>`) : ui.info === 'foot' ? `<em> · ${num(S[activeWorld()].pedFlow[id] * flowScale(S[activeWorld()]), false)} walkers/day</em>` : ''); } } }
   if (!html && b >= 0 && ui.tool !== 'ped') { const it = infoTip(b); html = it ? `<b>${BLD[b].n || 'Block'}</b> · ${it}` : `<b>${BLD[b].n || ZLABEL[zoneOf(b, S[activeWorld()])]}</b><em> · ${BLD[b].n ? ZLABEL[zoneOf(b, S[activeWorld()])] + ' · ' : ''}${Math.round(BLD[b].h)} m</em>`; }
   tip.hidden = !html; tip.innerHTML = html; tip.style.left = (ev.clientX + 14) + 'px'; tip.style.top = (ev.clientY + 12) + 'px';
 });
 cv.addEventListener('pointerleave', () => { $('#tip').hidden = true; });
 
 let infoBeforeTool = null; const TOOL_INFO = { zoning: 'zoning', density: 'jobs' };
-function setTool(t) { if (TOOL_INFO[t] && !ui.demo) { if (!TOOL_INFO[ui.tool]) infoBeforeTool = ui.info; setInfo(TOOL_INFO[t]); } else if (TOOL_INFO[ui.tool] && !TOOL_INFO[t]) setInfo(infoBeforeTool); ui.tool = t; document.querySelectorAll('[data-tool]').forEach(b => b.classList.toggle('on', b.dataset.tool === t)); cv.style.cursor = t === 'ped' ? 'crosshair' : t === 'select' ? 'grab' : 'pointer'; showToolHint(); }
+function streetTip(id) { const k = ui.streetKind || 'car_free', has = S.plan.ped.has(id) ? 'car_free' : planTreat.get(id); if (has === k) return k === 'car_free' ? 'click to reopen to cars' : `click to remove the ${streetKindLabel(k)}`; return `${has ? streetKindLabel(has) + ' · ' : ''}click or drag to make ${k === 'car_free' ? 'car-free' : 'a ' + streetKindLabel(k)}`; }
+function showStreetKinds() { const on = ui.tool === 'ped' && !!ENG && !ui.demo; $('#streetkinds').hidden = !on; document.body.classList.toggle('sk-on', on); document.querySelectorAll('[data-sk]').forEach(b => b.classList.toggle('on', b.dataset.sk === (ui.streetKind || 'car_free'))); }
+document.querySelectorAll('[data-sk]').forEach(b => b.onclick = () => { ui.streetKind = b.dataset.sk; showStreetKinds(); showToolHint(); });
+function setTool(t) { if (TOOL_INFO[t] && !ui.demo) { if (!TOOL_INFO[ui.tool]) infoBeforeTool = ui.info; setInfo(TOOL_INFO[t]); } else if (TOOL_INFO[ui.tool] && !TOOL_INFO[t]) setInfo(infoBeforeTool); ui.tool = t; document.querySelectorAll('[data-tool]').forEach(b => b.classList.toggle('on', b.dataset.tool === t)); cv.style.cursor = t === 'ped' ? 'crosshair' : t === 'select' ? 'grab' : 'pointer'; showStreetKinds(); showToolHint(); }
 const TOOL_HINT = { ped: '<b>Drag along a street</b> to make it car-free · click it again to reopen', density: '<b>Click a building</b> to make its block taller or shorter', zoning: '<b>Click a building</b> to change what its block is used for' };
-function showToolHint() { const h = $('#toolhint'); const txt = TOOL_HINT[ui.tool]; if (!txt) { h.hidden = true; return; } const btn = document.querySelector(`[data-tool="${ui.tool}"]`); h.innerHTML = txt; h.hidden = false; requestAnimationFrame(() => { const r = btn.getBoundingClientRect(); const w = h.offsetWidth; h.style.left = clamp(r.left + r.width / 2, w / 2 + 12, stage.clientWidth - w / 2 - 12) + 'px'; }); }
+const STREET_HINT = { car_free: '<b>Drag along a street</b> to make it car-free · click it again to reopen', slow: '<b>Drag along a street</b> to make it a slow street (local traffic only)', bike_lane: '<b>Drag along a street</b> to give it a protected bike lane', road_diet: '<b>Drag along a street</b> to take out a general lane' };
+function showToolHint() { const h = $('#toolhint'); const txt = ui.tool === 'ped' && ENG ? STREET_HINT[ui.streetKind || 'car_free'] + (RAMPS.length ? ' · click a freeway ramp to close it' : '') : TOOL_HINT[ui.tool]; if (!txt) { h.hidden = true; return; } const btn = document.querySelector(`[data-tool="${ui.tool}"]`); h.innerHTML = txt; h.hidden = false; requestAnimationFrame(() => { const r = btn.getBoundingClientRect(); const w = h.offsetWidth; h.style.left = clamp(r.left + r.width / 2, w / 2 + 12, stage.clientWidth - w / 2 - 12) + 'px'; }); }
 document.querySelectorAll('[data-tool]').forEach(b => b.onclick = () => setTool(b.dataset.tool));
 addEventListener('keydown', (e) => { if (e.target.tagName === 'INPUT') return; const k = e.key.toLowerCase(); if (k === 'v') setTool('select'); if (k === 'p') setTool('ped'); if (k === 'd') setTool('density'); if (k === 'z') setTool('zoning'); if (k === 'i') toggleInfoPop(); if (k === 'c') setCompare(!ui.compare); if (k === 'a' && CITY.engine) toggleAI(); if (k >= '1' && k <= '8') setInfo(INFO_KEYS[+k - 1] === ui.info ? null : INFO_KEYS[+k - 1]); if (k === '0') setInfo(null); if (k === ' ') { e.preventDefault(); togglePlay(); } if (k === 'escape') { if (ui.demo) { endDemo(); return; } closeInspector(); toggleInfoPop(false); } });
 function switchView(w) { ui.view = w; $('#tab-base').classList.toggle('on', w === 'base'); $('#tab-plan').classList.toggle('on', w === 'plan'); }
@@ -4389,7 +4459,7 @@ async function askEngine(q, why, a) {
   return opts;
 }
 function policyText(po) { const g = EW && HPBackend.inletByKey ? HPBackend.inletByKey(EW, po.target) : null; const where = (g?.name || INLETS.find(x => x.key === po.target)?.name || po.target); return po.kind === 'congestion_charge' ? `$${+po.amount} AM-peak charge at ${where}` : po.kind === 'parking_price' ? `$${+po.amount} parking price${po.target ? ' at ' + where : ''}` : `${po.kind} ${po.amount ?? ''}`; }
-function currentEdits() { const e = HPBackend.editsFrom({ ped: TOY.plan.ped, blocks: TOY.plan.blocks, policies: planPolicies, reopened: planReopened }); if (planReopenMode) e.reopen_mode = planReopenMode; return e; }
+function currentEdits() { const e = HPBackend.editsFrom({ ped: TOY.plan.ped, blocks: TOY.plan.blocks, policies: planPolicies, reopened: planReopened, treatments: planTreat, closedRoads: rampEdges() }); if (planReopenMode) e.reopen_mode = planReopenMode; return e; }
 async function applyEngineOption(o) {
   switchView('plan'); toggleAI(false);
   const merged = (B.mergeEdits || HPBackend.mergeEdits)(currentEdits(), o.edits);   // on TOP of the current plan
@@ -4437,13 +4507,22 @@ function openPitch() {
   const closeP = () => { v2.remove(); if (v2.dataset.after) toast(v2.dataset.after); }; $('#pitch-close').onclick = closeP; v2.onclick = (e) => { if (e.target === v2) closeP(); };
   $('#pitch-copy').onclick = () => { const t = `The Human Project · ${name}: ${money(v.total)}/yr net value. Revenue ${money(p.revenue - b.revenue)}/day, car trips ${num((p.car - b.car) * SCALE)}/day, new connections ${num(p.ties - b.ties)}/day.`; navigator.clipboard?.writeText(t).then(() => toast('Summary copied'), () => toast(t)); };
 }
+// Plain names for the engine-only edits, for the pitch title.
+function newEditNames() {
+  const out = []; const tr = new Map(); for (const [id, k] of planTreat) { const n = (EDGES[id].name || '').replace(' Street', ' St'); if (!n) continue; if (!tr.has(k)) tr.set(k, new Set()); tr.get(k).add(n); }
+  for (const [k, ns] of tr) out.push(`${[...ns].slice(0, 2).join(' + ')} ${streetKindLabel(k)}`);
+  for (const rid of planRamps) out.push(`${RAMPS[rid]?.name || 'ramp'} closed`);
+  let parks = 0, shops = 0; for (const [, v] of TOY.plan.blocks) { if (v.z === 'park') parks++; else if (v.sh) shops++; }
+  if (parks) out.push(`${parks} new park${parks > 1 ? 's' : ''}`); if (shops) out.push(`${shops} new business${shops > 1 ? 'es' : ''}`);
+  return out;
+}
 function openPitchEng() {
   $('#pitch')?.remove();
   const b = S.base.m, p = S.plan.m, d = S.plan.delta, v = S.plan.value;
   const parts = [['Mobility', v.mobility, '#8fa6d6'], ['Street life', v.social, '#ff4fa3'], ['Local economy', v.economy, '#4fdc7a'], ['Environment', v.environment, '#5fd4c4']]; const vTotal = parts.reduce((a, x) => a + x[1], 0);
-  const sumAbs = parts.reduce((a, x) => a + Math.abs(x[1]), 0) || 1; const nBlk = new Set([...S.plan.blocks.keys()].map(b => BLOCK_OF[b])).size;
+  const sumAbs = parts.reduce((a, x) => a + Math.abs(x[1]), 0) || 1; const nBlk = new Set([...S.plan.blocks].filter(([, v]) => v.z !== 'park' && !v.sh).map(([b]) => BLOCK_OF[b])).size;
   const cnt = new Map(); for (const id of S.plan.ped) { const e = EDGES[id]; if (e.name) cnt.set(e.name, (cnt.get(e.name) || 0) + e.l); } const streets = [...cnt].sort((a, b) => b[1] - a[1]).map(x => x[0].replace(' Street', ''));
-  const heroOn = HERO_EDGES.every(e => S.plan.ped.has(e)); const others = streets.filter(n => n !== '2nd'); const name = [S.plan.ped.size ? (heroOn ? '2nd Street Promenade' + (others.length ? ` + ${others.slice(0, 2).join(' + ')} St car-free` : '') : streets.length ? `${streets.slice(0, 3).join(' + ')} car-free` : 'Street changes') : null, nBlk ? `${nBlk} rezoned block${nBlk > 1 ? 's' : ''}` : null, ...planPolicies.map(po => policyText(po))].filter(Boolean).join(' + ') || 'No changes yet';
+  const heroOn = HERO_EDGES.every(e => S.plan.ped.has(e)); const others = streets.filter(n => n !== '2nd'); const name = [S.plan.ped.size ? (heroOn ? '2nd Street Promenade' + (others.length ? ` + ${others.slice(0, 2).join(' + ')} St car-free` : '') : streets.length ? `${streets.slice(0, 3).join(' + ')} car-free` : 'Street changes') : null, nBlk ? `${nBlk} rezoned block${nBlk > 1 ? 's' : ''}` : null, ...planPolicies.map(po => policyText(po)), ...newEditNames()].filter(Boolean).join(' + ') || 'No changes yet';
   const vot = v.factors?.vot_personal_usd_per_hr || EW.params?.vot_personal_usd_per_hr?.value || 21.8; const bi = d.by_income || {};
   const tier = ['low', 'mid', 'high'].map(k => { const x = bi[k] || {}; return -(x.travel_min || 0) / 60 * vot * WORKDAYS; });
   const ap = (x) => clamp(Math.round(x), 8, 96); const rel = (dv, bv) => dv / Math.max(Math.abs(bv), 1e-6);
@@ -4728,7 +4807,7 @@ async function playSources(tok) {
 }
 const within = (p, ms) => Promise.race([p, sleep(ms).then(() => undefined)]);
 async function demoReset() {
-  for (const e of [...S.plan.ped]) S.plan.ped.delete(e); for (const [bid] of S.plan.blocks) { setBuildingAttr('aTint', bid, BASE_COL[bid]); setBuildingAttr('aScale', bid, 1); } S.plan.blocks.clear(); S.plan.cache.clear(); planPolicies = []; planReopened = []; planReopenMode = '';
+  for (const e of [...S.plan.ped]) S.plan.ped.delete(e); for (const [bid] of S.plan.blocks) { setBuildingAttr('aTint', bid, BASE_COL[bid]); setBuildingAttr('aScale', bid, 1); } S.plan.blocks.clear(); S.plan.cache.clear(); planPolicies = []; planReopened = []; planReopenMode = ''; planTreat = new Map(); planRamps = new Set(); refreshEditGlow();
   if (ENG) { await loadHeroView(EW.hero.plan_id); fillEngine(ENG.base, B.baseline); fillEngine(ENG.plan, B.baseline); useWorld(true); resetAgents(V.base, ui.time, false); paintTies(V.base); } else S.plan.settle(baseCarRoutes(), 5);
   refreshTables(); refreshEditGlow(); recomputeTargets(); shown = { val: { ...target.val }, shape: target.shape.slice() }; drawPillars(); drawRadar(shown.shape); mariaMet = null; unfollow(); setCompare(false); switchView('plan'); setInfo(null); setTool('select'); showChips(''); ui.diversion = false; streetLabel.hide = true; spillLabel.hide = true; $('#toast').hidden = true; $('#settle-note').textContent = 'Plan A vs today'; resetAgents(V.plan, ui.time, false); paintTies(V.plan);
   FEED.length = 0; renderFeed();
@@ -4963,6 +5042,6 @@ $('#ask-dock').onclick = () => MODS.ask ? openModule('ask') : toast('Ask isn’t
 $('#pol-dock').onclick = () => MODS.policy ? openModule('policy') : toast('Policies aren’t available in this build.');
 $('#live-dock').onclick = () => MODS.live ? MODS.live.toggle() : toast('Live needs the shared session: start with ./run.sh --live');
 { let lastCur = 0; cv.addEventListener('pointermove', (ev) => { if (!LIVE || !LIVE.isLive || !LIVE.isLive()) return; const n = performance.now(); if (n - lastCur < 120) return; lastCur = n; const g = groundAt(ev); if (g) LIVE.cursor(g.x, g.z); }); }
-window.__bw = { MODS, HOST, settle, applyEdits, resetPlan, currentEdits, setApi: (u) => { ENGINE_API = u; }, engineCache, B, ENG, TOY, useWorld, loadHeroView, plannerOptions, S, V, ui, EDGES, HERO_EDGES, INLETS, BLOCK_OF, NBLOCK, setInfo, flyTo, jumpTo, setCompare, runDemo, camera, controls, scene, renderer, composer, water, settle, togglePed, setTool, askAI, openPitch, grade, followPerson, inspectBlock, BLD, CAL, Scenario, baseCarRoutes, valueOf, run: (n = 30) => { for (let i = 0; i < n; i++) { last -= 33; tick(performance.now()); } } };
+window.__bw = { MODS, HOST, settle, applyEdits, resetPlan, currentEdits, setApi: (u) => { ENGINE_API = u; }, engineCache, B, ENG, TOY, useWorld, loadHeroView, plannerOptions, S, V, ui, EDGES, HERO_EDGES, INLETS, BLOCK_OF, NBLOCK, setInfo, flyTo, jumpTo, setCompare, runDemo, camera, controls, scene, renderer, composer, water, settle, togglePed, setTool, askAI, openPitch, grade, followPerson, inspectBlock, inspectStreet, toggleTreat, toggleRamp, setBlock, RAMPS, plan: () => ({ treat: planTreat, ramps: planRamps }), BLD, CAL, Scenario, baseCarRoutes, valueOf, run: (n = 30) => { for (let i = 0; i < n; i++) { last -= 33; tick(performance.now()); } } };
 if (QS.has('reel')) { $('#intro')?.remove(); setTimeout(runDemo, 400); }   // opened from the homepage's Play demo
 </script>

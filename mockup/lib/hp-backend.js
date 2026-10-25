@@ -21,21 +21,31 @@
   const sortedIds = (a) => [...new Set(a)].map(Number).sort((x, y) => x - y);
 
   // Canonical edits payload (contract §POST /scenario) from page state.
-  function editsFrom({ ped = [], blocks = new Map(), policies = [], reopened = [] } = {}) {
+  // treatments: Map/object edge id -> 'slow' | 'bike_lane' | 'road_diet'; closedRoads: freeway ramp edge ids.
+  // Newer fields are only included when used, so older plans keep the same payload and cache key.
+  function editsFrom({ ped = [], blocks = new Map(), policies = [], reopened = [], treatments = new Map(), closedRoads = [] } = {}) {
     const b = {};
     for (const [bid, e] of (blocks instanceof Map ? blocks : new Map(Object.entries(blocks)))) {
-      b[String(bid)] = { scale: +(e.scale ?? e.s ?? 1), ...(e.zone ?? e.z ? { zone: e.zone ?? e.z } : {}) };
+      const shops = e.shops ?? e.sh;
+      b[String(bid)] = { scale: +(e.scale ?? e.s ?? 1), ...(e.zone ?? e.z ? { zone: e.zone ?? e.z } : {}), ...(shops ? { shops } : {}) };
     }
-    return { pedestrianized: sortedIds([...ped]), blocks: b, policies, reopened: sortedIds(reopened) };
+    const out = { pedestrianized: sortedIds([...ped]), blocks: b, policies, reopened: sortedIds(reopened) };
+    const t = treatments instanceof Map ? [...treatments] : Object.entries(treatments || {});
+    if (t.length) out.street_treatments = Object.fromEntries(t.map(([k, v]) => [String(k), v]).sort((x, y) => x[0] - y[0]));
+    if (closedRoads.length) out.closed_roads = sortedIds(closedRoads);
+    return out;
   }
   const sortKeys = (o) => o && typeof o === 'object' && !Array.isArray(o) ? Object.keys(o).sort().reduce((r, k) => (r[k] = sortKeys(o[k]), r), {}) : o;
   const normPolicy = (p) => ({ kind: p.kind, target: p.target ?? null, amount: +(p.amount ?? 0), params: sortKeys(p.params ?? null) });
   const editsKey = (e) => JSON.stringify({
     p: sortedIds(e.pedestrianized || []),
-    b: Object.keys(e.blocks || {}).sort((x, y) => x - y).map(k => [String(k), +(e.blocks[k].scale ?? e.blocks[k].s ?? 1), e.blocks[k].zone ?? e.blocks[k].z ?? null]),
+    b: Object.keys(e.blocks || {}).sort((x, y) => x - y).map(k => [String(k), +(e.blocks[k].scale ?? e.blocks[k].s ?? 1), e.blocks[k].zone ?? e.blocks[k].z ?? null,
+      ...(e.blocks[k].shops ?? e.blocks[k].sh ? [e.blocks[k].shops ?? e.blocks[k].sh] : [])]),
     po: (e.policies || []).map(normPolicy).sort((x, y) => JSON.stringify(x) < JSON.stringify(y) ? -1 : 1),
     r: sortedIds(e.reopened || []),
     rm: e.reopen_mode || '',
+    ...(Object.keys(e.street_treatments || {}).length ? { t: Object.entries(e.street_treatments).map(([k, v]) => [+k, v]).sort((x, y) => x[0] - y[0]) } : {}),
+    ...(e.closed_roads?.length ? { c: sortedIds(e.closed_roads) } : {}),
   });
   // Union of two edit sets: an AI planner option is applied ON TOP of the current plan (b wins on conflicts).
   function mergeEdits(a = {}, b = {}) {
@@ -47,9 +57,12 @@
       policies: [...pol.values()],
       reopened: sortedIds([...(a.reopened || []), ...(b.reopened || [])]),
       reopen_mode: b.reopen_mode || a.reopen_mode || '',
+      street_treatments: { ...(a.street_treatments || {}), ...(b.street_treatments || {}) },
+      closed_roads: sortedIds([...(a.closed_roads || []), ...(b.closed_roads || [])]),
     };
   }
-  const isEmpty = (e) => !(e.pedestrianized?.length || Object.keys(e.blocks || {}).length || e.policies?.length || e.reopened?.length);
+  const isEmpty = (e) => !(e.pedestrianized?.length || Object.keys(e.blocks || {}).length || e.policies?.length || e.reopened?.length
+    || Object.keys(e.street_treatments || {}).length || e.closed_roads?.length);
 
   // Trip geometry: contract "Rebuilding a trip polyline".
   // Returns { pts: [[x,z]...], segE: [edgeId per segment], cum: Float32Array, len }.
@@ -187,5 +200,5 @@
   }
   const inletByKey = (world, key) => (world?.inlets || []).find(g => g.key === key) || null;
 
-  window.HPBackend = { connect, editsFrom, editsKey, mergeEdits, tripPolyline, expandTrips, inletCountsAt, edgeHour, mergeInlets, inletByKey };
+  window.HPBackend = { connect, editsFrom, editsKey, mergeEdits, isEmpty, tripPolyline, expandTrips, inletCountsAt, edgeHour, mergeInlets, inletByKey };
 })();
