@@ -1,0 +1,11 @@
+{
+ "posts": [
+  {
+   "agent_id": null,
+   "name": "Citizen",
+   "text": "```json\n[\n  {\"agent_id\": 48, \"name\": \"Wei H.\", \"text\": \"The model has me switching from driving to transit. Overall it shows 6,",
+   "tag": "social"
+  }
+ ],
+ "model": "claude-haiku-5-5"
+}

@@ -409,9 +409,11 @@ class Ctx:
                     roots = car.tree_multi(src, int(h), cong, reverse=rev).roots()[self.car_node[m]]
                     out[m] = [n2i.get(int(x), out[k]) for x, k in zip(roots, m)]
 
-    def walk_in_times(self):
-        """Seconds walking from the inlet/station to the workplace (perceived), and cycling from the region gate."""
-        pop, w, wk = self.pop, self.e.w, self.walk
+    def walk_in_times(self, wk=None):
+        """Seconds walking from the inlet/station to the workplace (perceived), and cycling from the region gate.
+        `wk` defaults to this scenario's walk network; welfare uses the bonus-free physical network instead."""
+        pop, w = self.pop, self.e.w
+        wk = wk or self.walk
         st_walk = np.full(self.n, np.inf)
         self.st_node = np.full(self.n, -1)
         for i in w.rail_inlets:
@@ -442,7 +444,14 @@ class Ctx:
         am, pm = self.car_times(cong)
         if not hasattr(self, "_walk_static"):
             self._walk_static = self.walk_in_times()
-        st_walk, walk_in, bike_in = self._walk_static
+            # Welfare is measured on physical distances: closing a street to cars doesn't shorten anyone's walk, and its
+            # amenity (comfort bonus) is credited under Street life / Economy, so it must not count again as time saved.
+            # (On perceived distances the bonus also pushed walks under the 55-min availability cutoff, so a whole mode
+            # appeared in the log-sum: 38 workers were worth ~60% of a "+$10M" alley closure.)
+            welfare_net = self.e.walknet(frozenset())
+            keep = (self.st_node, self.gate)   # walk_in_times sets these as a side effect; choices use the perceived ones
+            self._walk_welfare = self._walk_static if welfare_net is self.walk else self.walk_in_times(welfare_net)
+            self.st_node, self.gate = keep
         R = REGIONS
         car_out = np.array([R[r]["car_min"] for r in self.region], float)
         tr_out = np.array([R[r]["tr_min"] for r in self.region], float)
@@ -454,15 +463,21 @@ class Ctx:
         car_in_min = (am + pm) / 2 / 60
         mult = P["walk_wait_time_multiplier"]
         bt, bc = self.beta_t, self.beta_c
-        V = np.full((self.n, 4), -np.inf)
         car_cost = P["daily_parking_cost_fidi_usd"] / 2 + toll + P["vehicle_operating_cost_usd_per_mile"] * (miles + 1.5) + self.charge + self.fx.car_cost_usd
-        V[:, CAR] = e.asc["car"] + bt * (car_out + car_in_min + 4) + bc * car_cost
-        V[:, TRANSIT] = bt * (tr_out + 5 * mult + st_walk / 60 * mult) + bc * fare
-        walk_total = (np.nan_to_num(walk_out, nan=1e9) / P["walking_speed_m_s"] + walk_in) / 60
-        V[:, WALK] = np.where(walk_total < 55, e.asc["walk"] + bt * walk_total * mult, -np.inf)
-        bike_total = (np.nan_to_num(bike_out, nan=1e9) / P["bike_speed_m_s"] + bike_in) / 60
-        V[:, BIKE] = np.where(bike_total < 45, e.asc["bike"] + bt * bike_total * 1.5, -np.inf)
-        V[~pop.car | ~np.isfinite(car_in_min), CAR] = -np.inf
+
+        def utilities(st_walk, walk_in, bike_in):
+            V = np.full((self.n, 4), -np.inf)
+            V[:, CAR] = e.asc["car"] + bt * (car_out + car_in_min + 4) + bc * car_cost
+            V[:, TRANSIT] = bt * (tr_out + 5 * mult + st_walk / 60 * mult) + bc * fare
+            walk_total = (np.nan_to_num(walk_out, nan=1e9) / P["walking_speed_m_s"] + walk_in) / 60
+            V[:, WALK] = np.where(walk_total < 55, e.asc["walk"] + bt * walk_total * mult, -np.inf)
+            bike_total = (np.nan_to_num(bike_out, nan=1e9) / P["bike_speed_m_s"] + bike_in) / 60
+            V[:, BIKE] = np.where(bike_total < 45, e.asc["bike"] + bt * bike_total * 1.5, -np.inf)
+            V[~pop.car | ~np.isfinite(car_in_min), CAR] = -np.inf
+            return V
+
+        V = utilities(*self._walk_static)                                       # perceived: drives choices
+        self.V_welfare = V if self._walk_welfare is self._walk_static else utilities(*self._walk_welfare)
         workers = pop.kind == WORKER
         U = V + pop.eps
         mode = np.argmax(U, 1)
@@ -860,8 +875,8 @@ class Ctx:
         rr, ref, cap_ = P["heat_walk_rr"], P["heat_walk_ref_min_per_week"], P["heat_walk_rr_cap"]
         red = np.minimum(cap_, (1 - rr) * active_min * 5 / ref)
         deaths_averted = float((red[people_mask] * S).sum() * P["us_crude_mortality_20_74"])
-        # Commuter welfare: logit log-sum per worker (USD per trip).
-        V = self.V
+        # Commuter welfare: logit log-sum per worker (USD per trip), on physical walking distances (see choose()).
+        V = getattr(self, "V_welfare", self.V)
         finite = np.isfinite(V)
         mx = np.where(finite.any(1), np.max(np.where(finite, V, -1e9), 1), 0)
         logsum = mx + np.log(np.sum(np.where(finite, np.exp(np.where(finite, V, -1e9) - mx[:, None]), 0), 1) + 1e-300)
