@@ -1,0 +1,1017 @@
+{
+  "vot_personal_usd_per_hr": {
+    "value": 21.8,
+    "low": 19.4,
+    "high": 28.2,
+    "unit": "USD(2024)/person-hour",
+    "status": "literature",
+    "source": "https://dot.ca.gov/-/media/dot-media/programs/transportation-planning/documents/division-transportation-planning/transportation-economics/cal-bc-federal-comparison-of-value-matrix-2026-a11y.pdf",
+    "source_title": "Caltrans, 2026 INFRA Cal-B/C vs Federal (USDOT BCA guidance) comparison of values matrix (2024$)",
+    "notes": "USDOT BCA guidance value for local personal travel, escalated to 2024$ (Fed. column of the Caltrans matrix). Intercity personal = $28.20 (used as high). Low = previous default (unverified older guidance year). See literature/health-valuation.md and mode-choice-and-elasticities.md."
+  },
+  "vot_business_usd_per_hr": {
+    "value": 37.2,
+    "low": null,
+    "high": null,
+    "unit": "USD(2024)/vehicle-hour",
+    "status": "literature",
+    "source": "https://dot.ca.gov/-/media/dot-media/programs/transportation-planning/documents/division-transportation-planning/transportation-economics/cal-bc-federal-comparison-of-value-matrix-2026-a11y.pdf",
+    "source_title": "Caltrans, 2026 INFRA Cal-B/C vs Federal (USDOT BCA guidance) comparison of values matrix (2024$)",
+    "notes": "Matrix row 'Truck/Business ($/hr./veh.)', USDOT value. Row label mixes truck and business travel; a pure business-traveler-per-person value was not separately verified."
+  },
+  "walk_wait_time_multiplier": {
+    "value": 2.0,
+    "low": 1.5,
+    "high": 2.65,
+    "unit": "x in-vehicle VOT",
+    "status": "literature",
+    "source": "https://dot.ca.gov/-/media/dot-media/programs/transportation-planning/documents/division-transportation-planning/transportation-economics/cal-bc-federal-comparison-of-value-matrix-2026-a11y.pdf",
+    "source_title": "Caltrans, 2026 INFRA Cal-B/C vs Federal (USDOT BCA guidance) comparison of values matrix (2024$)",
+    "notes": "USDOT: walk/wait time valued at 2x (matrix: 'for wait times, the value should be doubled'). MTC TM1 uses 2x walk (<1.5 mi) and 2x initial wait (https://github.com/BayAreaMetro/travel-model-one/blob/master/model-files/model/ModeChoice.xls); SFCTA ActivitySim work-tour walk coefficient is 2.65x IVT (https://github.com/sfcta/activitysim-sfcta/blob/main/configs/resident/tour_mode_choice_coefficients.csv)."
+  },
+  "vsl_usd": {
+    "value": 14200000.0,
+    "low": 13200000.0,
+    "high": 14200000.0,
+    "unit": "USD",
+    "status": "literature",
+    "source": "https://www.transportation.gov/office-policy/transportation-policy/revised-departmental-guidance-on-valuation-of-a-statistical-life-in-economic-analysis",
+    "source_title": "USDOT, Departmental Guidance on Valuation of a Statistical Life (2025 update)",
+    "notes": "$14.2M for a 2025 base year; $13.7M (2024), $13.2M (2023). USDOT sensitivity range is wider (unverified for 2025)."
+  },
+  "heat_walk_rr": {
+    "value": 0.89,
+    "low": 0.83,
+    "high": 0.96,
+    "unit": "relative risk",
+    "status": "literature",
+    "source": "https://www.rsu.lv/sites/default/files/book_download/heat.pdf",
+    "source_title": "Kahlmeier et al. (2017), WHO Europe, Health economic assessment tool (HEAT) for walking and cycling: methods and user guide, 2017 update",
+    "notes": "All-cause mortality RR for regular walking at the reference volume (95% CI 0.83-0.96). Linear dose-response from 1.0 at 0 min."
+  },
+  "heat_walk_ref_min_per_week": {
+    "value": 168,
+    "low": null,
+    "high": null,
+    "unit": "min/week",
+    "status": "literature",
+    "source": "https://www.rsu.lv/sites/default/files/book_download/heat.pdf",
+    "source_title": "Kahlmeier et al. (2017), WHO Europe, Health economic assessment tool (HEAT) for walking and cycling: methods and user guide, 2017 update",
+    "notes": "Reference walking volume for RR 0.89 (= 11.25 MET-h/week). Applies to ages 20-74."
+  },
+  "heat_walk_rr_cap": {
+    "value": 0.3,
+    "low": null,
+    "high": null,
+    "unit": "max fractional risk reduction",
+    "status": "literature",
+    "source": "https://www.rsu.lv/sites/default/files/book_download/heat.pdf",
+    "source_title": "Kahlmeier et al. (2017), WHO Europe, Health economic assessment tool (HEAT) for walking and cycling: methods and user guide, 2017 update",
+    "notes": "Benefit capped at 30% risk reduction (reached at ~460 min/week). HEAT also phases benefits in over 5 years (20%/yr); we report steady state."
+  },
+  "us_crude_mortality_20_74": {
+    "value": 0.0059,
+    "low": 0.005,
+    "high": 0.0065,
+    "unit": "deaths/person-year",
+    "status": "literature",
+    "source": "https://www.cdc.gov/nchs/products/databriefs/db521.htm",
+    "source_title": "NCHS Data Brief 521, Mortality in the United States, 2023",
+    "notes": "Derived from NCHS 2023 age-specific death rates weighted by population age 20-74; population weights not verified against CDC WONDER (replace with a WONDER query). California is lower than the US average."
+  },
+  "crash_cost_usd_per_vmt": {
+    "value": 0.2,
+    "low": 0.17,
+    "high": 0.43,
+    "unit": "USD/vehicle-mile",
+    "status": "literature",
+    "source": "https://connect.ncdot.gov/resources/LBIP2026-I95US301/Documents/BCA%20Technical%20Memorandum.pdf",
+    "source_title": "USDOT KABCO crash unit values (via NCDOT BCA technical memo); NHTSA fatality rate",
+    "notes": "Derived. Low = fatalities only (1.26 deaths/100M VMT x $13.2M). High = NHTSA ~$1.4T total societal crash cost / US VMT (unverified). Not all of this is external to the driver. See literature/health-valuation.md."
+  },
+  "co2_kg_per_vmt": {
+    "value": 0.4,
+    "low": null,
+    "high": null,
+    "unit": "kg CO2/vehicle-mile",
+    "status": "literature",
+    "source": "https://www.epa.gov/greenvehicles/greenhouse-gas-emissions-typical-passenger-vehicle",
+    "source_title": "US EPA, Greenhouse Gas Emissions from a Typical Passenger Vehicle",
+    "notes": "Typical passenger vehicle ~400 g CO2/mile. Congested low-speed SF driving emits more per mile (not modeled)."
+  },
+  "scc_usd_per_tonne": {
+    "value": 190,
+    "low": 120,
+    "high": 340,
+    "unit": "USD(2020)/tCO2",
+    "status": "literature",
+    "source": "https://www.rff.org/publications/reports/adopting-the-social-cost-of-carbon-for-state-benefit-cost-analysis-a-primer-for-practitioners/",
+    "source_title": "EPA 2023 SC-GHG report (via RFF primer)",
+    "notes": "Central 2% discount, 2020 emissions year; range 2.5%-1.5% discount. Federal use withdrawn by Executive Order 14154 (Jan 2025); USDOT matrix shows CO2 $0 federally. Keep as a user slider."
+  },
+  "vehicle_operating_cost_usd_per_mile": {
+    "value": 0.58,
+    "low": 0.41,
+    "high": 0.8,
+    "unit": "USD(2024)/mile",
+    "status": "literature",
+    "source": "https://dot.ca.gov/-/media/dot-media/programs/transportation-planning/documents/division-transportation-planning/transportation-economics/cal-bc-federal-comparison-of-value-matrix-2026-a11y.pdf",
+    "source_title": "Caltrans, 2026 INFRA Cal-B/C vs Federal (USDOT BCA guidance) comparison of values matrix (2024$)",
+    "notes": "Derived: non-fuel auto cost $0.408/mi (matrix) + fuel at $4.37/gal (matrix, CA 2024$) / ~25 mpg (assumed) = ~$0.175/mi. Low = non-fuel only. High ~ AAA full ownership cost per mile (unverified). Marginal cost of a trip is closer to the low end."
+  },
+  "retail_value_added_share": {
+    "value": 0.55,
+    "low": 0.25,
+    "high": 0.63,
+    "unit": "fraction of revenue",
+    "status": "literature",
+    "source": "https://fred.stlouisfed.org/series/USFOODDPNGSP",
+    "source_title": "BEA GDP by industry: accommodation & food services value added (FRED) vs Census food-service sales",
+    "notes": "Food service VA/sales ~0.63 (derived: $703B / $1.12T). General retail is much lower (~0.25, unverified) because sales include goods cost. 0.55 is our blend for a cafe/restaurant-heavy FiDi mix (assumed weights)."
+  },
+  "retail_net_new_share": {
+    "value": 0.5,
+    "low": 0.2,
+    "high": 0.8,
+    "unit": "fraction",
+    "status": "assumed",
+    "source": null,
+    "source_title": null,
+    "notes": "Share of a business's revenue gain that is new to the city rather than shifted from elsewhere. Literature (Volker & Handy 2021) notes most local gains are partly redistribution; no measured value."
+  },
+  "sf_sales_tax_rate": {
+    "value": 0.08625,
+    "low": null,
+    "high": null,
+    "unit": "fraction",
+    "status": "data",
+    "source": "https://www.cdtfa.ca.gov/taxes-and-fees/sales-use-tax-rates.htm",
+    "source_title": "CDTFA, California City & County Sales & Use Tax Rates",
+    "notes": "Statewide base 7.25% (verified on CDTFA page) + SF district taxes; the 8.625% SF total is from CDTFA rate tables (unverified this session; page tables not machine-readable)."
+  },
+  "city_share_of_sales_tax": {
+    "value": 0.01,
+    "low": 0.0075,
+    "high": 0.01,
+    "unit": "fraction of taxable sales",
+    "status": "literature",
+    "source": "https://www.cdtfa.ca.gov/taxes-and-fees/sales-use-tax-rates.htm",
+    "source_title": "Bradley-Burns Uniform Local Sales and Use Tax",
+    "notes": "Bradley-Burns local 1%: 0.75% to the city/county general fund + 0.25% county transportation (split unverified this session). SF is a consolidated city-county. Low = general-fund only."
+  },
+  "sf_property_tax_rate": {
+    "value": 0.0118,
+    "low": 0.0116,
+    "high": 0.0118,
+    "unit": "fraction of assessed value",
+    "status": "assumed",
+    "source": null,
+    "source_title": null,
+    "notes": "1% Prop 13 base + voter-approved debt ~0.16-0.18% (unverified: no SF Treasurer page could be retrieved this session; replace with the FY2025-26 secured rate)."
+  },
+  "assessed_value_usd_per_m2": {
+    "value": 5000,
+    "low": 3000,
+    "high": 9000,
+    "unit": "USD/m2",
+    "status": "assumed",
+    "source": null,
+    "source_title": null,
+    "notes": "Assessed value of new floor area (~$465/sqft). Downtown office values have collapsed (e.g. 350 California sold ~-75%, see literature/office-to-residential-conversion.md); keep as slider."
+  },
+  "value_of_weak_tie_usd_per_yr": {
+    "value": 1100,
+    "low": 300,
+    "high": 2500,
+    "unit": "USD/tie-year",
+    "status": "assumed",
+    "source": "https://www.housinglin.org.uk/_assets/Resources/Housing/OtherOrganisation/Report_SFHASocialValueToolkitGuidanceNotes.pdf",
+    "source_title": "HACT/Fujiwara UK Social Value Bank (via SFHA toolkit guidance notes)",
+    "notes": "Derived: Social Value Bank 'talks to neighbours regularly' ~GBP 4,511/person-yr divided by an assumed ~5 local weak ties, converted to USD. Upper anchor: UK DCMS severe loneliness GBP 9,537/yr (https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/963077/Loneliness_monetisation_report_V2.pdf). Wellbeing valuations are not market values; show as adjustable."
+  },
+  "value_per_encounter_usd": {
+    "value": 0.05,
+    "low": 0.0,
+    "high": 0.25,
+    "unit": "USD/encounter",
+    "status": "assumed",
+    "source": null,
+    "source_title": null,
+    "notes": "Small value per positive chance encounter; no literature value. Sandstrom & Dunn 2014 show weak-tie interactions raise same-day wellbeing but not in $."
+  },
+  "workdays_per_year": {
+    "value": 250,
+    "low": 230,
+    "high": 260,
+    "unit": "days/yr",
+    "status": "assumed",
+    "source": null,
+    "source_title": null,
+    "notes": "Weekdays modeled per year (52x5 minus holidays)."
+  },
+  "bpr_alpha": {
+    "value": 0.15,
+    "low": 0.15,
+    "high": 1.12,
+    "unit": "-",
+    "status": "literature",
+    "source": "https://www.fhwa.dot.gov/ohim/hpmsmanl/appn5.cfm",
+    "source_title": "Bureau of Public Roads (1964) volume-delay function; FHWA HPMS Appendix N",
+    "notes": "BPR default. MTC Travel Model One does NOT use BPR 0.15/4: freeways use 0.20*((V/C)/0.75)^6 (~alpha 1.12, beta 6) and arterials an Akcelik curve (https://github.com/BayAreaMetro/travel-model-one/blob/master/model-files/scripts/block/SpeedFlowCurve.block). Default BPR is gentle below V/C=1; use high values as sensitivity."
+  },
+  "bpr_beta": {
+    "value": 4.0,
+    "low": 4.0,
+    "high": 6.0,
+    "unit": "-",
+    "status": "literature",
+    "source": "https://www.fhwa.dot.gov/ohim/hpmsmanl/appn5.cfm",
+    "source_title": "BPR (1964); FHWA HPMS Appendix N",
+    "notes": "See bpr_alpha. TM1 freeway curve ~beta 6."
+  },
+  "lane_capacity_vph": {
+    "value": {
+      "motorway": 2050,
+      "motorway_link": 1450,
+      "trunk": 1450,
+      "primary": 900,
+      "secondary": 800,
+      "tertiary": 650,
+      "residential": 600,
+      "unclassified": 600,
+      "living_street": 300
+    },
+    "low": null,
+    "high": null,
+    "unit": "veh/hour/lane",
+    "status": "literature",
+    "source": "https://github.com/BayAreaMetro/travel-model-one/blob/master/model-files/scripts/block/SpeedCapacity_1hour.block",
+    "source_title": "MTC Travel Model One SpeedCapacity_1hour.block (area type 0 = regional core)",
+    "notes": "TM1 regional core: freeway 2,050, expressway/ramp 1,450, major arterial 900, collector 600 (650 in CBD area type 1). Cross-check: HCM base saturation flow 1,900 pc/h/ln x g/C 0.45 = 855. secondary (800) and living_street (300) are our interpolations (assumed). See literature/congestion-modeling.md."
+  },
+  "urban_free_flow_speed_kmh": {
+    "value": {
+      "motorway": 88,
+      "motorway_link": 48,
+      "trunk": 64,
+      "primary": 32,
+      "secondary": 32,
+      "tertiary": 28,
+      "residential": 24,
+      "unclassified": 24,
+      "living_street": 10
+    },
+    "low": null,
+    "high": null,
+    "unit": "km/h",
+    "status": "literature",
+    "source": "https://github.com/BayAreaMetro/travel-model-one/blob/master/model-files/scripts/block/SpeedCapacity_1hour.block",
+    "source_title": "MTC Travel Model One SpeedCapacity_1hour.block free-flow speeds, regional core",
+    "notes": "TM1 core: freeway 55 mph (88), expressway 40 mph (64), ramp 30 mph (48), major arterial 20 mph (32), collector 10 mph (16). SF default street limit 25 mph (40 km/h). tertiary/residential/living_street are our choices (assumed). Observed congested downtown arterial speed 2025: 12.9 mph AM / 11.5 mph PM (SFCTA CMP 2025, https://www.sfcta.org/reports/congestion-management-program-2025) - use as a validation target, not free flow."
+  },
+  "traffic_evaporation_median": {
+    "value": -0.106,
+    "low": -0.22,
+    "high": -0.05,
+    "unit": "fraction of treated road's prior traffic",
+    "status": "literature",
+    "source": "https://nacto.org/wp-content/uploads/disappearing_traffic_cairns.pdf",
+    "source_title": "Cairns, Atkins & Goodwin (2002), Disappearing traffic? The story so far, Proc. ICE Municipal Engineer 151(1)",
+    "notes": "62 results, 51 (82%) showed reductions. Median -10.6%, mean -21.9%, central shopping schemes median -13.7%. DENOMINATOR: % of the traffic that previously used the treated road, measured across the wider area - NOT % of total area traffic/VMT. Cairns et al. 1998 report median ~-14%. Validation target, should emerge from behavior."
+  },
+  "car_trip_time_elasticity": {
+    "value": -0.5,
+    "low": -1.0,
+    "high": -0.22,
+    "unit": "elasticity",
+    "status": "literature",
+    "source": "https://www.vtpi.org/elasticities.pdf",
+    "source_title": "Litman (VTPI), Transportation Elasticities; Goodwin (1996) Empirical evidence on induced traffic, Transportation 23",
+    "notes": "Goodwin 1996: traffic volume w.r.t. travel time ~-0.5 short run, ~-1.0 long run (https://trid.trb.org/View/458127). VTPI lists US urban auto -0.22 (high end of range here)."
+  },
+  "downtown_sf_worker_mode_share": {
+    "value": {
+      "drive_alone": 0.26,
+      "carpool": 0.06,
+      "transit": 0.45,
+      "walk": 0.12,
+      "bike": 0.04,
+      "other": 0.03,
+      "wfh": 0.2
+    },
+    "low": null,
+    "high": null,
+    "unit": "share of commuters (wfh = share of workers)",
+    "status": "assumed",
+    "source": "https://censusreporter.org/tables/B08601/?primary_geo_id=05000US06075",
+    "source_title": "Anchors: ACS 2024 1-yr B08601 (workplace = SF County) and SFCTA Downtown Travel Study 2025",
+    "notes": "No published work-trip mode split for FiDi-only workplaces was retrievable. Anchors: (1) ACS 2024 B08601, people WORKING in SF County, commuters excl. WFH: drive alone 42.1%, carpool 8.5%, transit 34.2%, walk 8.6%, bike 3.3%, other 3.4%; WFH 15.9% of workers. (2) SFCTA Downtown Travel Study (2023, all trip purposes, downtown): auto 36.9%, transit 20.9%, walk/bike 39.7%, TNC 2.5% (https://www.sfcta.org/sites/default/files/2025-05/Downtown_Travel_Study_FINAL_Report_2025-05-22_Executive_Summary.pdf). FiDi is far more transit-oriented than the county (BART/Muni Metro trunk, $22-40/day parking), so we shift ~16 pts from car to transit/walk. Commute-share values exclude WFH and sum to 1.0; wfh is separate. Sensitivity: use the ACS county split as the car-heavy bound."
+  },
+  "sf_county_worker_mode_share_acs2024": {
+    "value": {
+      "drive_alone": 0.421,
+      "carpool": 0.085,
+      "transit": 0.342,
+      "walk": 0.086,
+      "bike": 0.033,
+      "other": 0.034,
+      "wfh": 0.159
+    },
+    "low": null,
+    "high": null,
+    "unit": "share of commuters excl. WFH (wfh = share of all workers)",
+    "status": "data",
+    "source": "https://censusreporter.org/tables/B08601/?primary_geo_id=05000US06075",
+    "source_title": "ACS 2024 1-year, Table B08601 Means of Transportation to Work for Workplace Geography, San Francisco County",
+    "notes": "Total workers 632,129; WFH 100,347. Computed from table counts (drove alone 224,109; carpool 45,066; transit 181,920; walked 45,522; bike 17,403; taxi+moto+other 17,762)."
+  },
+  "downtown_trip_mode_share_sfcta": {
+    "value": {
+      "y2019": {
+        "auto": 0.245,
+        "transit": 0.279,
+        "walk_bike": 0.434,
+        "tnc": 0.042
+      },
+      "y2023": {
+        "auto": 0.369,
+        "transit": 0.209,
+        "walk_bike": 0.397,
+        "tnc": 0.025
+      }
+    },
+    "low": null,
+    "high": null,
+    "unit": "share of trips to/from/within Downtown",
+    "status": "data",
+    "source": "https://www.sfcta.org/sites/default/files/2025-05/Downtown_Travel_Study_FINAL_Report_2025-05-22_Executive_Summary.pdf",
+    "source_title": "SFCTA, Downtown Travel Study (May 2025), Executive Summary",
+    "notes": "All trip purposes, from household travel diaries. Downtown trips -46% within the core 2019-2023; work trips -66%. Downtown workers teleworking 2+ days/week: 14% -> 63%."
+  },
+  "car_availability_by_income": {
+    "value": {
+      "low": 0.55,
+      "mid": 0.72,
+      "high": 0.8
+    },
+    "low": 0.5,
+    "high": 0.9,
+    "unit": "share of workers with a vehicle available",
+    "status": "assumed",
+    "source": "https://censusreporter.org/tables/B08014/?primary_geo_id=05000US06075",
+    "source_title": "ACS 2024 1-year B08014 (Vehicles available, SF resident workers)",
+    "notes": "Anchor: 76.3% of SF-resident workers have >=1 vehicle (B08014: 109,361 of 460,929 have none). No ACS table crosses vehicles by worker earnings; gradient by tier is assumed. Note ACS B08519 (SF workplace) shows auto commute share is nearly flat by earnings (~49% <$15k, ~52% $15-50k, ~50% >=$50k of non-WFH commuters), so income mainly matters through VOT, not car access."
+  },
+  "daily_parking_cost_fidi_usd": {
+    "value": 22.0,
+    "low": 22.0,
+    "high": 40.0,
+    "unit": "USD/day",
+    "status": "data",
+    "source": "https://www.sfmta.com/index%2Ephp/garages-lots/golden-gateway-garage",
+    "source_title": "SFMTA Golden Gateway Garage (250 Clay St) rates",
+    "notes": "Early bird $22, 12-hr max $40, 24-hr max $46, $8/hr daytime. City garage; private FiDi garages are typically pricier (unverified). Many commuters have employer-paid parking (share unverified)."
+  },
+  "bart_fare_usd": {
+    "value": {
+      "east_bay": 6.33,
+      "peninsula": 5.07,
+      "sf": 2.85,
+      "sf_bart": 2.55,
+      "north_bay": 8.0
+    },
+    "low": null,
+    "high": null,
+    "unit": "USD one-way (Clipper)",
+    "status": "data",
+    "source": "https://www.bart.gov/dev/schedules/google_transit.zip",
+    "source_title": "BART GTFS feed v72 (fare_rules/fare_attributes, valid 2026-01-12..2026-08-30), weighted by BART 2025 weekday 05-10h hourly OD to EMBR+MONT",
+    "notes": "Our computation: ridership-weighted AM fare to Embarcadero/Montgomery: East Bay $6.33 (range $4.20 W. Oakland - $9.95 Berryessa), Peninsula $5.07 (Daly City $4.30 - Millbrae $6.15; SFO $11.80), SF BART $2.55. sf = Muni adult fare $2.85 Clipper/MuniMobile (https://www.sfmta.com/fares). north_bay has no BART: Golden Gate Transit/Ferry fare assumed ~$8 (unverified)."
+  },
+  "bridge_toll_usd": {
+    "value": 8.5,
+    "low": 8.0,
+    "high": 8.5,
+    "unit": "USD",
+    "status": "literature",
+    "source": "https://en.wikipedia.org/wiki/San_Francisco%E2%80%93Oakland_Bay_Bridge",
+    "source_title": "Bay Bridge toll schedule 2026 (Wikipedia infobox; primary BATA page not reachable)",
+    "notes": "2026: $8.50 standard, $4.25 carpool weekday peak (FasTrak), westbound only. Primary BATA/MTC source not verified this session (unverified)."
+  },
+  "sf_persons_per_household": {
+    "value": 2.14,
+    "low": 1.8,
+    "high": 2.24,
+    "unit": "persons/household",
+    "status": "data",
+    "source": "https://censusreporter.org/tables/B25010/?primary_geo_id=05000US06075",
+    "source_title": "ACS 2024 1-year B25010, San Francisco County",
+    "notes": "Owners 2.51, renters 1.93. Low = 15 tracts in our sim bbox (ACS 2019-23 5-yr, https://api.census.gov/data/2023/acs/acs5, computed by data agent in data/backend/acs.json). High = Census QuickFacts 2019-23 (2.24)."
+  },
+  "persons_per_household_downtown": {
+    "value": 1.8,
+    "low": 1.6,
+    "high": 2.0,
+    "unit": "persons/household",
+    "status": "data",
+    "source": "https://api.census.gov/data/2023/acs/acs5",
+    "source_title": "ACS 2019-2023 5-year, B01003/B11001 for the 15 SF tracts inside the sim bbox",
+    "notes": "37,174 residents / 20,604 households. Use for residents of FiDi/SoMa blocks."
+  },
+  "sf_office_occupancy_rate": {
+    "value": 0.472,
+    "low": 0.44,
+    "high": 0.55,
+    "unit": "fraction of pre-pandemic badge swipes",
+    "status": "data",
+    "source": "https://www.kastle.com/safety-wellness/getting-america-back-to-work/",
+    "source_title": "Kastle Systems Back to Work Barometer, week incl. 13 Oct 2026",
+    "notes": "SF 47.2% vs 10-city average 55.1%. Measured relative to pre-pandemic swipes in Kastle buildings, not share of all workers. Tue-Thu peaks are higher (unverified daily breakdown)."
+  },
+  "fidi_office_vacancy_rate": {
+    "value": 0.29,
+    "low": 0.248,
+    "high": 0.309,
+    "unit": "fraction of inventory",
+    "status": "data",
+    "source": "https://kidder.com/wp-content/uploads/market_report/office-market-research-san-francisco-2026-2q.pdf",
+    "source_title": "Kidder Mathews, San Francisco Office Market Report Q2 2026",
+    "notes": "FiDi 29.0%, South FiDi 24.8%, SoMa 33.2%, citywide 27.2%. CBRE Q1 2026: North FiDi 30.9%, South FiDi 26.1%, SoMa 35.4%, city 30.4% (peak 36.9% Q3 2024) (https://mktgdocs.cbre.com/2299/4b628c03-e0be-422a-af2b-5bd047bb9a65-960261425/San_Francisco_Office_Figures_Q.pdf)."
+  },
+  "soma_office_vacancy_rate": {
+    "value": 0.332,
+    "low": 0.332,
+    "high": 0.354,
+    "unit": "fraction of inventory",
+    "status": "data",
+    "source": "https://kidder.com/wp-content/uploads/market_report/office-market-research-san-francisco-2026-2q.pdf",
+    "source_title": "Kidder Mathews Q2 2026 (CBRE Q1 2026 high)",
+    "notes": "Use for SoMa blocks south of Mission."
+  },
+  "office_sqft_per_job": {
+    "value": 240,
+    "low": 220,
+    "high": 300,
+    "unit": "gross sqft/job",
+    "status": "literature",
+    "source": "https://sfplanning.org/sites/default/files/resources/2021-11/Jobs-Housing_Fit_Report_2020.pdf",
+    "source_title": "SF Planning, Jobs-Housing Fit Report 2020",
+    "notes": "SF Planning employment density factors (office 240). Central SoMa blended ~220. National CBECS median ~600 sqft/worker is not representative of downtown SF (https://www.eia.gov/consumption/commercial/data/2018/bc/pdf/b16.pdf). Multiply by occupancy for on-site workers."
+  },
+  "retail_sqft_per_job": {
+    "value": 350,
+    "low": 300,
+    "high": 500,
+    "unit": "gross sqft/job",
+    "status": "literature",
+    "source": "https://sfplanning.org/sites/default/files/resources/2021-11/Jobs-Housing_Fit_Report_2020.pdf",
+    "source_title": "SF Planning, Jobs-Housing Fit Report 2020",
+    "notes": "Retail/restaurant density factor."
+  },
+  "hotel_sqft_per_job": {
+    "value": 440,
+    "low": 400,
+    "high": 900,
+    "unit": "gross sqft/job",
+    "status": "literature",
+    "source": "https://sfplanning.org/sites/default/files/resources/2021-11/Jobs-Housing_Fit_Report_2020.pdf",
+    "source_title": "SF Planning, Jobs-Housing Fit Report 2020",
+    "notes": "'Visitor' (hotel) density factor. hotel_rooms_per_job not found."
+  },
+  "other_sqft_per_job": {
+    "value": 600,
+    "low": 400,
+    "high": 900,
+    "unit": "gross sqft/job",
+    "status": "assumed",
+    "source": null,
+    "source_title": null,
+    "notes": "Civic/institutional/PDR density; no SF-specific value retrieved."
+  },
+  "residential_sqft_per_unit_gross": {
+    "value": 950,
+    "low": 900,
+    "high": 1000,
+    "unit": "gross sqft/unit",
+    "status": "literature",
+    "source": "https://www.spur.org/sites/default/files/2023-10/HR%26A_SF_Office_to_Residential_Conversion_Feasibility_Study_Sept_2023.pdf",
+    "source_title": "SPUR / HR&A, SF Office-to-Residential Conversion Feasibility Study (Sept 2023)",
+    "notes": "650 net sqft/unit at 75-80% efficiency => ~850-900 gross; SF '30 by 30' maps 5M sqft -> ~5,000 units (~1,000 gross) (https://sf.gov/reports/july-2024/30-x-30)."
+  },
+  "walking_speed_m_s": {
+    "value": 1.34,
+    "low": 1.07,
+    "high": 1.4,
+    "unit": "m/s",
+    "status": "literature",
+    "source": "https://github.com/sfcta/activitysim-sfcta/blob/main/configs/common/constants.yaml",
+    "source_title": "SFCTA ActivitySim constants (walk 3 mph)",
+    "notes": "3 mph = 1.34 m/s. MUTCD signal timing uses 3.5 ft/s (1.07 m/s) as a slow-walker design value (https://mutcd.fhwa.dot.gov/htm/2009/part4/part4e.htm)."
+  },
+  "walk_detour_factor": {
+    "value": 1.21,
+    "low": 1.14,
+    "high": 1.3,
+    "unit": "network/crow-fly distance",
+    "status": "literature",
+    "source": "https://arxiv.org/pdf/1708.00836",
+    "source_title": "Boeing (2019), Urban spatial order: street network orientation, configuration, and entropy (SF circuity)",
+    "notes": "SF walk network circuity ~1.21 (drive network ~1.31). MATSim default beeline factor 1.3. Only for off-network trips (we route on the graph otherwise)."
+  },
+  "bike_speed_m_s": {
+    "value": 4.2,
+    "low": 3.5,
+    "high": 5.0,
+    "unit": "m/s",
+    "status": "assumed",
+    "source": null,
+    "source_title": null,
+    "notes": "Urban cycling ~15 km/h incl. signals (common planning assumption; no SF measurement retrieved)."
+  },
+  "departure_time_distribution_sf": {
+    "value": {
+      "00:00-04:59": 0.0209,
+      "05:00-05:29": 0.0183,
+      "05:30-05:59": 0.0216,
+      "06:00-06:29": 0.05,
+      "06:30-06:59": 0.0566,
+      "07:00-07:29": 0.1325,
+      "07:30-07:59": 0.1172,
+      "08:00-08:29": 0.1843,
+      "08:30-08:59": 0.1096,
+      "09:00-09:59": 0.1417,
+      "10:00-10:59": 0.047,
+      "11:00-11:59": 0.014,
+      "12:00-15:59": 0.0515,
+      "16:00-23:59": 0.0347
+    },
+    "low": null,
+    "high": null,
+    "unit": "share of SF-resident commuters (excl. WFH) leaving home",
+    "status": "data",
+    "source": "https://censusreporter.org/tables/B08302/?primary_geo_id=05000US06075",
+    "source_title": "ACS 2024 1-year B08302 Time of Departure to Go to Work, San Francisco County (residence geography)",
+    "notes": "n = 368,083. Residence geography (SF residents)."
+  },
+  "arrival_time_distribution_sf_workplace": {
+    "value": {
+      "00:00-04:59": 0.0201,
+      "05:00-05:29": 0.0097,
+      "05:30-05:59": 0.0221,
+      "06:00-06:29": 0.0408,
+      "06:30-06:59": 0.0498,
+      "07:00-07:29": 0.0856,
+      "07:30-07:59": 0.1081,
+      "08:00-08:29": 0.1456,
+      "08:30-08:59": 0.1397,
+      "09:00-09:59": 0.1907,
+      "10:00-10:59": 0.0659,
+      "11:00-11:59": 0.0258,
+      "12:00-15:59": 0.0538,
+      "16:00-23:59": 0.0421
+    },
+    "low": null,
+    "high": null,
+    "unit": "share of people working in SF (excl. WFH) arriving at work",
+    "status": "data",
+    "source": "https://censusreporter.org/tables/B08602/?primary_geo_id=05000US06075",
+    "source_title": "ACS 2024 1-year B08602 Time Arriving at Work, Workplace Geography, San Francisco County",
+    "notes": "n = 531,782. Better than B08302 for downtown inflow timing (includes in-commuters). BART EMBR/MONT exits peak 08:00-08:59 (22-25% of daily exits; data/backend/transit.json)."
+  },
+  "home_region_share_downtown_workers": {
+    "value": {
+      "east_bay": 0.328,
+      "peninsula_south_bay": 0.214,
+      "sf_west": 0.11,
+      "sf_southeast_mission": 0.142,
+      "sf_north": 0.048,
+      "sf_in_area": 0.028,
+      "north_bay": 0.063,
+      "other": 0.066
+    },
+    "low": null,
+    "high": null,
+    "unit": "share of jobs in sim bbox by home region",
+    "status": "data",
+    "source": "https://lehd.ces.census.gov/data/lodes/LODES8/ca/od/ca_od_main_JT00_2023.csv.gz",
+    "source_title": "Census LEHD LODES8 OD main JT00 2023 (CA), jobs in SF blocks inside the sim bbox; computed in data/backend/lodes.json",
+    "notes": "Excludes home blocks >150 km from FiDi (HQ-reporting artifacts). Unfiltered: east_bay 0.275, peninsula_south_bay 0.179, sf_west 0.092, sf_se_mission 0.119, sf_north 0.040, sf_in_area 0.023, north_bay 0.053, other 0.218. LODES counts jobs at reported worksite (not attendance)."
+  },
+  "income_tier_share_downtown_workers": {
+    "value": {
+      "low": 0.067,
+      "mid": 0.08,
+      "high": 0.853
+    },
+    "low": null,
+    "high": null,
+    "unit": "share of jobs",
+    "status": "data",
+    "source": "https://lehd.ces.census.gov/data/lodes/LODES8/ca/wac/ca_wac_S000_JT00_2023.csv.gz",
+    "source_title": "Census LODES8 WAC 2023 (CE01-CE03), SF blocks in sim bbox",
+    "notes": "322,449 jobs: <= $1,250/mo 21,535; $1,251-3,333/mo 25,892; > $3,333/mo 275,022. Tier 'high' starts at only ~$40k/yr, so split it further with ACS earnings if needed."
+  },
+  "lunch_out_share_office_workers": {
+    "value": 0.52,
+    "low": 0.4,
+    "high": 0.6,
+    "unit": "share of in-office days",
+    "status": "literature",
+    "source": "https://www.aol.com/articles/week-worth-lunches-now-cost-130000134.html",
+    "source_title": "ezCater 2025 office lunch survey (via press coverage)",
+    "notes": "2.6 purchased lunches per in-office week of ~5 days. US national, not SF-specific. Secondary source."
+  },
+  "coffee_trip_share": {
+    "value": 0.3,
+    "low": 0.19,
+    "high": 0.45,
+    "unit": "share of in-office days",
+    "status": "assumed",
+    "source": "https://ncausa.org/Newsroom/Grounds-for-celebration-Americans-remain-committed-to-coffee",
+    "source_title": "National Coffee Association newsroom, National Coffee Data Trends summary",
+    "notes": "66% daily coffee drinkers x ~29% buying away from home => ~19% of adults/day (derived); bumped for downtown office commuters (assumed)."
+  },
+  "morning_coffee_share": {
+    "value": 0.25,
+    "low": 0.15,
+    "high": 0.35,
+    "unit": "share of in-office days",
+    "status": "assumed",
+    "source": null,
+    "source_title": null,
+    "notes": "Office workers buying coffee right after arriving; no SF measurement."
+  },
+  "avg_ticket_usd": {
+    "value": {
+      "cafe": 7.0,
+      "restaurant": 28.0,
+      "fast_food": 13.0,
+      "bar": 25.0,
+      "shop": 45.0
+    },
+    "low": null,
+    "high": null,
+    "unit": "USD/visit",
+    "status": "literature",
+    "source": "https://www.retailbrew.com/stories/2023/05/30/higher-average-lunchtime-checks-post-pandemic",
+    "source_title": "Toast restaurant check data (2023); ezCater; SF downtown shopper survey 2007-08",
+    "notes": "cafe $7 ($5-8; SF lattes $6.25-8 unverified), restaurant $28 (Toast full-service lunch check ~$31 per check), fast_food $13 (derived from ezCater $34.82/week over 2.6 lunches), bar $25 (Portland 2012 $17-22/trip inflated, assumed), shop $45 (downtown SF $40-88/visit, 2007-08 survey via Streetsblog). See literature/retail-and-walkability.md."
+  },
+  "walker_vs_driver_visit_ratio": {
+    "value": 2.0,
+    "low": 1.1,
+    "high": 3.2,
+    "unit": "visits/month ratio",
+    "status": "literature",
+    "source": "https://sf.streetsblog.org/2009/05/27/only-17-percent-drive-to-downtown-sf-to-shop-study-finds",
+    "source_title": "SF downtown shopper survey (via Streetsblog 2009); Takapuna/Auckland (Fleming et al.); Clifton et al. 2012 Portland",
+    "notes": "Downtown SF: walkers ~8 visits/month vs drivers ~4. Takapuna ~12 vs ~6 is widely cited (https://openrepository.aut.ac.nz/handle/10292/999) but its figures could not be retrieved (unverified). Clifton (https://trec.pdx.edu/research/project/411): drivers spend more per trip, walkers/cyclists more per month."
+  },
+  "ped_street_retail_uplift": {
+    "value": 0.15,
+    "low": 0.0,
+    "high": 0.3,
+    "unit": "fractional change in sales",
+    "status": "literature",
+    "source": "https://nacto.org/wp-content/uploads/measuring_the_street_nyc_dot.pdf",
+    "source_title": "NYC DOT Measuring the Street (2012); Volker & Handy (2021) review; TfL/UCL",
+    "notes": "Central +15%. NYC Pearl St (FiDi) plaza +14% vs borough; Brooklyn Pearl St +172% (outlier); TfL public-realm upgrades up to +30%; Oslo car-free core ~0 (no harm); Valencia St SF tracked comparison zip; SF parklet businesses +29% vs +10% (Controller 2021, secondary). Volker & Handy (https://ideas.repec.org/a/taf/transr/v41y2021i4p401-431.html): effects positive or non-significant."
+  },
+  "ped_footfall_uplift": {
+    "value": 0.29,
+    "low": 0.11,
+    "high": 0.65,
+    "unit": "fractional change in pedestrian volume",
+    "status": "data",
+    "source": "https://www.sfmta.com/project-updates/april-2022-update-new-hearing-date-and-new-robust-data",
+    "source_title": "SFMTA JFK Promenade data update (April 2022)",
+    "notes": "JFK Drive walking +29%, biking +76% (2019-2021). Low = Times Square ped volume +11% (NYC DOT 2010). High = SF Slow Streets walking +65% (SFMTA 2021). Oslo +14% people on street, +43% people staying; Copenhagen car-free area x4 => staying x4."
+  },
+  "rent_walkability_elasticity": {
+    "value": 0.005,
+    "low": 0.001,
+    "high": 0.009,
+    "unit": "fractional rent change per Walk Score point (engine: per 10% foot-traffic change)",
+    "status": "literature",
+    "source": "https://experts.arizona.edu/en/publications/the-walkability-premium-in-commercial-real-estate-investments/",
+    "source_title": "Pivo & Fisher (2011), The walkability premium in commercial real estate investments, Real Estate Economics 39(2)",
+    "notes": "Pivo & Fisher: +1% to +9% value per 10 Walk Score points (property type dependent). The engine applies this per 10% change in nearby foot traffic/access - mapping 1 Walk Score point to a 10% foot-traffic change is our assumption. Barcelona green axes: rents +15% within 50 m, +8.5% within 100 m (thesis DiD, case-studies/barcelona-superblocks.md); Seoul Cheonggyecheon land +30-50% within 50 m."
+  },
+  "encounter_window_min": {
+    "value": 15,
+    "low": 5,
+    "high": 15,
+    "unit": "minutes",
+    "status": "assumed",
+    "source": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6906316/",
+    "source_title": "Sapiezynski et al. (2019), Interaction data from the Copenhagen Networks Study, Scientific Data",
+    "notes": "CNS Bluetooth scans every 5 min. We use 15-min co-presence bins at places/segments for compute reasons (assumed)."
+  },
+  "tie_formation_prob_per_repeat_encounter": {
+    "value": 0.02,
+    "low": 0.01,
+    "high": 0.1,
+    "unit": "probability per repeated co-presence",
+    "status": "assumed",
+    "source": "https://escholarship.org/uc/item/4tp2801z",
+    "source_title": "Calibration assumption bounded by Hipp & Perrin (2009) and Hall (2019, ~50 h to casual friend)",
+    "notes": "No direct measurement exists. Calibrate so that light-traffic vs heavy-traffic streets reproduce Appleyard's ~2-3x gap in local acquaintances (literature/social-interaction-in-public-space.md). Hall 2019 (https://greatergood.berkeley.edu/article/item/how_long_does_it_take_to_make_a_friend)."
+  },
+  "appleyard_friends_by_traffic": {
+    "value": {
+      "light": 3.0,
+      "moderate": 1.3,
+      "heavy": 0.9
+    },
+    "low": null,
+    "high": null,
+    "unit": "friends per resident on the street",
+    "status": "literature",
+    "source": "https://amara.org/videos/WrBmfcwZMu7b/en/103981",
+    "source_title": "Appleyard (1981) Livable Streets, via Streetfilms video transcript; see also https://pps.org/article/dappleyard",
+    "notes": "3.0 vs 0.9 friends confirmed only via Streetfilms transcript; 1.3 moderate (unverified). Acquaintances 'about twice as many' on light streets. Validation target for the social model."
+  },
+  "repeat_days_per_year": {
+    "value": 60,
+    "low": 30,
+    "high": 120,
+    "unit": "days/yr",
+    "status": "assumed",
+    "source": null,
+    "source_title": null,
+    "notes": "Days a habitual lunch-spot pairing repeats per year (hybrid work ~2-3 office days/week)."
+  },
+  "street_dwell_share_car_free": {
+    "value": 0.08,
+    "low": 0.03,
+    "high": 0.15,
+    "unit": "share of passers-by",
+    "status": "assumed",
+    "source": "https://nacto.org/wp-content/uploads/greenlight_midtown_nycdot.pdf",
+    "source_title": "Anchor: NYC DOT Green Light for Midtown (2010)",
+    "notes": "Times/Herald Sq: +84% people staying; Oslo +43% staying. Absolute share lingering is assumed."
+  },
+  "muni_speed_change_market_car_free": {
+    "value": 0.06,
+    "low": 0.04,
+    "high": 0.136,
+    "unit": "fractional Muni speed change",
+    "status": "data",
+    "source": "https://sfmta.com/media/25169/download",
+    "source_title": "SFMTA Board, Better Market Street update (19 Jan 2021); SF Chronicle 26 Feb 2020 quoting SFMTA",
+    "notes": "~6% faster on average; 'up to 12% reduction in Muni travel time' (= +13.6% speed, best line, 9R best). No line-by-line table published. Clean after-window only ~7 weeks before COVID shelter-in-place (Mar 2020). Chronicle: https://www.sfchronicle.com/bayarea/article/Results-of-car-free-Market-Street-so-so-for-SF-15087210.php"
+  },
+  "parallel_street_max_slowdown_market_car_free": {
+    "value": 0.04,
+    "low": 0.0,
+    "high": 0.06,
+    "unit": "fractional travel-speed reduction",
+    "status": "data",
+    "source": "https://inrix.com/blog/full-car-ban-on-market-street-little-impact-on-surrounding-roads/",
+    "source_title": "INRIX (2020), Full car ban on Market Street: little impact on surrounding roads",
+    "notes": "Worst: Mission St SB 8 AM 10.3 -> 9.9 mph (-4%); worst single hour -6% (Mission SB 9 AM, 5 PM). Adjacent streets average -1% AM / 0% PM; Howard and Folsom got 1-10% faster. INRIX did not report Bush/Pine/Golden Gate/Turk. Only ~200-400 private cars/h used Market peak direction before the ban."
+  },
+  "cycling_change_market_car_free": {
+    "value": 0.25,
+    "low": 0.2,
+    "high": 0.3,
+    "unit": "fractional change in bike volume",
+    "status": "data",
+    "source": "https://sfmta.com/media/25169/download",
+    "source_title": "SFMTA Board Better Market Street update (Jan 2021); SFMTA blog 'Moving Better Market Street forward'",
+    "notes": "Peak-hour bikes ~650 -> >800/h (+25%) 'until Shelter in Place ordered'. https://www.sfmta.com/blog/moving-better-market-street-forward"
+  },
+  "bay_bridge_aadt": {
+    "value": 231000,
+    "low": null,
+    "high": null,
+    "unit": "vehicles/day (two-way)",
+    "status": "data",
+    "source": "https://caltrans-gis.dot.ca.gov/arcgis/rest/services/CHhighway/Traffic_AADT/MapServer/0",
+    "source_title": "Caltrans Traffic Census AADT (2024), SF-Oakland Bay Bridge toll plaza",
+    "notes": "Peak hour 15,400. I-80 near 4th/5th St connections 93,000-113,000 AADT. Bay Bridge volume ~9% below pre-pandemic (SFCTA DTS 2025)."
+  },
+  "downtown_arterial_speed_mph_2025": {
+    "value": {
+      "am": 12.9,
+      "pm": 11.5
+    },
+    "low": null,
+    "high": null,
+    "unit": "mph",
+    "status": "data",
+    "source": "https://www.sfcta.org/sites/default/files/2025-12/SFCTA_CMP2025_Fig4-3_CMP_Arterial_Average_Speeds_Citywide_and_in_the_Downtown_Core.csv",
+    "source_title": "SFCTA Congestion Management Program 2025, Fig 4-3",
+    "notes": "2019: 10.4 AM / 9.1 PM. Citywide 2025 16.1 / 14.7. Downtown Muni bus 7.1 AM / 6.1 PM. Validation target for baseline congestion."
+  },
+  "bart_weekday_exits_downtown_2026_09": {
+    "value": {
+      "embarcadero": 23619,
+      "montgomery": 18908,
+      "powell": 13573
+    },
+    "low": null,
+    "high": null,
+    "unit": "avg weekday",
+    "status": "data",
+    "source": "https://www.bart.gov/sites/default/files/2026-10/Ridership_202609.xlsx",
+    "source_title": "BART Monthly Ridership Report, September 2026",
+    "notes": "Values as reported by data-sources agent; data/backend/transit.json gives EMBR exits 20,648 / entries 23,619 from the OD matrix (row/col convention). Sep 2019: EMBR 50,787, MONT 46,263, POWL 25,288 (~41-54% recovery)."
+  },
+  "cairns_central_shopping_median": {
+    "value": -0.137,
+    "low": null,
+    "high": null,
+    "unit": "fraction",
+    "status": "literature",
+    "source": "https://nacto.org/wp-content/uploads/disappearing_traffic_cairns.pdf",
+    "source_title": "Cairns et al. (2002)",
+    "notes": "Median for town-centre / central shopping area schemes (closest analogue to FiDi street pedestrianization)."
+  },
+  "parking_price_elasticity_vehicle_trips": {
+    "value": -0.3,
+    "low": -0.54,
+    "high": -0.1,
+    "unit": "elasticity",
+    "status": "literature",
+    "source": "https://www.vtpi.org/elasticities.pdf",
+    "source_title": "Litman (VTPI), Transportation Elasticities",
+    "notes": "General range -0.1 to -0.3; CBD preferred-parking -0.54 (Hensher & King 2001). SFpark -0.4 is an on-street occupancy elasticity, not mode choice."
+  },
+  "mtc_tm1_ivt_coef_work_per_min": {
+    "value": -0.0134,
+    "low": null,
+    "high": null,
+    "unit": "utils/min",
+    "status": "literature",
+    "source": "https://github.com/BayAreaMetro/travel-model-one/blob/master/model-files/model/ModeChoice.xls",
+    "source_title": "MTC Travel Model One, ModeChoice.xls (work tours)",
+    "notes": "Non-work -0.0175. Walk <=1.5 mi 2x IVT; transfer = 30 IVT-min; BART IVT weighted 0.8x. Cost coef = 0.6*IVT/VOT."
+  },
+  "sfcta_ivt_coef_work_per_min": {
+    "value": -0.016,
+    "low": null,
+    "high": null,
+    "unit": "utils/min",
+    "status": "literature",
+    "source": "https://github.com/sfcta/activitysim-sfcta/blob/main/configs/resident/tour_mode_choice_coefficients.csv",
+    "source_title": "SFCTA ActivitySim tour mode choice coefficients (work)",
+    "notes": "Walk -0.0424, initial wait -0.024. Repo forked from SANDAG ABM3 example; coefficients may not be SF-estimated."
+  },
+  "region_car_access": {
+    "value": {
+      "east_bay": [
+        [
+          "key:i80",
+          0
+        ],
+        [
+          "side:east",
+          4
+        ],
+        [
+          "side:south",
+          3
+        ]
+      ],
+      "peninsula_south_bay": [
+        [
+          "key:us101",
+          0
+        ],
+        [
+          "side:south",
+          2
+        ]
+      ],
+      "sf_west": [
+        [
+          "key:mkt",
+          0
+        ],
+        [
+          "side:west",
+          1
+        ]
+      ],
+      "sf_southeast_mission": [
+        [
+          "key:fol",
+          0
+        ],
+        [
+          "side:south",
+          1
+        ],
+        [
+          "side:west",
+          3
+        ]
+      ],
+      "sf_north": [
+        [
+          "key:bwy",
+          0
+        ],
+        [
+          "side:north",
+          1
+        ],
+        [
+          "side:west",
+          3
+        ]
+      ],
+      "north_bay": [
+        [
+          "key:bwy",
+          0
+        ],
+        [
+          "side:north",
+          2
+        ],
+        [
+          "side:west",
+          4
+        ]
+      ],
+      "sf_in_area": [
+        [
+          "key:fol",
+          0
+        ],
+        [
+          "side:south",
+          1
+        ],
+        [
+          "side:east",
+          1
+        ],
+        [
+          "side:west",
+          1
+        ],
+        [
+          "side:north",
+          1
+        ]
+      ],
+      "other": [
+        [
+          "key:i80",
+          0
+        ],
+        [
+          "side:east",
+          4
+        ],
+        [
+          "side:south",
+          3
+        ]
+      ]
+    },
+    "low": null,
+    "high": null,
+    "unit": "[selector, extra minutes outside the map]",
+    "status": "assumed",
+    "source": null,
+    "source_title": null,
+    "notes": "Which car inlets drivers from each home region can use, and the extra outside-the-map minutes of each option versus the region's main route (the legacy inlet, 0). Drivers pick the cheapest inlet by route cost, so closures shift entry points. Directions follow the regional freeway network (Bay Bridge -> I-80 ramps and the Embarcadero/SoMa grid; US-101/I-280 -> the south edge; western SF -> Market/Mission and the west edge; North Beach/Marin -> Broadway/Columbus and the north edge). Minutes are judgment, not measured."
+  },
+  "inlet_class_penalty_min": {
+    "value": {
+      "motorway": 0,
+      "motorway_link": 0,
+      "trunk": 0,
+      "trunk_link": 0.5,
+      "primary": 0,
+      "primary_link": 0.5,
+      "secondary": 0.5,
+      "secondary_link": 1,
+      "tertiary": 1,
+      "tertiary_link": 1.5,
+      "unclassified": 2.5,
+      "residential": 2.5
+    },
+    "low": null,
+    "high": null,
+    "unit": "minutes",
+    "status": "assumed",
+    "source": null,
+    "source_title": null,
+    "notes": "Extra perceived minutes for entering or leaving the map on a lower-class street (slower approach outside the map, more signals). Keeps drivers on arterials unless a closure makes a side street clearly shorter."
+  },
+  "through_inlet_max_penalty_min": {
+    "value": 1.0,
+    "low": null,
+    "high": null,
+    "unit": "minutes",
+    "status": "assumed",
+    "source": null,
+    "source_title": null,
+    "notes": "Through-traffic only uses non-freeway inlets whose class penalty is at most this (primary/secondary/tertiary). Freeway-to-freeway traffic stays on the freeway and never enters the street grid. Through volume between map sides is weighted by the lane capacity of each side's eligible inlets."
+  }
+}

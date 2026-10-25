@@ -1,0 +1,19 @@
+{
+ "answer": "Modeled revenue is up about $434,700 per day, roughly 4% over baseline. The model doesn't split this into causes, so this is my reading of the pattern.\n\n- **More people nearby:** The plan doubles residential density on 13 blocks, adding about 12,350 residents. Total people in the model rise by about 11,360.\n- **More foot traffic:** Walking minutes rise by about 187,000 and visits by about 17,700. Pedestrianizing 2nd and Minna Streets lifts foot traffic there, and 6th Street gains too.\n- **Where it lands:** Mostly shops. American Giant gains about $19,300 per day, Hook & Scissor about $17,000, and Yoshida Picture Framing about $16,100.\n\n**Losers:** Foot traffic drops on 5th Street and",
+ "grounding": {
+  "scenario": "99eaf6ad6845",
+  "keys": [
+   "scenario",
+   "metrics_plan",
+   "delta_vs_baseline",
+   "value_usd_per_yr",
+   "value_lines",
+   "car_traffic_change_by_street",
+   "foot_traffic_change_by_street",
+   "biggest_business_changes",
+   "assumptions_flagged",
+   "scale_people_per_agent"
+  ]
+ },
+ "model": "claude-sonnet-5-5"
+}

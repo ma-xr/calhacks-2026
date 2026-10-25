@@ -1,0 +1,21 @@
+{
+  "name": "human-project-live",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SpacetimeDB live layer: shared plan, presence and results for The Human Project",
+  "scripts": {
+    "build": "spacetime build",
+    "publish:local": "spacetime publish human-live --server local --yes",
+    "generate": "spacetime generate --lang typescript --out-dir client/module_bindings --module-path .",
+    "build:client": "npm run generate && esbuild client/live.ts --bundle --format=esm --platform=browser --target=es2022 --outfile=client/dist/live.mjs",
+    "proxy": "node scripts/engine-proxy.mjs --set",
+    "e2e": "node scripts/e2e.mjs --fresh"
+  },
+  "dependencies": {
+    "spacetimedb": "2.13.*"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.2",
+    "typescript": "~5.6.2"
+  }
+}

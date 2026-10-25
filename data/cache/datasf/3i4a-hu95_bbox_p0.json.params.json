@@ -1,0 +1,8 @@
+{
+  "$where": "intersects(the_geom, 'POLYGON((-122.4095 37.78, -122.388 37.78, -122.388 37.7975, -122.4095 37.7975, -122.4095 37.78))')",
+  "$limit": 1000,
+  "$offset": 0,
+  "$order": ":id",
+  "url": "https://data.sf.gov/resource/3i4a-hu95.json",
+  "fetched_at": "2026-10-24T21:59:45+00:00"
+}

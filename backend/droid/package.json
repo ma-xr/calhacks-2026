@@ -1,0 +1,10 @@
+{
+  "name": "hp-droid-runner",
+  "private": true,
+  "type": "module",
+  "description": "Runs Factory Droid (via @factory/droid-sdk) as the policy compiler for The Human Project",
+  "dependencies": {
+    "@factory/cli": "0.249.0",
+    "@factory/droid-sdk": "0.10.0"
+  }
+}

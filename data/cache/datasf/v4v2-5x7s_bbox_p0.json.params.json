@@ -1,0 +1,6 @@
+{
+  "$where": "within_box(shape, 37.7995, -122.41149999999999, 37.778, -122.38600000000001)",
+  "$limit": 5000,
+  "url": "https://data.sf.gov/resource/v4v2-5x7s.json",
+  "fetched_at": "2026-10-24T22:06:16+00:00"
+}

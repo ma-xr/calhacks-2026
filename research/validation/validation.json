@@ -1,0 +1,202 @@
+[
+ {
+  "case": "Calibration: downtown worker mode split",
+  "quantity": "Commute mode share: car",
+  "model": 0.3507800135654533,
+  "target": 0.3440860215053763,
+  "source": "https://censusreporter.org/tables/B08601/?primary_geo_id=05000US06075",
+  "note": "calibrated (ASCs)"
+ },
+ {
+  "case": "Calibration: downtown worker mode split",
+  "quantity": "Commute mode share: transit",
+  "model": 0.4966086366719421,
+  "target": 0.48387096774193544,
+  "source": "https://censusreporter.org/tables/B08601/?primary_geo_id=05000US06075",
+  "note": "calibrated (ASCs)"
+ },
+ {
+  "case": "Calibration: downtown worker mode split",
+  "quantity": "Commute mode share: walk",
+  "model": 0.11067148993895547,
+  "target": 0.12903225806451613,
+  "source": "https://censusreporter.org/tables/B08601/?primary_geo_id=05000US06075",
+  "note": "calibrated (ASCs)"
+ },
+ {
+  "case": "Calibration: downtown worker mode split",
+  "quantity": "Commute mode share: bike",
+  "model": 0.04193985982364911,
+  "target": 0.04301075268817204,
+  "source": "https://censusreporter.org/tables/B08601/?primary_geo_id=05000US06075",
+  "note": "calibrated (ASCs)"
+ },
+ {
+  "case": "Car-free Market Street (Jan 29, 2020)",
+  "quantity": "Muni speed on Market St",
+  "model": 0.00019584535333572184,
+  "target": 0.06,
+  "source": "https://sfmta.com/media/25169/download",
+  "note": "bus time index = 1 + 0.25\u00b7(car congestion \u2212 1) on Market edges"
+ },
+ {
+  "case": "Car-free Market Street (Jan 29, 2020)",
+  "quantity": "Worst parallel-street slowdown (Mission Street)",
+  "model": 0.04758103411159165,
+  "target": 0.04,
+  "source": "https://inrix.com/blog/full-car-ban-on-market-street-little-impact-on-surrounding-roads/",
+  "note": "AM-peak travel-time factor, length-weighted"
+ },
+ {
+  "case": "Car-free Market Street (Jan 29, 2020)",
+  "quantity": "Cycling on Market St",
+  "model": 0.975609756097561,
+  "target": 0.25,
+  "source": "https://sfmta.com/media/25169/download",
+  "note": "bike agent-trips over Market edges"
+ },
+ {
+  "case": "Car-free Market Street (Jan 29, 2020)",
+  "quantity": "Traffic evaporation (\u0394 area VMT \u00f7 prior VMT on Market St)",
+  "model": -3.2573764184657223,
+  "target": -0.106,
+  "source": "https://nacto.org/wp-content/uploads/disappearing_traffic_cairns.pdf",
+  "note": "Cairns et al. definition; median of 63 cases, range roughly \u2212100% to +25%"
+ },
+ {
+  "case": "Car-free Market Street (Jan 29, 2020)",
+  "quantity": "Car traffic in the whole study area (VMT)",
+  "model": -0.005698777860989268,
+  "target": null,
+  "source": null,
+  "note": "context: share of all area traffic"
+ },
+ {
+  "case": "Pedestrianizing 2nd St (Market \u2192 Folsom)",
+  "quantity": "Foot traffic on the treated street",
+  "model": 0.245771436976026,
+  "target": 0.29,
+  "source": "https://www.sfmta.com/project-updates/april-2022-update-new-hearing-date-and-new-robust-data",
+  "note": "people/day on 2nd St Market\u2192Folsom"
+ },
+ {
+  "case": "Pedestrianizing 2nd St (Market \u2192 Folsom)",
+  "quantity": "Revenue of 19 businesses fronting the street",
+  "model": 0.2447524152255749,
+  "target": 0.15,
+  "source": "https://nacto.org/wp-content/uploads/measuring_the_street_nyc_dot.pdf",
+  "note": "destination + walk-by visits \u00d7 ticket"
+ },
+ {
+  "case": "Pedestrianizing 2nd St (Market \u2192 Folsom)",
+  "quantity": "Visits per day: walkers vs drivers (ratio)",
+  "model": 1.181413647769264,
+  "target": 2.0,
+  "source": "https://sf.streetsblog.org/2009/05/27/only-17-percent-drive-to-downtown-sf-to-shop-study-finds",
+  "note": "baseline workers; literature measures visits/month to a high street by access mode"
+ },
+ {
+  "case": "Business visit timing vs Google popular times",
+  "quantity": "Hourly visit profile correlation: bar",
+  "model": 0.5191136964499824,
+  "target": 0.8,
+  "source": "Google Maps popular times via Apify",
+  "note": "Pearson r over 24 h. Partly calibrated: walk-in propensity by hour uses these shapes; destination trips (lunch, coffee, dinner) do not"
+ },
+ {
+  "case": "Business visit timing vs Google popular times",
+  "quantity": "Hourly visit profile correlation: cafe",
+  "model": 0.8150551484003115,
+  "target": 0.8,
+  "source": "Google Maps popular times via Apify",
+  "note": "Pearson r over 24 h. Partly calibrated: walk-in propensity by hour uses these shapes; destination trips (lunch, coffee, dinner) do not"
+ },
+ {
+  "case": "Business visit timing vs Google popular times",
+  "quantity": "Hourly visit profile correlation: fast_food",
+  "model": 0.5986890896126096,
+  "target": 0.8,
+  "source": "Google Maps popular times via Apify",
+  "note": "Pearson r over 24 h. Partly calibrated: walk-in propensity by hour uses these shapes; destination trips (lunch, coffee, dinner) do not"
+ },
+ {
+  "case": "Business visit timing vs Google popular times",
+  "quantity": "Hourly visit profile correlation: restaurant",
+  "model": 0.6646414217086424,
+  "target": 0.8,
+  "source": "Google Maps popular times via Apify",
+  "note": "Pearson r over 24 h. Partly calibrated: walk-in propensity by hour uses these shapes; destination trips (lunch, coffee, dinner) do not"
+ },
+ {
+  "case": "Business visit timing vs Google popular times",
+  "quantity": "Hourly visit profile correlation: shop",
+  "model": 0.8955718355172068,
+  "target": 0.8,
+  "source": "Google Maps popular times via Apify",
+  "note": "Pearson r over 24 h. Partly calibrated: walk-in propensity by hour uses these shapes; destination trips (lunch, coffee, dinner) do not"
+ },
+ {
+  "case": "Transit arrivals vs BART ridership",
+  "quantity": "Embarcadero: people arriving per weekday (ratio model/BART exits)",
+  "model": 3.1396261139093373,
+  "target": 1.0,
+  "source": "https://www.bart.gov/about/reports/ridership",
+  "note": "model 64,827 vs BART 20,648 exits; model inlet also carries Muni Metro/other rail riders"
+ },
+ {
+  "case": "Transit arrivals vs BART ridership",
+  "quantity": "Embarcadero: hourly arrival profile correlation",
+  "model": 0.9736981768038302,
+  "target": 0.8,
+  "source": "BART hourly OD (Sep 2025)",
+  "note": "Pearson r over 24 hours"
+ },
+ {
+  "case": "Transit arrivals vs BART ridership",
+  "quantity": "Montgomery Street: people arriving per weekday (ratio model/BART exits)",
+  "model": 2.2491723296741593,
+  "target": 1.0,
+  "source": "https://www.bart.gov/about/reports/ridership",
+  "note": "model 38,724 vs BART 17,217 exits; model inlet also carries Muni Metro/other rail riders"
+ },
+ {
+  "case": "Transit arrivals vs BART ridership",
+  "quantity": "Montgomery Street: hourly arrival profile correlation",
+  "model": 0.9391437632743168,
+  "target": 0.8,
+  "source": "BART hourly OD (Sep 2025)",
+  "note": "Pearson r over 24 hours"
+ },
+ {
+  "case": "Transit arrivals vs BART ridership",
+  "quantity": "Powell Street: people arriving per weekday (ratio model/BART exits)",
+  "model": 2.1182810556860576,
+  "target": 1.0,
+  "source": "https://www.bart.gov/about/reports/ridership",
+  "note": "model 30,660 vs BART 14,474 exits; model inlet also carries Muni Metro/other rail riders"
+ },
+ {
+  "case": "Transit arrivals vs BART ridership",
+  "quantity": "Powell Street: hourly arrival profile correlation",
+  "model": 0.8434624742598635,
+  "target": 0.8,
+  "source": "BART hourly OD (Sep 2025)",
+  "note": "Pearson r over 24 hours"
+ },
+ {
+  "case": "Cycling vs SFMTA counts",
+  "quantity": "Cyclists at count sites, PM peak hour (Pearson r across sites)",
+  "model": 0.5879063427397109,
+  "target": 0.6,
+  "source": "SFMTA manual bike counts (DataSF v4v2-5x7s)",
+  "note": "11 sites, counts from 2015-2017"
+ },
+ {
+  "case": "Cycling vs SFMTA counts",
+  "quantity": "Cyclists at count sites, total (ratio model/observed)",
+  "model": 0.08796152652807943,
+  "target": 1.0,
+  "source": "SFMTA manual bike counts",
+  "note": "model counts commuters only; observed includes all cyclists"
+ }
+]

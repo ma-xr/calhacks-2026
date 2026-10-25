@@ -1,0 +1,19 @@
+{
+ "answer": "Revenue rose by about $27,710 per weekday, from the plan's total of roughly $10.57 million. The model reports it as a small net gain, and visits rose by only about 1,062 per weekday.\n\n**Why it rose:** Pedestrianizing 2nd Street and charging $5 on I-80 shifted travel toward walking and transit. Walk minutes rose by about 63,374, and foot traffic rose on Mission (+19,656 per day), Beale (+16,716) and Market (+10,038). More people on foot means more stops at nearby shops.\n\n**Winners:** Whole Cakes (+$1,811 per day), Reynoso Florist (+$1,791), Quality Shoe Repair (+$1,043), and the caf\u00e9 Radiator (+$864).\n\n**Losers:** Insomnia Cookies (\u2212$945 per day), Golden Goose (\u2212$818), and several caf\u00e9s, including Blue Stone Lane (\u2212$152), Philz (\u2212$147) and Cafe Madeleine (\u2212$128).\n\n**Caveat:** The economic value of this gain depends on the assumed \"retail net new share\" parameter. Also, the model shows 42 people dropping out of commuting (\"gone\"), which is a cost of the charge.",
+ "grounding": {
+  "scenario": "b2b36d9552f6",
+  "keys": [
+   "scenario",
+   "metrics_plan",
+   "delta_vs_baseline",
+   "value_usd_per_yr",
+   "value_lines",
+   "car_traffic_change_by_street",
+   "foot_traffic_change_by_street",
+   "biggest_business_changes",
+   "assumptions_flagged",
+   "scale_people_per_agent"
+  ]
+ },
+ "model": "claude-sonnet-5-5"
+}

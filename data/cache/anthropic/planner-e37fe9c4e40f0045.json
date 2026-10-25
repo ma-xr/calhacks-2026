@@ -1,0 +1,162 @@
+{
+ "goal": "boost small business in SoMa without slowing Bay Bridge traffic",
+ "options": [
+  {
+   "title": "Alleys plus Ellis and Sutter (Clementina, Minna, Ellis, Sutter)",
+   "edits": {
+    "pedestrianized": [
+     29,
+     30,
+     88,
+     89,
+     90,
+     116,
+     159,
+     175,
+     176,
+     216,
+     346,
+     348,
+     510,
+     595,
+     596,
+     720,
+     727,
+     740,
+     789,
+     906,
+     1015,
+     1016,
+     1017,
+     1020,
+     1059,
+     1074,
+     1104,
+     1105,
+     1106,
+     1107,
+     1125,
+     1126,
+     1139,
+     1179,
+     1183,
+     1241,
+     1258,
+     1259,
+     1263
+    ],
+    "blocks": {},
+    "policies": []
+   },
+   "rationale": "This is the only plan that raises business revenue (+$128,246 in the model's revenue delta). It also cuts total delay by 122 hours and adds about 409 new social ties, with a total value of about $36.7M per year. The trade-offs are that 722 fewer commuters drive, 38 commuters are counted as 'gone', and rent pressure rises by 0.16. The model reports no Bay Bridge-specific figure, so total delay is the only traffic measure.",
+   "result_id": "ff01aed23a2e",
+   "value_total": 36696053.31,
+   "deltas": {
+    "commuters": {
+     "car": -722,
+     "transit": 76,
+     "walk": 741,
+     "bike": -133,
+     "gone": 38
+    },
+    "delay_hours_total": -122.15,
+    "revenue": 128245.98,
+    "new_ties": 408.7,
+    "co2_tonnes": -4.72,
+    "rent_pressure_index": 0.16
+   }
+  },
+  {
+   "title": "SoMa alleys: Clementina, Minna, Natoma",
+   "edits": {
+    "pedestrianized": [
+     29,
+     30,
+     34,
+     35,
+     36,
+     37,
+     38,
+     88,
+     89,
+     90,
+     116,
+     216,
+     364,
+     1017,
+     1020,
+     1104,
+     1105,
+     1106,
+     1107,
+     1139,
+     1258,
+     1263
+    ],
+    "blocks": {},
+    "policies": []
+   },
+   "rationale": "Total delay falls by 56 hours and 741 more commuters walk, for a total value of about $19.0M per year. Most of that value comes from mobility ($10.0M) and health ($8.6M). The economy pillar is negative (-$862K per year) and revenue falls by $18,634, so this plan does not help small businesses on the model's numbers. The model reports no Bay Bridge-specific figure.",
+   "result_id": "35c9646f714f",
+   "value_total": 18998187.68,
+   "deltas": {
+    "commuters": {
+     "car": -665,
+     "transit": 38,
+     "walk": 741,
+     "bike": -114,
+     "gone": 0
+    },
+    "delay_hours_total": -56.01,
+    "revenue": -18633.71,
+    "new_ties": 116.4,
+    "co2_tonnes": -4.77,
+    "rent_pressure_index": -0.27
+   }
+  },
+  {
+   "title": "Clementina + Minna only",
+   "edits": {
+    "pedestrianized": [
+     29,
+     30,
+     88,
+     89,
+     90,
+     116,
+     216,
+     1017,
+     1020,
+     1104,
+     1105,
+     1106,
+     1107,
+     1139,
+     1258,
+     1263
+    ],
+    "blocks": {},
+    "policies": []
+   },
+   "rationale": "This smallest option cuts total delay by about 98 hours and is worth about $18.1M per year, mostly from mobility and health. Revenue falls by $20,445 and the economy pillar is -$946K per year, so it does not meet the small-business goal and is the weakest of the three on that measure. The model reports no Bay Bridge-specific figure.",
+   "result_id": "b3aab8130db9",
+   "value_total": 18134098.32,
+   "deltas": {
+    "commuters": {
+     "car": -665,
+     "transit": 38,
+     "walk": 741,
+     "bike": -114,
+     "gone": 0
+    },
+    "delay_hours_total": -97.72,
+    "revenue": -20444.74,
+    "new_ties": 107.46,
+    "co2_tonnes": -4.42,
+    "rent_pressure_index": -0.28
+   }
+  }
+ ],
+ "evaluated": 3,
+ "model": "claude-sonnet-5-5"
+}

@@ -1,0 +1,1821 @@
+<meta charset="utf-8">
+<title>Human Project · Paper Model</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* "Paper Model": an architect's white study model on a pale table, with an editorial UI.
+   Color is reserved for data: blue cars, orange-red walkers, highlighter-yellow edits, violet ties. */
+:root {
+  --paper: #eef1f4;
+  --card: #ffffff;
+  --rule: #e1e5ea;
+  --rule-2: #c9d0d8;
+  --ink: #14223a;
+  --ink-2: #47566b;
+  --dim: #7a8696;
+  --car: #2459d6;
+  --walk: #f0532d;
+  --edit: #ffcf33;
+  --edit-ink: #8a6a00;
+  --tie: #7b3fe4;
+  --good: #158a5e;
+  --bad: #cf3434;
+  --f-display: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --f-ui: "Geist", "Segoe UI", system-ui, sans-serif;
+  --f-data: "Geist Mono", ui-monospace, Menlo, monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--paper); color: var(--ink); font-family: var(--f-ui); font-size: 13px; overflow: hidden; -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--car); outline-offset: 2px; }
+#app {
+  height: 100%;
+  display: grid;
+  grid-template-columns: 226px minmax(0, 1fr) 214px;
+  grid-template-rows: 58px minmax(0, 1fr) 54px;
+  gap: 10px;
+  padding-block: 10px;
+  padding-left: max(14px, env(safe-area-inset-left, 0px));
+  padding-right: max(14px, env(safe-area-inset-right, 0px));
+}
+#app.demo { grid-template-columns: 226px minmax(0, 1fr); }
+#app.demo #side { display: none; }
+#app.demo #ask, #app.demo .note, #app.demo #presets { display: none; }
+#mini { display: none; gap: 14px; align-items: baseline; font-size: 11.5px; color: var(--ink-2); white-space: nowrap; margin-left: auto; }
+#app.demo #mini { display: flex; }
+#mini b { font-family: var(--f-display); font-weight: 500; font-size: 16px; color: var(--ink); margin-left: 4px; }
+#mini .sep { width: 1px; height: 18px; background: var(--rule); align-self: center; }
+.card { background: var(--card); border: 1px solid var(--rule); border-radius: 6px; }
+h2.eyebrow, .eyebrow { margin: 0 0 10px; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); font-weight: 600; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.eyebrow span { letter-spacing: 0; text-transform: none; font-weight: 400; }
+
+/* Top bar */
+#top { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; padding: 0 14px; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.brand svg { flex: none; }
+.brand b { display: block; font-family: var(--f-display); font-weight: 500; font-size: 22px; letter-spacing: -.01em; line-height: 1; white-space: nowrap; }
+.brand small { display: block; color: var(--dim); font-size: 11px; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.brand > div { min-width: 0; }
+.seg { display: flex; gap: 2px; background: var(--paper); padding: 3px; border-radius: 6px; border: 1px solid var(--rule); }
+.seg > button { padding: 5px 11px; border-radius: 4px; color: var(--ink-2); font-weight: 500; white-space: nowrap; }
+.seg > button.on { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgba(20,34,58,.14), 0 0 0 1px var(--rule); }
+.seg > button[disabled] { opacity: .45; cursor: default; }
+.clock { font-family: var(--f-data); color: var(--dim); display: flex; gap: 8px; align-items: baseline; white-space: nowrap; }
+.clock b { color: var(--ink); font-size: 19px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.spacer { flex: 1; }
+.cv { display: flex; align-items: baseline; gap: 8px; }
+.cv small { font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); white-space: nowrap; }
+.cv b { min-width: 92px; text-align: right; font-family: var(--f-display); font-size: clamp(20px, 2.4vw, 30px); font-weight: 500; color: var(--good); font-variant-numeric: tabular-nums; line-height: 1; }
+.cv i { font-style: normal; color: var(--dim); font-family: var(--f-data); font-size: 12px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 5px; background: var(--card); border: 1px solid var(--rule-2); font-weight: 500; white-space: nowrap; }
+.btn:hover { border-color: var(--ink-2); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: #fff; }
+.btn.primary:hover { background: #22365a; }
+.btn svg { flex: none; }
+
+/* Story sidebar */
+#story { display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: auto; }
+#story section { padding: 12px 12px 10px; }
+#steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; position: relative; }
+#steps::before { content: ""; position: absolute; left: 11px; top: 14px; bottom: 14px; width: 1px; background: var(--rule-2); }
+.step > button { display: grid; grid-template-columns: 23px minmax(0, 1fr); gap: 10px; width: 100%; text-align: left; padding: 4px 4px 4px 0; border-radius: 5px; position: relative; }
+.step .n { width: 23px; height: 23px; border-radius: 50%; border: 1px solid var(--rule-2); background: var(--card); display: grid; place-items: center; font-family: var(--f-display); font-size: 14px; color: var(--ink-2); line-height: 1; }
+.step b { display: block; font-weight: 500; font-size: 13.5px; line-height: 1.25; margin-top: 3px; }
+.step small { display: none; color: var(--dim); font-size: 11.5px; line-height: 1.35; margin-top: 1px; }
+.step > button:hover b { text-decoration: underline; text-underline-offset: 2px; text-decoration-color: var(--rule-2); }
+.step.on .n { background: var(--ink); color: #fff; border-color: var(--ink); }
+.step.on b { font-weight: 600; }
+.step.on small, #app:not(.demo) .step:hover small { display: block; }
+.step.done .n { background: var(--paper); color: var(--ink); border-color: var(--ink-2); }
+.step .cap { display: none; margin: 2px 0 6px 33px; padding: 8px 10px; border-left: 2px solid var(--walk); background: #fbf7f5; color: var(--ink-2); line-height: 1.45; font-size: 12px; }
+
+.tools { display: grid; grid-template-columns: repeat(4, 1fr); }
+.tools > button { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 2px 5px; font-size: 11px; }
+.tools > button svg { width: 20px; height: 20px; }
+.tools > button.on { color: var(--ink); }
+.tools > button.on[data-tool="ped"] svg { color: var(--walk); }
+.hint { margin: 6px 0 0; color: var(--dim); font-size: 11.5px; line-height: 1.4; }
+#infos { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+#infos button { display: flex; flex-direction: column; align-items: stretch; gap: 4px; width: 100%; padding: 6px 7px 5px; border-radius: 4px; text-align: left; color: var(--ink-2); border: 1px solid var(--rule); font-size: 12px; line-height: 1.15; white-space: nowrap; }
+#infos button:hover { background: var(--paper); color: var(--ink); }
+#infos button.on { background: var(--ink); color: #fff; }
+#infos button.on small { color: rgba(255,255,255,.7); }
+#infos .sw { height: 6px; border-radius: 2px; box-shadow: inset 0 0 0 1px rgba(20,34,58,.12); }
+#infos small { display: none; }
+
+/* Stage */
+#stage { position: relative; overflow: hidden; border-radius: 6px; border: 1px solid var(--rule); background: #e7eaee; min-height: 0; }
+#stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+#labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 1; }
+.lbl { position: absolute; transform: translate(-50%, -100%); white-space: nowrap; }
+.lbl.district { font-family: var(--f-display); font-style: italic; font-size: 21px; letter-spacing: .02em; color: rgba(20,34,58,.42); transform: translate(-50%, -50%); }
+.lbl.landmark { font-size: 10.5px; color: var(--ink-2); text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 2px #fff; }
+.lbl.landmark::after { content: ""; display: block; width: 1px; height: 12px; background: var(--ink-2); margin: 2px auto 0; opacity: .6; }
+.lbl.street { background: var(--edit); color: var(--ink); padding: 3px 8px; border-radius: 2px; font-weight: 600; font-size: 11.5px; transform: translate(-50%, -50%); box-shadow: 0 1px 0 rgba(20,34,58,.25); }
+.lbl.pin { background: var(--ink); color: #fff; font-size: 11.5px; font-weight: 600; padding: 3px 8px; border-radius: 2px; z-index: 2; }
+.lbl.pin::after { content: ""; position: absolute; left: 50%; top: 100%; width: 1px; height: 26px; background: var(--ink); }
+.lbl.pin { transform: translate(-50%, calc(-100% - 26px)); }
+.lbl.spill { background: var(--card); color: var(--bad); border: 1px solid var(--bad); padding: 2px 8px; border-radius: 2px; font-size: 11.5px; font-weight: 500; transform: translate(-50%, -50%); }
+.callout { display: flex; flex-direction: column; align-items: center; }
+.callout .cb { display: flex; align-items: baseline; gap: 6px; white-space: nowrap; background: var(--card); border: 1px solid var(--ink); border-radius: 2px; padding: 2px 6px 3px; box-shadow: 2px 2px 0 rgba(20,34,58,.10); font-family: var(--f-data); font-size: 11px; font-variant-numeric: tabular-nums; }
+.callout .cb b { font-family: var(--f-ui); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; color: var(--ink); }
+.callout .cb em { font-style: normal; font-family: var(--f-ui); font-size: 9.5px; color: var(--dim); font-weight: 500; }
+.callout .cb i { font-style: normal; }
+.callout s { display: block; width: 1px; height: 20px; background: var(--ink); text-decoration: none; }
+.callout.car .cb i { color: var(--car); }
+.callout.walk .cb i { color: var(--walk); }
+.callout.car .cb { border-left: 3px solid var(--car); }
+.callout.walk .cb { border-left: 3px solid var(--walk); }
+
+.float { position: absolute; z-index: 3; background: rgba(255,255,255,.96); border: 1px solid var(--rule); border-radius: 5px; box-shadow: 0 1px 2px rgba(20,34,58,.06), 0 6px 20px rgba(20,34,58,.06); }
+#legstack { position: absolute; left: 12px; bottom: 12px; z-index: 3; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+#legstack .float { position: static; }
+#legend { display: grid; grid-template-columns: auto auto; gap: 4px 14px; align-items: center; padding: 8px 12px; font-size: 11.5px; color: var(--ink-2); }
+#legend span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+#legend b { grid-column: 1 / -1; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); font-weight: 600; }
+.k-car { width: 13px; height: 7px; background: var(--car); border-radius: 1px; display: inline-block; }
+.k-walk { width: 8px; height: 8px; background: var(--walk); border-radius: 50%; display: inline-block; box-shadow: 0 0 0 1.5px #fff, 0 0 0 2.5px rgba(240,83,45,.35); }
+.k-edit { width: 16px; height: 6px; background: var(--edit); display: inline-block; }
+.k-tie { width: 16px; height: 8px; border: 1.5px solid var(--tie); border-bottom: 0; border-radius: 10px 10px 0 0; display: inline-block; }
+#infolegend { width: 262px; padding: 10px 12px 11px; }
+#infolegend h4 { margin: 0; font-family: var(--f-display); font-weight: 500; font-size: 17px; line-height: 1.15; }
+#infolegend h4 small { display: block; font-family: var(--f-ui); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); font-weight: 600; margin-top: 2px; }
+#infolegend p { margin: 3px 0 8px; color: var(--ink-2); font-size: 11.5px; line-height: 1.4; }
+.ramp { height: 10px; border-radius: 1px; box-shadow: inset 0 0 0 1px rgba(20,34,58,.12); }
+.ramp-ax { display: flex; justify-content: space-between; font-family: var(--f-data); font-size: 10px; color: var(--ink-2); margin-top: 3px; }
+.cats { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; font-size: 11.5px; }
+.cats span { display: flex; align-items: center; gap: 7px; }
+.cats i { width: 12px; height: 12px; border-radius: 1px; box-shadow: inset 0 0 0 1px rgba(20,34,58,.15); }
+#presets { right: 12px; bottom: 12px; display: flex; align-items: center; padding: 3px; gap: 2px; }
+#presets button { padding: 5px 9px; border-radius: 3px; font-size: 11.5px; color: var(--ink-2); }
+#presets button:hover { background: var(--paper); color: var(--ink); }
+#presets .lab { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); padding: 0 6px 0 7px; font-weight: 600; }
+
+#caption { left: 50%; top: 12px; transform: translateX(-50%); width: min(600px, calc(100% - 24px)); z-index: 11; padding: 12px 14px 12px 12px; display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 12px; align-items: start; border-color: var(--rule-2); }
+#caption .num { font-family: var(--f-display); font-size: 40px; line-height: .85; color: var(--walk); text-align: center; }
+#caption small { display: block; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); font-weight: 600; }
+#caption b { display: block; font-family: var(--f-display); font-weight: 500; font-size: 19px; line-height: 1.15; margin: 2px 0 3px; }
+#caption p { margin: 0; color: var(--ink-2); line-height: 1.45; font-size: 12.5px; }
+#caption .ctl { display: flex; flex-direction: column; gap: 4px; }
+#caption .ctl button { font-size: 11px; color: var(--ink-2); padding: 3px 8px; border-radius: 3px; border: 1px solid var(--rule-2); white-space: nowrap; }
+
+#chips { position: absolute; left: 12px; top: 12px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; z-index: 3; }
+#stage.has-cap #chips, #stage.has-cap #inspector, #stage.has-cap .side-tag { top: 112px; }
+#stage.has-cap #ai { top: 112px; }
+#stage.drawer #presets { right: auto; left: 12px; bottom: auto; top: 12px; }
+#stage.drawer.has-cap #presets { top: 112px; }
+#stage.drawer #chips { display: none; }
+.chip { padding: 8px 12px; font-size: 12px; }
+.chip .dots { display: inline-flex; gap: 4px; margin-left: 8px; vertical-align: middle; }
+.chip .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--rule-2); }
+.chip .dots i.on { background: var(--ink); }
+#evap { width: 236px; padding: 10px 12px; }
+#evap h5 { margin: 0 0 6px; font-family: var(--f-display); font-weight: 500; font-size: 15px; }
+#evap .row { display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: var(--ink-2); }
+#evap .row b { font-family: var(--f-data); font-weight: 500; color: var(--ink); }
+#evap .big { font-family: var(--f-display); font-size: 24px; color: var(--walk); line-height: 1; }
+
+#inspector { right: 12px; top: 12px; width: 310px; padding: 12px 14px; max-height: calc(100% - 24px); overflow: auto; }
+#stage.has-cap #inspector { max-height: calc(100% - 124px); }
+#inspector.compact { width: 250px; }
+#inspector h3 { margin: 0 22px 0 0; font-family: var(--f-display); font-size: 19px; font-weight: 500; line-height: 1.15; }
+#inspector .sub { color: var(--dim); font-size: 11.5px; margin: 3px 0 10px; line-height: 1.4; }
+.x { position: absolute; right: 8px; top: 6px; color: var(--dim); font-size: 18px; padding: 2px 6px; line-height: 1; }
+.kv { display: grid; grid-template-columns: 1fr auto auto; gap: 4px 12px; font-family: var(--f-data); font-size: 11.5px; align-items: baseline; }
+.kv span:nth-child(3n+1) { color: var(--ink-2); font-family: var(--f-ui); }
+.kv .h { color: var(--dim); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; font-family: var(--f-ui); border-bottom: 1px solid var(--rule); padding-bottom: 3px; }
+.up { color: var(--good); } .down { color: var(--bad); }
+.m-car { color: var(--car); font-weight: 500; } .m-walk { color: var(--walk); font-weight: 500; }
+.diary { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--rule); line-height: 1.5; color: var(--ink-2); }
+.diary p { margin: 0 0 6px; }
+.diary .t { font-family: var(--f-data); color: var(--walk); margin-right: 6px; font-size: 11px; }
+.zones { display: flex; flex-wrap: wrap; gap: 5px; margin: 6px 0 10px; }
+.zones button { padding: 4px 9px; border-radius: 3px; border: 1px solid var(--rule-2); font-size: 12px; display: inline-flex; align-items: center; gap: 6px; }
+.zones button i { width: 9px; height: 9px; border-radius: 1px; }
+.zones button.on { border-color: var(--ink); background: var(--ink); color: #fff; }
+.lab-s { font-size: 10px; color: var(--dim); letter-spacing: .12em; text-transform: uppercase; font-weight: 600; }
+input[type=range] { width: 100%; accent-color: var(--ink); }
+.bars { display: flex; align-items: flex-end; gap: 2px; height: 54px; margin: 10px 0 2px; }
+.bars div { flex: 1; position: relative; height: 100%; }
+.bars i, .bars em { position: absolute; bottom: 0; left: 0; right: 0; }
+.bars i { background: #d5dbe2; }
+.bars em { background: var(--ink); left: 28%; right: 28%; }
+.axis { display: flex; justify-content: space-between; font-family: var(--f-data); font-size: 9.5px; color: var(--dim); }
+
+#handle { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--ink); z-index: 3; cursor: ew-resize; }
+#handle::after { content: "⇆"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 34px; height: 34px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; font-size: 15px; }
+.side-tag { position: absolute; top: 12px; z-index: 3; font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; font-weight: 600; padding: 5px 10px; border-radius: 3px; background: var(--card); border: 1px solid var(--ink); }
+
+#ai { right: 12px; top: 12px; width: 310px; z-index: 4; padding: 14px; overflow: auto; max-height: calc(100% - 24px); }
+#stage.has-cap #ai { max-height: calc(100% - 124px); }
+#ai .q { background: var(--paper); border-radius: 4px; padding: 8px 10px; margin: 8px 0 10px; font-family: var(--f-display); font-size: 15px; }
+#ai .a { line-height: 1.5; color: var(--ink-2); margin-bottom: 10px; }
+.opt { border: 1px solid var(--rule); border-radius: 5px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer; position: relative; }
+.opt:hover, .opt.hover { border-color: var(--ink); box-shadow: inset 3px 0 0 var(--edit); }
+.opt b { display: block; margin-bottom: 3px; font-weight: 600; }
+.opt .why { color: var(--ink-2); font-size: 12px; line-height: 1.4; }
+.opt .nums { display: flex; gap: 12px; margin-top: 7px; font-family: var(--f-data); font-size: 11px; flex-wrap: wrap; }
+.opt .apply { margin-top: 8px; }
+.mock { font-size: 10px; color: var(--dim); letter-spacing: .12em; text-transform: uppercase; font-weight: 600; }
+
+/* Right column */
+#side { display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: auto; }
+#side section { padding: 12px 13px; }
+.stats { display: grid; grid-template-columns: 1fr; gap: 4px; }
+.stats div { display: flex; justify-content: space-between; align-items: baseline; min-width: 0; }
+.stats b { order: 2; display: block; font-family: var(--f-display); font-weight: 500; font-size: 19px; font-variant-numeric: tabular-nums; line-height: 1.05; }
+.stats small { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--ink-2); margin-top: 2px; white-space: nowrap; }
+
+.pillars { display: grid; grid-template-columns: 1fr; gap: 0; border-top: 1px solid var(--rule); }
+.pill { padding: 6px 0; min-width: 0; border-bottom: 1px solid var(--rule); display: grid; grid-template-columns: 1fr auto; align-items: baseline; column-gap: 8px; }
+.pill small { display: block; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 600; }
+.pill b { display: block; font-family: var(--f-display); font-size: 18px; font-weight: 500; font-variant-numeric: tabular-nums; text-align: right; }
+.pill span { grid-column: 1 / -1; font-size: 11px; color: var(--ink-2); display: block; line-height: 1.3; }
+.feed { display: flex; flex-direction: column; gap: 11px; }
+.post { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 9px; cursor: pointer; }
+.post .av { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-weight: 600; font-size: 10.5px; color: var(--ink); background: var(--paper); border: 1px solid var(--rule-2); }
+.post .who { font-size: 12px; font-weight: 500; } .post .who em { font-style: normal; color: var(--dim); font-family: var(--f-data); font-size: 10.5px; margin-left: 4px; font-weight: 400; }
+.post .who .tag { font-style: normal; font-size: 10px; padding: 0 5px; border-radius: 2px; margin-left: 4px; font-weight: 500; }
+.post p { margin: 2px 0 0; color: var(--ink-2); line-height: 1.4; }
+.post.new { animation: slide .5s ease-out; }
+@keyframes slide { from { opacity: 0; transform: translateY(-6px); } }
+
+/* Bottom bar */
+#bottom { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; padding: 0 12px; }
+#play { width: 34px; height: 34px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; flex: none; }
+.scrub { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 120px; }
+.scrub span { font-family: var(--f-data); font-size: 11px; color: var(--dim); }
+.speeds > button { font-family: var(--f-data); font-size: 11px; padding: 4px 8px; }
+#ask { display: flex; align-items: center; gap: 8px; background: var(--paper); border: 1px solid var(--rule); border-radius: 5px; padding: 0 4px 0 10px; width: 380px; }
+#ask input { flex: 1; min-width: 0; background: none; border: 0; color: var(--ink); font: inherit; padding: 8px 0; outline: none; }
+#ask .btn { padding: 4px 10px; }
+.note { font-family: var(--f-data); font-size: 10.5px; color: var(--dim); white-space: nowrap; }
+
+/* Modals */
+.veil { position: absolute; inset: 0; z-index: 10; background: rgba(238,241,244,.72); backdrop-filter: blur(5px); display: grid; place-items: center; padding: 16px; }
+.sheet { width: min(720px, 100%); max-height: 100%; overflow: auto; background: var(--card); border: 1px solid var(--rule-2); border-radius: 6px; padding: 24px 28px 18px; box-shadow: 0 20px 60px rgba(20,34,58,.16); }
+.intro .kicker { display: flex; align-items: center; gap: 10px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); font-weight: 600; }
+.intro h1 { font-family: var(--f-display); font-size: 50px; line-height: 1.0; margin: 12px 0 12px; font-weight: 400; letter-spacing: -.015em; text-wrap: balance; }
+.intro h1 em { font-style: italic; background: linear-gradient(transparent 58%, var(--edit) 58%, var(--edit) 92%, transparent 92%); padding: 0 2px; }
+.intro p { color: var(--ink-2); line-height: 1.55; font-size: 14px; max-width: 60ch; }
+.intro .row { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+.intro .keyrow { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--rule); font-size: 12px; color: var(--ink-2); }
+.intro .keyrow span { display: inline-flex; align-items: center; gap: 7px; }
+.pitch .eyebrow { margin: 0; }
+.pitch h2 { font-family: var(--f-display); font-size: 32px; margin: 6px 0 2px; font-weight: 400; text-wrap: balance; }
+.pitch .total { font-family: var(--f-display); font-size: 62px; font-weight: 400; color: var(--good); line-height: 1; margin: 12px 0 4px; }
+.stack { display: flex; height: 12px; overflow: hidden; margin: 14px 0 6px; background: var(--paper); }
+.stack div { height: 100%; }
+.legend2 { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--ink-2); }
+.legend2 i { display: inline-block; width: 9px; height: 9px; border-radius: 1px; margin-right: 6px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 20px; }
+.grid2 h4 { margin: 0 0 6px; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); font-weight: 600; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+td { padding: 5px 0; border-bottom: 1px solid var(--rule); }
+td:last-child { text-align: right; font-family: var(--f-data); }
+.appr { margin-bottom: 9px; }
+.appr div { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px; }
+.appr .track { height: 6px; background: var(--paper); overflow: hidden; }
+.appr .track i { display: block; height: 100%; }
+.foot { margin-top: 18px; font-size: 11px; color: var(--dim); line-height: 1.5; }
+#toast { left: 50%; bottom: 56px; transform: translateX(-50%); z-index: 12; padding: 8px 14px; }
+#tip { position: absolute; z-index: 5; pointer-events: none; background: var(--ink); color: #fff; padding: 5px 8px; border-radius: 3px; font-size: 11.5px; white-space: nowrap; line-height: 1.35; }
+#tip small { display: block; color: rgba(255,255,255,.7); font-size: 10.5px; }
+#brush { position: absolute; z-index: 5; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; border: 2px solid var(--ink); background: rgba(255,207,51,.55); pointer-events: none; }
+#loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--dim); font-family: var(--f-display); font-style: italic; font-size: 18px; z-index: 2; }
+
+@media (max-width: 1100px) {
+  #app { grid-template-columns: 230px minmax(0, 1fr); }
+  #side { display: none; }
+  #ask { width: 260px; }
+  .note { display: none; }
+}
+@media (max-width: 760px) {
+  body { overflow: auto; }
+  #app { height: auto; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto 64vh auto; }
+  #top { flex-wrap: wrap; padding: 10px 12px; gap: 10px; }
+  #story { overflow: visible; order: 2; }
+  #stage { order: 3; }
+  #bottom { flex-wrap: wrap; padding: 10px 12px; order: 4; }
+  #ask { width: 100%; }
+  #inspector, #ai { left: 12px; right: 12px; width: auto; }
+  #legend { flex-wrap: wrap; right: 12px; }
+  #presets { display: none; }
+  .grid2 { grid-template-columns: 1fr; }
+  .intro h1 { font-size: 36px; }
+}
+@media (prefers-reduced-motion: reduce) { .post.new { animation: none; } }
+</style>
+
+<div id="app">
+  <header id="top" class="card">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="1.5" y="1.5" width="27" height="27" rx="3" fill="none" stroke="#14223a" stroke-width="1.5"/><rect x="6" y="13" width="5" height="11" fill="#14223a"/><rect x="12.5" y="7" width="5" height="17" fill="#14223a"/><rect x="19" y="16" width="5" height="8" fill="#14223a"/><circle cx="21.5" cy="9.5" r="2.4" fill="#f0532d"/></svg>
+      <div><b>The Human Project</b><small>Modeling urban society with agent swarms</small></div>
+    </div>
+    <div class="seg" role="tablist">
+      <button id="tab-base" role="tab">Today</button>
+      <button id="tab-plan" role="tab" class="on">Plan A</button>
+      
+    </div>
+    <div class="clock"><b id="clock">06:40</b><span id="daypart">Morning</span></div>
+    <div class="spacer"></div>
+    <div class="cv"><small>City value vs today</small><b id="cv">$0</b><i>/yr</i></div>
+    <button class="btn" id="pitch-btn">Pitch to the Board</button>
+    <button class="btn primary" id="demo-btn"><svg width="10" height="12" viewBox="0 0 10 12"><path d="M0 0l10 6-10 6z" fill="currentColor"/></svg><span>Play demo</span></button>
+  </header>
+
+  <nav id="story">
+    <section class="card">
+      <h2 class="eyebrow">The story<span>click any step</span></h2>
+      <ol id="steps"></ol>
+    </section>
+    <section class="card">
+      <h2 class="eyebrow">Tools<span>V P D Z</span></h2>
+      <div class="seg tools" id="tools">
+        <button data-tool="select" class="on" title="Select and inspect (V)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M6 3.5l12 7.2-5.3 1.3-2.6 5.4z"/><path d="M12.7 12l4.3 6"/></svg>Select</button>
+        <button data-tool="ped" title="Make streets car-free (P)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4.5" r="1.8"/><path d="M10 21l2.2-5.2L10.5 12l1.2-4.5 3.3 3 3 1.2"/><path d="M11.7 7.5L8 9.5 7 13"/><path d="M12.2 15.8l2.8 2.2.8 3"/></svg>Car-free</button>
+        <button data-tool="density" title="Change block density (D)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 21V11h5v10M9 21V4h6v17M15 21v-8h5v8"/><path d="M3 21h18"/></svg>Density</button>
+        <button data-tool="zoning" title="Rezone a block (Z)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="7" height="7"/><rect x="13" y="4" width="7" height="7" fill="currentColor" fill-opacity=".25"/><rect x="4" y="13" width="7" height="7" fill="currentColor" fill-opacity=".25"/><rect x="13" y="13" width="7" height="7"/></svg>Zoning</button>
+      </div>
+      <p class="hint" id="tool-hint">Click anything to inspect it. Drag to pan, right-drag to rotate, scroll to zoom.</p>
+    </section>
+    <section class="card">
+      <h2 class="eyebrow">Info views<span>one at a time</span></h2>
+      <ul id="infos"></ul>
+    </section>
+  </nav>
+
+  <main id="stage">
+    <div id="loading">Building San Francisco…</div>
+    <div id="labels"></div>
+    <div id="caption" class="float" hidden></div>
+    <div id="chips"></div>
+    <div id="inspector" class="float" hidden></div>
+    <div id="ai" class="float" hidden></div>
+    <div id="handle" hidden></div>
+    <div class="side-tag" id="tag-l" hidden>Today</div>
+    <div class="side-tag" id="tag-r" hidden>Plan A</div>
+    <div id="legstack"><div id="infolegend" class="float" hidden></div>
+    <div id="legend" class="float"><b>Key · each dot = 6 people</b><span><i class="k-car"></i>Car</span><span><i class="k-walk"></i>Pedestrian</span><span><i class="k-edit"></i>Car-free street</span><span><i class="k-tie"></i>New tie</span></div></div>
+    <div id="presets" class="float"><span class="lab">View</span><button data-cam="overview">Overview</button><button data-cam="fidi">FiDi</button><button data-cam="soma">SoMa</button><button data-cam="top">Top-down</button><button data-cam="reset" title="Reset camera" aria-label="Reset camera"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></svg></button></div>
+    <div id="tip" hidden></div>
+    <div id="brush" hidden></div>
+    <div id="toast" class="float" hidden></div>
+    <div class="veil" id="intro">
+      <div class="sheet intro">
+        <div class="kicker"><svg width="18" height="18" viewBox="0 0 30 30" aria-hidden="true"><rect x="6" y="13" width="5" height="11" fill="#14223a"/><rect x="12.5" y="7" width="5" height="17" fill="#14223a"/><rect x="19" y="16" width="5" height="8" fill="#14223a"/><circle cx="21.5" cy="9.5" r="2.4" fill="#f0532d"/></svg>The Human Project · modeling urban society with agent swarms</div>
+        <h1>What if <em>2nd Street</em> belonged to people?</h1>
+        <p>This is a working model of a weekday in San Francisco's Financial District and SoMa, built from real OpenStreetMap buildings and streets. About 6,000 agents each have a commute, a lunch spot and coworkers. Change a street or a block and every agent replans its day. Each result is measured against the unchanged city.</p>
+        <p style="color:var(--dim);font-size:12.5px">Design mockup. Agents follow simple rules and the numbers are illustrative.</p>
+        <div class="row">
+          <button class="btn primary" id="intro-demo"><svg width="10" height="12" viewBox="0 0 10 12"><path d="M0 0l10 6-10 6z" fill="currentColor"/></svg>Play the 2-minute demo</button>
+          <button class="btn" id="intro-free">Explore on my own</button>
+        </div>
+        <div class="keyrow">
+          <span><i class="k-car"></i>Car</span>
+          <span><i class="k-walk"></i>Pedestrian</span>
+          <span><i class="k-edit"></i>Your edit (car-free street)</span>
+          <span><i class="k-tie"></i>New connection</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <aside id="side">
+    <section class="card">
+      <h2 class="eyebrow">Right now<span id="world-note">Plan A</span></h2>
+      <div class="stats">
+        <div><b id="st-people">0</b><small>people here</small></div>
+        <div><b id="st-cars" style="color:var(--car)">0</b><small><i class="k-car"></i>driving</small></div>
+        <div><b id="st-walk" style="color:var(--walk)">0</b><small><i class="k-walk"></i>walking</small></div>
+      </div>
+    </section>
+    <section class="card">
+      <h2 class="eyebrow">What changed<span id="settle-note">no changes yet</span></h2>
+      <div class="pillars" id="pillars"></div>
+    </section>
+    <section class="card" style="flex:1">
+      <h2 class="eyebrow">Citizen feed<span>simulated</span></h2>
+      <div class="feed" id="feed"></div>
+    </section>
+  </aside>
+
+  <footer id="bottom" class="card">
+    <button id="play" aria-label="Play or pause"></button>
+    <div class="scrub"><span>06:00</span><input type="range" id="scrub" min="345" max="1440" step="1" value="400" aria-label="Time of day"><span>24:00</span></div>
+    <div class="seg speeds" id="speeds">
+      <button data-s="30" title="30× real time">30×</button><button data-s="90" class="on" title="90× real time">90×</button><button data-s="300" title="300× real time">300×</button>
+    </div>
+    <button class="btn" id="compare-btn">Compare ⇆</button>
+    <form id="ask"><span style="color:var(--walk)">✦</span><input id="ask-in" placeholder="Ask the planner, e.g. “why did revenue go up?”" autocomplete="off"><button class="btn">Ask</button></form>
+    <span class="note">each dot = 6 people · © OpenStreetMap</span>
+    <div id="mini"></div>
+  </footer>
+</div>
+
+<script id="world" type="application/json">__WORLD__</script>
+<script>/*__HP_CONTEXT__*/</script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { Pass } from 'three/addons/postprocessing/Pass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { MapControls } from 'three/addons/controls/MapControls.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+
+// ───────────────────────── data + helpers ─────────────────────────
+const W = JSON.parse(document.getElementById('world').textContent);
+const $ = (s) => document.querySelector(s);
+const NODES = W.nodes, EDGES = W.edges, NAMES = W.names, BLD = W.buildings;
+const BB = W.bbox;
+const BASE = { x0: -1200, x1: 1220, z0: -1200, z1: 1260 };   // the model board
+const SCALE = 6;             // 1 agent = 6 people
+const WORKDAYS = 250;
+const inBox = (x, z, m = 0) => x > BB.x0 - m && x < BB.x1 + m && z > BB.z0 - m && z < BB.z1 + m;
+const inBase = (x, z, m = 0) => x > BASE.x0 - m && x < BASE.x1 + m && z > BASE.z0 - m && z < BASE.z1 + m;
+function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const hash2 = (a, b) => { let h = Math.imul(a + 0x9e3779b9, 0x85ebca6b) ^ Math.imul(b + 0x7f4a7c15, 0xc2b2ae35); h ^= h >>> 13; h = Math.imul(h, 0x27d4eb2f); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
+const gumbel = (u) => -Math.log(-Math.log(Math.min(Math.max(u, 1e-9), 1 - 1e-9)));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const ease = (t) => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+const easeIO = (t) => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const backOut = (t) => { const c = 1.9; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const fmtClock = (min) => { min = ((min % 1440) + 1440) % 1440; return String(Math.floor(min / 60)).padStart(2, '0') + ':' + String(Math.floor(min % 60)).padStart(2, '0'); };
+function money(v, sign = true) {
+  if (Math.abs(v) < .5) return '$0';
+  const s = v < 0 ? '−' : (sign ? '+' : ''); const a = Math.abs(v);
+  if (a >= 1e6) return s + '$' + (a / 1e6).toFixed(a >= 1e7 ? 1 : 2) + 'M';
+  if (a >= 1e3) return s + '$' + Math.round(a / 1e3) + 'K';
+  return s + '$' + Math.round(a);
+}
+const pct = (v) => (v >= 0 ? '+' : '−') + Math.abs(v * 100).toFixed(Math.abs(v) < .1 ? 1 : 0) + '%';
+const num = (v, sign = true) => (v < 0 ? '−' : (sign && v > 0 ? '+' : '')) + Math.round(Math.abs(v)).toLocaleString('en-US');
+function polyArea(p) { let a = 0; for (let i = 0, j = p.length - 1; i < p.length; j = i++) a += (p[j][0] + p[i][0]) * (p[j][1] - p[i][1]); return Math.abs(a / 2); }
+function inPoly(x, z, p) { let c = false; for (let i = 0, j = p.length - 1; i < p.length; j = i++) { const [xi, zi] = p[i], [xj, zj] = p[j]; if ((zi > z) !== (zj > z) && x < (xj - xi) * (z - zi) / (zj - zi) + xi) c = !c; } return c; }
+const _c = new THREE.Color();
+const lin = (hex) => { _c.set(hex); return [_c.r, _c.g, _c.b]; };       // sRGB hex -> linear rgb array
+const mixc = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
+function rampAt(stops, t) { t = clamp(t, 0, 1) * (stops.length - 1); const i = Math.min(stops.length - 2, Math.floor(t)); return mixc(stops[i], stops[i + 1], t - i); }
+
+// ───────────────────────── road graph ─────────────────────────
+const SPEED = { motorway: 22, motorway_link: 13, trunk: 16, trunk_link: 11, primary: 11, primary_link: 9, secondary: 10, secondary_link: 8, tertiary: 9, tertiary_link: 7, residential: 7, unclassified: 7, living_street: 4 };
+const LANES = { motorway: 4, motorway_link: 1, trunk: 3, primary: 3, secondary: 2, tertiary: 2, residential: 1, unclassified: 1, living_street: 1 };
+const WIDTH = { motorway: 18, motorway_link: 8, trunk: 16, trunk_link: 8, primary: 17, primary_link: 8, secondary: 14, secondary_link: 8, tertiary: 11, tertiary_link: 7, residential: 8, unclassified: 8, living_street: 6, pedestrian: 6 };
+EDGES.forEach((e, i) => {
+  e.id = i; e.car = e.c in SPEED; e.ped = !e.c.startsWith('motorway') && !e.c.startsWith('trunk');
+  e.lanes = e.ln || LANES[e.c] || 1; e.w = WIDTH[e.c] || 8; e.name = NAMES[e.n] || '';
+  const m = e.p[Math.floor(e.p.length / 2)]; e.mx = (e.p[0][0] + e.p[e.p.length - 1][0] + m[0] * 2) / 4; e.mz = (e.p[0][1] + e.p[e.p.length - 1][1] + m[1] * 2) / 4;
+  e.hw = e.c.startsWith('motorway');
+});
+const arcs = []; const carOut = NODES.map(() => []), carIn = NODES.map(() => []), pedOut = NODES.map(() => []);
+EDGES.forEach((e) => {
+  if (e.car) {
+    if (e.o >= 0) { const k = arcs.length; arcs.push({ e: e.id, from: e.a, to: e.b, rev: false }); carOut[e.a].push(k); carIn[e.b].push(k); }
+    if (e.o <= 0) { const k = arcs.length; arcs.push({ e: e.id, from: e.b, to: e.a, rev: true }); carOut[e.b].push(k); carIn[e.a].push(k); }
+  }
+});
+const pedArcs = [];
+EDGES.forEach((e) => { if (e.ped) { pedArcs.push({ e: e.id, from: e.a, to: e.b, rev: false }); pedOut[e.a].push(pedArcs.length - 1); pedArcs.push({ e: e.id, from: e.b, to: e.a, rev: true }); pedOut[e.b].push(pedArcs.length - 1); } });
+
+class Heap { constructor() { this.k = []; this.v = []; } get size() { return this.k.length; }
+  push(k, v) { const K = this.k, V = this.v; let i = K.length; K.push(k); V.push(v); while (i > 0) { const p = (i - 1) >> 1; if (K[p] <= k) break; K[i] = K[p]; V[i] = V[p]; i = p; } K[i] = k; V[i] = v; }
+  pop() { const K = this.k, V = this.v; const rk = K[0], rv = V[0]; const lk = K.pop(), lv = V.pop(); const n = K.length; if (n) { let i = 0; for (;;) { let l = 2 * i + 1, r = l + 1, m = i; let mk = lk; if (l < n && K[l] < mk) { m = l; mk = K[l]; } if (r < n && K[r] < mk) { m = r; } if (m === i) break; K[i] = K[m]; V[i] = V[m]; i = m; } K[i] = lk; V[i] = lv; } return [rk, rv]; } }
+function dijkstra(sources, outList, arcList, cost, reverse) {
+  const n = NODES.length, dist = new Float64Array(n).fill(Infinity), prev = new Int32Array(n).fill(-1), h = new Heap();
+  for (const s of sources) { dist[s] = 0; h.push(0, s); }
+  while (h.size) { const [d, u] = h.pop(); if (d > dist[u]) continue;
+    for (const ai of outList[u]) { const a = arcList[ai]; const c = cost(a); if (c === Infinity) continue; const v = reverse ? a.from : a.to; const nd = d + c; if (nd < dist[v]) { dist[v] = nd; prev[v] = ai; h.push(nd, v); } } }
+  return { dist, prev, reverse, arcList };
+}
+function treePath(tree, target) {
+  const out = []; let v = target, guard = 0;
+  if (tree.dist[target] === Infinity) return null;
+  while (tree.prev[v] !== -1 && guard++ < 5000) { const a = tree.arcList[tree.prev[v]]; out.push(tree.prev[v]); v = tree.reverse ? a.to : a.from; }
+  if (!tree.reverse) out.reverse();
+  return out;
+}
+const G = 60, nodeGrid = new Map();
+const gk = (x, z) => Math.floor(x / G) + ',' + Math.floor(z / G);
+NODES.forEach(([x, z], i) => { const k = gk(x, z); if (!nodeGrid.has(k)) nodeGrid.set(k, []); nodeGrid.get(k).push(i); });
+function nearestNode(x, z, ok) {
+  let best = -1, bd = Infinity;
+  for (let r = 0; r < 6 && best < 0; r++) for (let dx = -r; dx <= r; dx++) for (let dz = -r; dz <= r; dz++) {
+    const list = nodeGrid.get((Math.floor(x / G) + dx) + ',' + (Math.floor(z / G) + dz)); if (!list) continue;
+    for (const i of list) { if (!ok(i)) continue; const d = (NODES[i][0] - x) ** 2 + (NODES[i][1] - z) ** 2; if (d < bd) { bd = d; best = i; } }
+  }
+  return best;
+}
+const isLocalCar = (i) => carOut[i].length && carIn[i].length && carOut[i].some(a => !EDGES[arcs[a].e].hw);
+const isPed = (i) => pedOut[i].length > 0;
+const segGrid = new Map();
+EDGES.forEach((e) => { for (let j = 0; j < e.p.length - 1; j++) { const [x1, z1] = e.p[j], [x2, z2] = e.p[j + 1]; const cells = new Set([gk(x1, z1), gk(x2, z2), gk((x1 + x2) / 2, (z1 + z2) / 2)]); for (const k of cells) { if (!segGrid.has(k)) segGrid.set(k, []); segGrid.get(k).push([e.id, j]); } } });
+function segDist(px, pz, x1, z1, x2, z2) { const dx = x2 - x1, dz = z2 - z1; const t = clamp(((px - x1) * dx + (pz - z1) * dz) / (dx * dx + dz * dz || 1), 0, 1); return Math.hypot(px - x1 - t * dx, pz - z1 - t * dz); }
+function edgeAt(x, z, maxD = 14) {
+  let best = -1, bd = maxD; const cx = Math.floor(x / G), cz = Math.floor(z / G);
+  for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) { const l = segGrid.get((cx + dx) + ',' + (cz + dz)); if (!l) continue;
+    for (const [ei, j] of l) { const e = EDGES[ei]; if (!e.car && e.c !== 'pedestrian') continue; const d = segDist(x, z, e.p[j][0], e.p[j][1], e.p[j + 1][0], e.p[j + 1][1]) - e.w / 2; if (d < bd) { bd = d; best = ei; } } }
+  return best;
+}
+function segCross(a, b, c, d) { const o = (p, q, r) => Math.sign((q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0])); return o(a, b, c) !== o(a, b, d) && o(c, d, a) !== o(c, d, b); }
+function crossesRoad(a, b) {
+  const cells = new Set(); const steps = Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 30) + 1;
+  for (let i = 0; i <= steps; i++) cells.add(gk(lerp(a[0], b[0], i / steps), lerp(a[1], b[1], i / steps)));
+  for (const k of cells) { const l = segGrid.get(k); if (!l) continue; for (const [ei, j] of l) { const e = EDGES[ei]; if (!e.car || e.hw) continue; if (segCross(a, b, e.p[j], e.p[j + 1])) return true; } }
+  return false;
+}
+
+// ───────────────────────── places ─────────────────────────
+BLD.forEach((b, i) => {
+  b.id = i; b.area = polyArea(b.p); b.inside = inBox(b.c[0], b.c[1]);
+  b.pedNode = nearestNode(b.c[0], b.c[1], isPed); b.carNode = nearestNode(b.c[0], b.c[1], isLocalCar);
+  b.floor = b.area * Math.max(1, Math.round(b.h / 3.6));
+});
+const BG = 100, bldGrid = new Map();
+BLD.forEach(b => { const k = Math.floor(b.c[0] / BG) + ',' + Math.floor(b.c[1] / BG); if (!bldGrid.has(k)) bldGrid.set(k, []); bldGrid.get(k).push(b); });
+function bldNear(x, z, r) { const out = []; const R = Math.ceil(r / BG); const cx = Math.floor(x / BG), cz = Math.floor(z / BG); for (let dx = -R; dx <= R; dx++) for (let dz = -R; dz <= R; dz++) { const l = bldGrid.get((cx + dx) + ',' + (cz + dz)); if (l) for (const b of l) out.push(b); } return out; }
+function inBuilding(x, z) { for (const b of bldNear(x, z, 100)) if (Math.abs(b.c[0] - x) < 160 && Math.abs(b.c[1] - z) < 160 && inPoly(x, z, b.p)) return true; return false; }
+const capOf = (kind, floor) => ({
+  jobs: kind === 'office' ? floor / 18 : kind === 'mixed' ? floor / 60 : kind === 'retail' ? floor / 50 : kind === 'hotel' ? floor / 80 : kind === 'civic' ? floor / 70 : 0,
+  res: kind === 'res' ? floor / 45 : kind === 'mixed' ? floor / 140 : 0,
+});
+const offices = BLD.filter(b => b.inside && b.pedNode >= 0 && b.carNode >= 0 && (b.k === 'office' || (b.k === 'mixed' && b.h > 24) || b.k === 'hotel'));
+const homes = BLD.filter(b => b.inside && b.pedNode >= 0 && (b.k === 'res' || (b.k === 'mixed' && b.h < 70)));
+const CAT = {
+  cafe: { w: 1.2, ticket: 9, capture: .028, lunch: .8, label: 'Café' },
+  restaurant: { w: 1.5, ticket: 26, capture: .012, lunch: 1.3, label: 'Restaurant' },
+  fast_food: { w: 1.1, ticket: 13, capture: .02, lunch: 1.1, label: 'Quick bite' },
+  bar: { w: 1, ticket: 30, capture: .008, lunch: .2, label: 'Bar' },
+  shop: { w: .8, ticket: 38, capture: .009, lunch: 0, label: 'Shop' },
+};
+const BASE_POIS = W.pois.filter(p => CAT[p.c] && inBox(p.x, p.z, 40)).map((p, i) => ({ ...p, n: /sweet ?green/i.test(p.n) ? 'Folsom Greens' : p.n, id: i, node: nearestNode(p.x, p.z, isPed), q: .6 + hash2(i, 7) * .8 }));
+const PG = 120;
+function indexPois(list) { const g = new Map(); list.forEach(p => { const k = Math.floor(p.x / PG) + ',' + Math.floor(p.z / PG); if (!g.has(k)) g.set(k, []); g.get(k).push(p); }); return g; }
+function poisNear(grid, x, z, r) { const out = []; const R = Math.ceil(r / PG); const cx = Math.floor(x / PG), cz = Math.floor(z / PG); for (let dx = -R; dx <= R; dx++) for (let dz = -R; dz <= R; dz++) { const l = grid.get((cx + dx) + ',' + (cz + dz)); if (l) for (const p of l) if (Math.hypot(p.x - x, p.z - z) < r) out.push(p); } return out; }
+function poiEdges(p) { const s = new Set(); const cx = Math.floor(p.x / G), cz = Math.floor(p.z / G); for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) { const l = segGrid.get((cx + dx) + ',' + (cz + dz)); if (l) for (const [ei, j] of l) { const e = EDGES[ei]; if (e.ped && segDist(p.x, p.z, e.p[j][0], e.p[j][1], e.p[j + 1][0], e.p[j + 1][1]) < e.w / 2 + 16) s.add(ei); } } return [...s]; }
+BASE_POIS.forEach(p => { p.edges = poiEdges(p); });
+
+// ───────────────────────── inlets: three BART stations, five car inlets ─────────────────────────
+const STATIONS = W.stations.map(s => ({ ...s, nodes: [...new Set(s.e.map(([x, z]) => nearestNode(x, z, isPed)))].filter(n => n >= 0) }));
+const stationBy = (n) => STATIONS.find(s => s.name === n) || STATIONS[0];
+const INLETS = [
+  { id: 'emb', name: 'Embarcadero', sub: 'BART', mode: 'walk', station: 'Embarcadero' },
+  { id: 'mont', name: 'Montgomery', sub: 'BART', mode: 'walk', station: 'Montgomery Street' },
+  { id: 'pow', name: 'Powell', sub: 'BART', mode: 'walk', station: 'Powell Street' },
+  { id: 'i80', name: 'I-80 · Bay Bridge', sub: 'freeway', mode: 'car', gw: ['I-80 · Bay Bridge'] },
+  { id: 'us101', name: 'US-101', sub: 'freeway', mode: 'car', gw: ['US-101 / I-80 West'] },
+  { id: 'mkt', name: 'Market St', sub: 'west', mode: 'car', gw: ['Market Street'] },
+  { id: 'fol', name: 'Folsom · 6th St', sub: 'south', mode: 'car', gw: ['Folsom Street', '6th Street'] },
+  { id: 'bwy', name: 'Broadway · Columbus', sub: 'north', mode: 'car', gw: ['Broadway', 'Columbus Avenue'] },
+];
+const INLET = Object.fromEntries(INLETS.map(n => [n.id, n]));
+INLETS.forEach(n => { if (n.station) n.st = stationBy(n.station); });
+const BART = INLETS.filter(n => n.st).map(n => n.st);
+const inletOfStation = (st) => INLETS.find(n => n.st === st)?.id;
+const sinks = NODES.map((_, i) => i).filter(i => carIn[i].length && !carOut[i].length);
+const gwNodes = (names, dir) => W.gateways.filter(g => names.includes(g.name) && g[dir]).map(g => g.node);
+function exitsFor(entries, names) {
+  const named = gwNodes(names, 'out'); if (named.length) return named;
+  const out = []; for (const en of entries) { let best = -1, bd = Infinity; for (const s of sinks) { const d = Math.hypot(NODES[s][0] - NODES[en][0], NODES[s][1] - NODES[en][1]); if (d < bd) { bd = d; best = s; } } if (best >= 0 && bd < 900) out.push(best); }
+  return out.length ? [...new Set(out)] : sinks.slice(0, 1);
+}
+// Each region has exactly one car inlet and one BART inlet.
+const REGIONS = [
+  { name: 'East Bay', share: .34, car: 'i80', bart: 'emb', carBase: 30, trBase: 27 },
+  { name: 'Peninsula', share: .22, car: 'us101', bart: 'mont', carBase: 36, trBase: 42 },
+  { name: 'Western SF', share: .2, car: 'mkt', bart: 'pow', carBase: 20, trBase: 22 },
+  { name: 'Mission', share: .14, car: 'fol', bart: 'pow', carBase: 17, trBase: 18 },
+  { name: 'North Beach', share: .1, car: 'bwy', bart: 'mont', carBase: 14, trBase: 17 },
+].map(r => { const gw = INLET[r.car].gw; const entries = gwNodes(gw, 'in'); return { ...r, gw, entries, exits: exitsFor(entries, gw), st: INLET[r.bart].st }; }).filter(r => r.entries.length);
+
+// ───────────────────────── population (shared by both scenarios) ─────────────────────────
+const FIRST = ['Maria', 'Dev', 'Ana', 'James', 'Wei', 'Priya', 'Luis', 'Sam', 'Grace', 'Omar', 'Hana', 'Tom', 'Rosa', 'Kenji', 'Aisha', 'Ben', 'Lena', 'Marco', 'Nia', 'Raj', 'Elena', 'Chris', 'Mei', 'Jorge', 'Sofia', 'Andre', 'Yuki', 'Dana', 'Ivan', 'Leah'];
+const LAST = ['Okafor', 'Patel', 'Nguyen', 'Garcia', 'Chen', 'Kim', 'Rossi', 'Lopez', 'Wright', 'Haddad', 'Sato', 'Murphy', 'Silva', 'Cohen', 'Diaz', 'Park', 'Reyes', 'Ali', 'Lee', 'Novak'];
+function pickWeighted(list, wfn, r) { let t = 0; const ws = list.map(x => { const w = wfn(x); t += w; return w; }); let u = r() * t; for (let i = 0; i < list.length; i++) { u -= ws[i]; if (u <= 0) return list[i]; } return list[list.length - 1]; }
+function normal(r) { return Math.sqrt(-2 * Math.log(r() + 1e-9)) * Math.cos(2 * Math.PI * r()); }
+function makeWorker(id, r, office) {
+  const reg = pickWeighted(REGIONS, x => x.share, r);
+  const income = r() < .28 ? 0 : r() < .62 ? 1 : 2;
+  return {
+    id, kind: 'worker', name: FIRST[Math.floor(r() * FIRST.length)] + ' ' + LAST[Math.floor(r() * LAST.length)][0] + '.',
+    reg, office, income, asc: normal(r) * .9 - .2 + income * .35, eps: gumbel(r()) - gumbel(r()), evap: r(),
+    entry: reg.entries[Math.floor(r() * reg.entries.length)], exit: reg.exits[Math.floor(r() * reg.exits.length)],
+    arrive: clamp(510 + normal(r) * 45, 400, 640) * 60, leave: clamp(1050 + normal(r) * 55, 930, 1230) * 60,
+    lunch: r() < .66, lunchT: clamp(740 + normal(r) * 24, 680, 830) * 60, lunchDur: (22 + r() * 22) * 60,
+    coffee: r() < .22, coffeeT: (870 + r() * 80) * 60, open: r(),
+  };
+}
+function makeResident(id, r, home) {
+  return {
+    id, kind: 'resident', name: FIRST[Math.floor(r() * FIRST.length)] + ' ' + LAST[Math.floor(r() * LAST.length)][0] + '.',
+    home, income: r() < .45 ? 0 : r() < .75 ? 1 : 2, open: r(), evap: r(),
+    commute: r() < .5, st: BART.reduce((a, s) => Math.hypot(s.c[0] - home.c[0], s.c[1] - home.c[1]) < Math.hypot(a.c[0] - home.c[0], a.c[1] - home.c[1]) ? s : a, BART[0]),
+    out1: clamp(450 + r() * 70, 430, 540) * 60, back1: clamp(1080 + r() * 60, 1040, 1180) * 60,
+    errand: r() < .55, errandT: (540 + r() * 150) * 60, evening: r() < .6, eveT: (1110 + r() * 150) * 60, eveDur: (40 + r() * 50) * 60,
+  };
+}
+const BASE_PERSONS = (() => {
+  const r = mulberry32(2026); const P = [];
+  for (let i = 0; i < 5200; i++) P.push(makeWorker(i, r, pickWeighted(offices, b => capOf(b.k, b.floor).jobs + 50, r)));
+  for (let i = 0; i < 760; i++) P.push(makeResident(P.length, r, pickWeighted(homes, b => capOf(b.k, b.floor).res + 5, r)));
+  return P;
+})();
+
+// Service vehicles (vans, ride-hail, taxis, errands): about 15-25% of the AM peak between the rushes. Same car color.
+const SERVICE_DEST = BLD.filter(b => b.inside && b.carNode >= 0 && ['office', 'retail', 'hotel', 'mixed', 'res'].includes(b.k));
+const SERVICE_ROLES = ['delivery van', 'rideshare', 'taxi', 'courier', 'errand', 'business trip'];
+const SERVICE_P = (() => { const r = mulberry32(4242); const out = []; for (let i = 0; i < 3000; i++) { const role = SERVICE_ROLES[Math.floor(r() * SERVICE_ROLES.length)]; out.push({ id: 300000 + i, kind: 'service', role, income: 1, name: FIRST[Math.floor(r() * FIRST.length)] + ' (' + role + ')' }); } return out; })();
+function serviceTime(r) { for (;;) { const h = 6.5 + r() * 15.5; const f = (.35 + .65 * Math.exp(-((h - 12.8) ** 2) / (2 * 2.4 * 2.4))) * (h > 20 ? .45 : 1); if (r() < f) return h * 3600; } }
+
+// ───────────────────────── scenario: plans, settle loop, projections ─────────────────────────
+const ZONES = { res: 'Residential', office: 'Office', retail: 'Commercial', mixed: 'Mixed use' };
+// Planning-atlas zoning palette (also used for the Zoning info view)
+const ZCAT = [['res', 'Residential', '#f0a35e'], ['com', 'Commercial', '#e4604e'], ['office', 'Office', '#5a82c6'], ['mixed', 'Mixed use', '#a88b6c'], ['civic', 'Civic & other', '#6fb38f']];
+const zcatOf = (k) => k === 'res' ? 0 : (k === 'retail' || k === 'hotel') ? 1 : k === 'office' ? 2 : k === 'mixed' ? 3 : 4;
+const ZCOL = ZCAT.map(z => lin(z[2]));
+const ZONE_TINT = Object.fromEntries(Object.keys(ZONES).map(k => [k, mixc(ZCOL[zcatOf(k)], [1, 1, 1], .35)]));
+class Scenario {
+  constructor(name, isPlan) { this.name = name; this.isPlan = isPlan; this.ped = new Set(); this.blocks = new Map(); this.cong = new Float32Array(EDGES.length).fill(1); this.cache = new Map(); this.version = 0; }
+  carCost = (a) => this.ped.has(a.e) ? Infinity : EDGES[a.e].l / SPEED[EDGES[a.e].c] * this.cong[a.e];
+  pedCost = (a) => { const e = EDGES[a.e]; let m = this.ped.has(a.e) ? .7 : 1; if (e.c === 'primary' || e.c === 'secondary') m *= 1.12; if (e.c === 'pedestrian') m *= .85; return e.l / 1.35 * m; };
+  tree(kind, key, sources) {
+    const k = kind + ':' + key; let t = this.cache.get(k); if (t) return t;
+    if (kind === 'car') t = dijkstra(sources, carOut, arcs, this.carCost, false);
+    else if (kind === 'carRev') t = dijkstra(sources, carIn, arcs, this.carCost, true);
+    else t = dijkstra(sources, pedOut, pedArcs, this.pedCost, false);
+    this.cache.set(k, t); return t;
+  }
+  clearCarTrees() { for (const k of [...this.cache.keys()]) if (k.startsWith('car')) this.cache.delete(k); }
+  pedTreeFrom(node) { return this.tree('ped', node, [node]); }
+  stationTree(st) { return this.tree('ped', 'st' + st.name, st.nodes); }
+  buildPopulation() {
+    const P = []; const removedJobs = new Map(); const extra = [];
+    this.pois = BASE_POIS.slice();
+    for (const [bid, ed] of this.blocks) {
+      const b = BLD[bid]; const before = capOf(b.k, b.floor), after = capOf(ed.z, b.floor * ed.s);
+      const dJobs = after.jobs - before.jobs, dRes = after.res - before.res; const r = mulberry32(bid * 31 + 7);
+      if (dJobs < 0) removedJobs.set(bid, Math.min(1, -dJobs / Math.max(before.jobs, 1) * .65));
+      for (let i = 0; i < Math.min(12, Math.round(Math.max(0, dJobs) / SCALE / 4)); i++) { const w = makeWorker(100000 + bid * 400 + i, r, b); w.transitOriented = true; extra.push(w); }
+      for (let i = 0; i < Math.min(10, Math.round(Math.max(0, dRes) / SCALE / 4)); i++) extra.push(makeResident(200000 + bid * 400 + i, r, b));
+      if ((ed.z === 'retail' || ed.z === 'mixed') && ed.z !== b.k) {
+        const n = clamp(Math.round(Math.sqrt(b.area) / 14), 1, 4);
+        for (let i = 0; i < n; i++) { const c = ['cafe', 'restaurant', 'shop', 'fast_food'][i % 4]; const p = { x: b.c[0] + (i - n / 2) * 8, z: b.c[1] + 6, n: 'New ' + CAT[c].label.toLowerCase() + ' (Plan A)', c, id: 5000 + bid * 5 + i, q: 1.1, virtual: true, blk: -2 }; p.node = nearestNode(p.x, p.z, isPed); p.edges = poiEdges(p); this.pois.push(p); }
+      }
+    }
+    for (const p of BASE_PERSONS) { if (p.kind === 'worker' && removedJobs.has(p.office.id) && hash2(p.id, 3) < removedJobs.get(p.office.id)) continue; P.push(p); }
+    this.persons = P.concat(extra); this.poiGrid = indexPois(this.pois);
+    this.pedPoiBonus = new Set(); for (const p of this.pois) if (p.edges.some(e => this.ped.has(e))) this.pedPoiBonus.add(p.id);
+  }
+  lunchSpot(p, at, t) {
+    const cands = poisNear(this.poiGrid, at.c[0], at.c[1], 560).filter(q => CAT[q.c].lunch > 0 && q.node >= 0);
+    let best = null, bu = -Infinity;
+    for (const q of cands) { const d = Math.hypot(q.x - at.c[0], q.z - at.c[1]); const u = Math.log(CAT[q.c].lunch * q.q) - d / 170 + (this.pedPoiBonus.has(q.id) ? 1.0 : 0) + gumbel(hash2(p.id * 7 + t, q.id)); if (u > bu) { bu = u; best = q; } }
+    return best;
+  }
+  modeOf(p, baseRoute) {
+    if (p.kind !== 'worker') return 'transit';
+    const tCarTree = this.tree('car', p.entry, [p.entry]); const tc = tCarTree.dist[p.office.carNode];
+    const st = p.reg.st; const tw = this.stationTree(st).dist[p.office.pedNode];
+    if (tc === Infinity || p.transitOriented) return 'transit';
+    const uCar = p.asc - .06 * (p.reg.carBase + tc / 60) - 1.95; const uTr = -.06 * (p.reg.trBase + 1.6 * tw / 60);
+    let mode = uCar + p.eps > uTr ? 'car' : 'transit';
+    if (this.isPlan && p.name === MARIA_NAME && p.id === MARIA_ID && this.ped.size) mode = 'transit';
+    if (this.isPlan && mode === 'car' && baseRoute && baseRoute.some(e => this.ped.has(e))) { if (p.evap < .03) return 'gone'; if (p.evap < .16) return 'transit'; }
+    return mode;
+  }
+  iterate(baseCarRoutes) {
+    this.clearCarTrees();
+    const flow = new Float32Array(EDGES.length); this.modes = new Map(); this.carRoutes = new Map();
+    for (const p of this.persons) {
+      const m = this.modeOf(p, baseCarRoutes && baseCarRoutes.get(p.id)); this.modes.set(p.id, m);
+      if (m !== 'car') continue;
+      const path = treePath(this.tree('car', p.entry, [p.entry]), p.office.carNode); if (!path) { this.modes.set(p.id, 'transit'); continue; }
+      const edges = path.map(a => arcs[a].e); this.carRoutes.set(p.id, edges);
+      for (const e of edges) flow[e] += 1;
+    }
+    for (let i = 0; i < EDGES.length; i++) { const e = EDGES[i]; if (!e.car) continue; const vph = flow[i] * SCALE / 2.2; const cap = e.lanes * (e.hw ? 1100 : CAL.cap); const f = 1 + CAL.a * Math.pow(vph / cap, CAL.p); this.cong[i] = lerp(this.cong[i], Math.min(f, 6), .6); }
+    this.carFlow = flow;
+  }
+  settle(baseCarRoutes, days = 5, onDay) { this.cong.fill(1); this.buildPopulation(); for (let d = 0; d < days; d++) { this.iterate(baseCarRoutes); onDay && onDay(d); } this.buildTrips(); this.project(); this.version++; }
+  buildTrips() {
+    const T = []; this.lunchAt = new Map(); this.personTrips = new Map(); this.pmapPre = new Map(this.persons.map(p => [p.id, p]));
+    for (const p of this.persons) {
+      const m = this.modes.get(p.id); if (m === 'gone') continue;
+      if (p.kind === 'worker') {
+        const o = p.office;
+        if (m === 'car') {
+          const path = treePath(this.tree('car', p.entry, [p.entry]), o.carNode); const tr = path && makeTrip(p, 'am', p.arrive - 600, 'car', path, arcs, null, null, 0, this); if (tr) { tr.gin = p.reg.car; T.push(tr); }
+          const pm = treePath(this.tree('carRev', p.exit, [p.exit]), o.carNode); const tr2 = pm && makeTrip(p, 'pm', p.leave, 'car', pm, arcs, null, null, 0, this); if (tr2) { tr2.gout = p.reg.car; T.push(tr2); }
+        } else {
+          const st = this.stationTree(p.reg.st); const path = treePath(st, o.pedNode);
+          if (path) { const tr = makeTrip(p, 'am', p.arrive - 500, 'ped', path, pedArcs, 1.35); if (tr) { tr.gin = p.reg.bart; T.push(tr); } const back = makeTrip(p, 'pm', p.leave, 'ped', path.slice().reverse(), pedArcs, 1.35, null, 0, null, true); if (back) { back.gout = p.reg.bart; T.push(back); } }
+        }
+        if (p.lunch) { const q = p.id === DEV_ID && MARIA_ID >= 0 ? this.lunchSpot(this.pmapPre.get(MARIA_ID), o, 1) : this.lunchSpot(p, o, 1); if (q) { this.lunchAt.set(p.id, q); const tr = this.pedTreeFrom(q.node); const path = treePath(tr, o.pedNode); if (path && path.length) { const back = makeTrip(p, 'lunch', p.lunchT, 'ped', path.slice().reverse(), pedArcs, 1.35, q, p.lunchDur, null, true); if (back) { T.push(back); const ret = makeTrip(p, 'lunch2', p.lunchT + back.dur + p.lunchDur, 'ped', path, pedArcs, 1.35); if (ret) T.push(ret); } } } }
+        if (p.coffee) { const q = this.lunchSpot(p, o, 2); if (q && q.c === 'cafe') { const path = treePath(this.pedTreeFrom(q.node), o.pedNode); if (path && path.length) { const a = makeTrip(p, 'coffee', p.coffeeT, 'ped', path.slice().reverse(), pedArcs, 1.35, q, 600, null, true); if (a) { T.push(a); const b = makeTrip(p, 'coffee2', p.coffeeT + a.dur + 600, 'ped', path, pedArcs, 1.35); if (b) T.push(b); } } } }
+      } else {
+        const h = p.home; const gid = inletOfStation(p.st);
+        if (p.commute) { const path = treePath(this.stationTree(p.st), h.pedNode); if (path && path.length) { const a = makeTrip(p, 'out', p.out1, 'ped', path.slice().reverse(), pedArcs, 1.35, null, 0, null, true); if (a) { a.gout = gid; T.push(a); } const b = makeTrip(p, 'home', p.back1, 'ped', path, pedArcs, 1.35); if (b) { b.gin = gid; T.push(b); } } }
+        const outing = (t, dur, tag) => { const q = this.lunchSpot(p, h, tag === 'eve' ? 3 : 4); if (!q) return; const path = treePath(this.pedTreeFrom(q.node), h.pedNode); if (!path || !path.length) return; const a = makeTrip(p, tag, t, 'ped', path.slice().reverse(), pedArcs, 1.35, q, dur, null, true); if (a) { T.push(a); const b = makeTrip(p, tag + '2', t + a.dur + dur, 'ped', path, pedArcs, 1.35); if (b) T.push(b); } if (tag === 'eve') this.lunchAt.set(p.id + 1e7, q); };
+        if (p.errand) outing(p.errandT, 900, 'err'); if (p.evening) outing(p.eveT, p.eveDur, 'eve');
+      }
+    }
+    // Service traffic: delivery vans, ride-hail and midday errands keep cars on the streets between the rushes.
+    { const r = mulberry32(777);
+      for (const sp of SERVICE_P) {
+        const reg = pickWeighted(REGIONS, x => x.share, r); const entry = reg.entries[Math.floor(r() * reg.entries.length)], exit = reg.exits[Math.floor(r() * reg.exits.length)];
+        const d = SERVICE_DEST[Math.floor(r() * SERVICE_DEST.length)]; const t0 = serviceTime(r), dwell = (5 + r() * 20) * 60;
+        const a = treePath(this.tree('car', entry, [entry]), d.carNode); const ta = a && makeTrip(sp, 'svc', t0, 'car', a, arcs, null, null, 0, this);
+        if (!ta) continue; ta.gin = reg.car; ta.service = true; T.push(ta);
+        const back = treePath(this.tree('carRev', exit, [exit]), d.carNode); const tb = back && makeTrip(sp, 'svc2', t0 + ta.dur + dwell, 'car', back, arcs, null, null, 0, this); if (tb) { tb.gout = reg.car; tb.service = true; T.push(tb); }
+      } }
+    T.sort((a, b) => a.t0 - b.t0); this.trips = T;
+    for (const t of T) { if (t.service) continue; if (!this.personTrips.has(t.p.id)) this.personTrips.set(t.p.id, []); this.personTrips.get(t.p.id).push(t); }
+  }
+  project() {
+    const pedFlow = new Float32Array(EDGES.length); let vmt = 0, vehH = 0, freeH = 0, walkM = 0, car = 0, tr = 0, gone = 0;
+    const tierTime = [0, 0, 0], tierWalk = [0, 0, 0], tierN = [0, 0, 0];
+    for (const p of this.persons) { const m = this.modes.get(p.id); tierN[p.income]++; if (m === 'car') car++; else if (m === 'gone') gone++; else if (p.kind === 'worker') tr++; }
+    for (const t of this.trips) {
+      if (t.service) continue;
+      if (t.mode === 'car') { let tt = 0, ff = 0; for (const e of t.edges) { const E = EDGES[e]; const f = E.l / SPEED[E.c]; ff += f; tt += f * this.cong[e]; } vmt += t.len / 1609; vehH += tt / 3600; freeH += ff / 3600; tierTime[t.p.income] += tt / 60; }
+      else { for (const e of t.edges) pedFlow[e]++; walkM += t.len / 80; tierWalk[t.p.income] += t.len / 80; tierTime[t.p.income] += t.len / 80; }
+    }
+    for (const p of this.persons) if (p.kind === 'worker' && this.modes.get(p.id) === 'transit') tierTime[p.income] += p.reg.trBase * 2; else if (p.kind === 'worker' && this.modes.get(p.id) === 'car') tierTime[p.income] += p.reg.carBase * 2;
+    const visits = new Map(); let revenue = 0;
+    for (const q of this.pois) { let exp = 0; for (const e of q.edges) exp += pedFlow[e]; const c = CAT[q.c]; let v = exp * c.capture * q.q * (this.pedPoiBonus.has(q.id) ? 1.35 : 1); visits.set(q.id, v); }
+    for (const [, q] of this.lunchAt) visits.set(q.id, (visits.get(q.id) || 0) + 1);
+    for (const q of this.pois) { const v = (visits.get(q.id) || 0) * SCALE; visits.set(q.id, v); revenue += v * CAT[q.c].ticket; }
+    const byPoi = new Map(); for (const [pid, q] of this.lunchAt) { if (!byPoi.has(q.id)) byPoi.set(q.id, []); byPoi.get(q.id).push(pid); }
+    let enc = 0, ties = 0; const tiePairs = [];
+    const pmap = this.pmap = new Map(this.persons.map(p => [p.id, p]));
+    for (const [qid, ids] of byPoi) {
+      const arr = ids.map(id => pmap.get(id % 1e7)).filter(Boolean).sort((a, b) => (a.lunchT || a.eveT || 0) - (b.lunchT || b.eveT || 0));
+      for (let i = 0; i < arr.length; i++) for (let j = i + 1; j < arr.length; j++) {
+        const ti = arr[i].lunchT || arr[i].eveT, tj = arr[j].lunchT || arr[j].eveT; if (tj - ti > 1500) break; enc++;
+        const same = arr[i].office && arr[i].office === arr[j].office; if (same || (arr[i].open > .72 && arr[j].open > .72)) { ties++; if (tiePairs.length < 900) tiePairs.push([arr[i], arr[j], qid]); }
+      }
+    }
+    let streetEnc = 0; for (const e of this.ped) streetEnc += pedFlow[e] * .12; ties += Math.round(streetEnc * .03);
+    let jobs = 0, res = 0, floorDelta = 0;
+    for (const b of BLD) { if (!b.inside) continue; const ed = this.blocks.get(b.id); const c = ed ? capOf(ed.z, b.floor * ed.s) : capOf(b.k, b.floor); jobs += c.jobs; res += c.res; if (ed) floorDelta += b.floor * (ed.s - 1); }
+    this.pedFlow = pedFlow; this.visits = visits; this.tiePairs = tiePairs;
+    this.m = { car, tr, gone, vmt: vmt * SCALE, vehH: vehH * SCALE, delayH: (vehH - freeH) * SCALE, walkMin: walkM * SCALE, revenue, enc: (enc + streetEnc) * SCALE, ties: ties * SCALE, jobs, res, floorDelta,
+      tierTime: tierTime.map((t, i) => t / Math.max(1, tierN[i])), tierWalk: tierWalk.map((t, i) => t / Math.max(1, tierN[i])), persons: this.persons.length,
+      residents: this.persons.filter(p => p.kind === 'resident').length };
+  }
+}
+const CAL = { cap: 400, a: 1, p: 2 };   // BPR: congestion spreads across arterials, closures cause modest spillover
+let MARIA_ID = -1, DEV_ID = -1; const MARIA_NAME = 'Maria O.';
+function makeTrip(p, leg, t0, mode, path, arcList, speed, poi, dwell, scn, reversed) {
+  if (!path || !path.length) return null;
+  const pts = []; const segE = []; const edges = [];
+  for (const ai of path) { const a = arcList[ai]; const e = EDGES[a.e]; const pp = (reversed ? !a.rev : a.rev) ? e.p.slice().reverse() : e.p; edges.push(e.id);
+    for (let j = 0; j < pp.length; j++) { if (pts.length && j === 0) continue; pts.push(pp[j]); if (pts.length > 1) segE.push(e.id); } }
+  // Cars appear and vanish at the edge of the model board.
+  if (mode === 'car') { const far = (q) => !inBase(q[0], q[1], -12); while (pts.length > 2 && far(pts[0]) && far(pts[1])) { pts.shift(); segE.shift(); } while (pts.length > 2 && far(pts[pts.length - 1]) && far(pts[pts.length - 2])) { pts.pop(); segE.pop(); } }
+  if (pts.length < 2) return null;
+  const cum = new Float32Array(pts.length); for (let i = 1; i < pts.length; i++) cum[i] = cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+  const len = cum[cum.length - 1]; let v = speed;
+  if (mode === 'car') { let tt = 0; for (const id of edges) { const e = EDGES[id]; tt += e.l / SPEED[e.c] * (scn ? scn.cong[id] : 1); } v = len / Math.max(tt, 1); }
+  const side = mode === 'ped' ? (hash2(p.id, t0 | 0) < .5 ? -1 : 1) : 1;
+  return { p, leg, t0, mode, pts, cum, segE, edges, len, v, dur: len / v, poi, dwell: dwell || 0, side, sig: leg + ':' + edges.join(',') };
+}
+
+// ───────────────────────── scenarios ─────────────────────────
+const S = { base: new Scenario('Today', false), plan: new Scenario('Plan A', true) };
+S.base.settle(null, 5);
+const baseCarRoutes = () => S.base.carRoutes;
+const HERO = { name: '2nd Street', from: 'Market Street', to: 'Folsom Street' };
+function stretch(name, from, to) {
+  const onName = EDGES.filter(e => e.name === name);
+  const nodeOf = (cross) => { const ns = new Set(EDGES.filter(e => e.name === cross).flatMap(e => [e.a, e.b])); return onName.flatMap(e => [e.a, e.b]).find(n => ns.has(n)); };
+  const a = nodeOf(from), b = nodeOf(to); if (a === undefined || b === undefined) return [];
+  const adj = new Map(); for (const e of onName) { for (const [u, v] of [[e.a, e.b], [e.b, e.a]]) { if (!adj.has(u)) adj.set(u, []); adj.get(u).push([v, e.id]); } }
+  const prev = new Map([[a, null]]); const q = [a];
+  while (q.length) { const u = q.shift(); if (u === b) break; for (const [v, eid] of adj.get(u) || []) if (!prev.has(v)) { prev.set(v, [u, eid]); q.push(v); } }
+  const out = []; let v = b; while (prev.get(v)) { const [u, eid] = prev.get(v); out.push(eid); v = u; } return out;
+}
+const HERO_EDGES = stretch(HERO.name, HERO.from, HERO.to);
+(() => {
+  const hx = HERO_EDGES.length ? EDGES[HERO_EDGES[Math.floor(HERO_EDGES.length / 2)]] : EDGES[0];
+  let best = null, bd = Infinity;
+  for (const p of BASE_PERSONS) { if (p.kind !== 'worker' || p.reg.name !== 'East Bay' || S.base.modes.get(p.id) !== 'car' || !p.lunch) continue; const r = S.base.carRoutes.get(p.id) || []; const uses = r.some(e => HERO_EDGES.includes(e)); const d = Math.hypot(p.office.c[0] - hx.mx, p.office.c[1] - hx.mz) - (uses ? 400 : 0); if (d < bd) { bd = d; best = p; } }
+  if (!best) best = BASE_PERSONS.find(p => p.kind === 'worker');
+  best.name = MARIA_NAME; best.lunchT = 735 * 60; best.arrive = 505 * 60; best.open = .9; MARIA_ID = best.id;
+  const dev = BASE_PERSONS.find(p => p.kind === 'worker' && p !== best && p.office === best.office) || BASE_PERSONS.find(p => p.kind === 'worker' && p !== best);
+  dev.office = best.office; dev.name = 'Dev P.'; dev.lunch = true; dev.lunchT = 731 * 60; dev.lunchDur = 40 * 60; dev.open = .9; DEV_ID = dev.id;
+})();
+S.base.settle(null, 5);
+S.plan.settle(baseCarRoutes(), 5);
+
+// Where each inlet sits on the board: stations at their entrances, car inlets where their road enters the board.
+{
+  const center = nearestNode(0, 0, isLocalCar);
+  for (const n of INLETS) {
+    if (n.st) { n.x = n.st.c[0]; n.z = n.st.c[1]; continue; }
+    const entry = gwNodes(n.gw, 'in')[0]; let pt = NODES[entry];
+    const path = treePath(S.base.tree('car', 'inlet' + entry, [entry]), center);
+    if (path) { outer: for (const ai of path) { const a = arcs[ai]; const e = EDGES[a.e]; const pp = a.rev ? e.p.slice().reverse() : e.p; for (const q of pp) if (inBox(q[0], q[1], -40)) { pt = q; break outer; } } }
+    n.x = clamp(pt[0], BB.x0 + 30, BB.x1 - 30); n.z = clamp(pt[1], BB.z0 + 30, BB.z1 - 30);
+  }
+}
+
+// ───────────────────────── street blocks (for per-block info views) ─────────────────────────
+// Union buildings whose centroids are within 70 m and not separated by a road.
+const BLK = new Int32Array(BLD.length); let NBLK = 0; const BLOCKS = [];
+{
+  const par = BLD.map((_, i) => i); const find = (i) => { while (par[i] !== i) { par[i] = par[par[i]]; i = par[i]; } return i; };
+  for (const b of BLD) for (const o of bldNear(b.c[0], b.c[1], 70)) {
+    if (o.id <= b.id) continue; const d = Math.hypot(o.c[0] - b.c[0], o.c[1] - b.c[1]); if (d > 70) continue;
+    const ra = find(b.id), rb = find(o.id); if (ra === rb) continue; if (crossesRoad(b.c, o.c)) continue; par[ra] = rb;
+  }
+  const idx = new Map(); BLD.forEach((b, i) => { const r = find(i); if (!idx.has(r)) { idx.set(r, NBLK++); BLOCKS.push([]); } BLK[i] = idx.get(r); BLOCKS[BLK[i]].push(i); });
+}
+function poiBlock(q) {
+  if (q.blk !== undefined && q.blk !== -2) return q.blk;
+  let best = -1, bd = 60; for (const b of bldNear(q.x, q.z, 60)) { const d = Math.hypot(b.c[0] - q.x, b.c[1] - q.z); if (d < bd) { bd = d; best = b.id; } }
+  q.blk = best >= 0 ? BLK[best] : -1; return q.blk;
+}
+function blockStats(scn) {
+  const jobs = new Float32Array(NBLK), res = new Float32Array(NBLK), visits = new Float32Array(NBLK), rev = new Float32Array(NBLK);
+  for (const b of BLD) { const ed = scn.blocks.get(b.id); const c = ed ? capOf(ed.z, b.floor * ed.s) : capOf(b.k, b.floor); jobs[BLK[b.id]] += c.jobs; res[BLK[b.id]] += c.res; }
+  for (const q of scn.pois) { const k = poiBlock(q); if (k < 0) continue; const v = scn.visits.get(q.id) || 0; visits[k] += v; rev[k] += v * CAT[q.c].ticket; }
+  return { jobs, res, visits, rev };
+}
+
+// ───────────────────────── renderer + scene ─────────────────────────
+const stage = $('#stage');
+const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.NoToneMapping;
+stage.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(34, 1, 20, 24000);
+const sky = new THREE.Mesh(new THREE.SphereGeometry(11000, 32, 16), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: { top: { value: new THREE.Color() }, hor: { value: new THREE.Color() } },
+  vertexShader: 'varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+  fragmentShader: 'uniform vec3 top; uniform vec3 hor; varying vec3 vP; void main(){ float t = smoothstep(-0.1, 0.6, vP.y); gl_FragColor = vec4(mix(hor, top, t), 1.0); }' }));
+const skyU = sky.material.uniforms; scene.add(sky);
+scene.fog = new THREE.Fog(0xe3e7eb, 9000, 20000);
+const hemi = new THREE.HemisphereLight(0xffffff, 0xd9dde2, 2.0); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffffff, 2.2); sun.castShadow = true;
+sun.shadow.mapSize.set(4096, 4096); Object.assign(sun.shadow.camera, { left: -1750, right: 1750, top: 1750, bottom: -1750, near: 100, far: 7000 }); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 1.5; sun.shadow.camera.updateProjectionMatrix();
+scene.add(sun); scene.add(sun.target);
+
+// The table, the model board, land and water.
+const table = new THREE.Mesh(new THREE.PlaneGeometry(40000, 40000), new THREE.MeshBasicMaterial({ color: 0xe6e9ec }));
+table.rotation.x = -Math.PI / 2; table.position.y = -34; table.receiveShadow = true; scene.add(table);
+const BW = BASE.x1 - BASE.x0, BD = BASE.z1 - BASE.z0, BCX = (BASE.x0 + BASE.x1) / 2, BCZ = (BASE.z0 + BASE.z1) / 2;
+const board = new THREE.Mesh(new THREE.BoxGeometry(BW, 32, BD), new THREE.MeshStandardMaterial({ color: 0xf6f7f8, roughness: 1 }));
+board.position.set(BCX, -17.6, BCZ); board.castShadow = true; board.receiveShadow = true; scene.add(board);
+const water = new THREE.Mesh(new THREE.PlaneGeometry(BW, BD), new THREE.MeshStandardMaterial({ color: 0xbccad6, roughness: .85 }));
+water.rotation.x = -Math.PI / 2; water.position.set(BCX, -1.5, BCZ); water.receiveShadow = true; scene.add(water);
+const shore = EDGES.filter(e => e.name === 'The Embarcadero' || e.name === 'King Street').flatMap(e => e.p).sort((a, b) => a[1] - b[1]);
+const shoreline = []; for (const p of shore) { if (!shoreline.length || Math.abs(p[1] - shoreline[shoreline.length - 1][1]) > 40) shoreline.push([p[0] + 95, p[1]]); }
+{
+  const sl = shoreline.filter(p => p[1] > BASE.z0 && p[1] < BASE.z1).map(([x, z]) => [Math.min(x, BASE.x1), z]);
+  const pts = [[BASE.x0, BASE.z0], [sl[0][0], BASE.z0], ...sl, [sl[sl.length - 1][0], BASE.z1], [BASE.x0, BASE.z1]];
+  const landShape = new THREE.Shape(pts.map(([x, z]) => new THREE.Vector2(x, -z)));
+  const landMesh = new THREE.Mesh(new THREE.ShapeGeometry(landShape), new THREE.MeshStandardMaterial({ color: 0xeef0f2, roughness: 1 }));
+  landMesh.rotation.x = -Math.PI / 2; landMesh.receiveShadow = true; scene.add(landMesh);
+  // a thin shoreline edge, like a cut board
+  const edgePts = sl.map(([x, z]) => new THREE.Vector3(x, .2, z));
+  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(edgePts), new THREE.LineBasicMaterial({ color: 0x9fb0bf })));
+}
+// Unfinished white massing beyond the simulated area, fading into the table (shared HPContext layer).
+const CTX = window.HPContext?.add(THREE, scene, { fadeColor: 0xe6e9ec, buildingColor: 0xf4f5f7, roadColor: 0xd9dde2, landColor: 0xeceef1, parkColor: 0xd9e5d0, waterColor: 0xc4d0da, accent: 0x2459d6, outline: 0x14223a, fadeStart: 40, fadeEnd: 1300 });
+const CTX_C = { fade: new THREE.Color(), land: new THREE.Color(), bld: new THREE.Color(), road: new THREE.Color(), water: new THREE.Color(), park: new THREE.Color() };
+for (const pk of W.parks) { if (pk.p.length < 3) continue; const s = new THREE.Shape(pk.p.map(([x, z]) => new THREE.Vector2(x, -z))); const isGreen = /park|garden|square/i.test(pk.n); const m = new THREE.Mesh(new THREE.ShapeGeometry(s), new THREE.MeshStandardMaterial({ color: isGreen ? 0xd3e3c8 : 0xe6e9e3, roughness: 1 })); m.rotation.x = -Math.PI / 2; m.position.y = 0.25; m.receiveShadow = true; scene.add(m); }
+
+// Roads: sidewalk band + carriageway + per-scenario overlay, clipped to the board.
+const ROAD_EDGES = EDGES.filter(e => e.p.some(([x, z]) => inBase(x, z)));
+function ribbonInto(pos, pts, w, y) {
+  const n = pts.length; const nx = [], nz = [];
+  for (let i = 0; i < n; i++) { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(n - 1, i + 1)]; let dx = b[0] - a[0], dz = b[1] - a[1]; const l = Math.hypot(dx, dz) || 1; nx.push(-dz / l); nz.push(dx / l); }
+  let added = 0;
+  for (let i = 0; i < n - 1; i++) {
+    const [x1, z1] = pts[i], [x2, z2] = pts[i + 1];
+    const h = w / 2; const L1 = [x1 + nx[i] * h, z1 + nz[i] * h], R1 = [x1 - nx[i] * h, z1 - nz[i] * h], L2 = [x2 + nx[i + 1] * h, z2 + nz[i + 1] * h], R2 = [x2 - nx[i + 1] * h, z2 - nz[i + 1] * h];
+    pos.push(L1[0], y, L1[1], L2[0], y, L2[1], R1[0], y, R1[1], R1[0], y, R1[1], L2[0], y, L2[1], R2[0], y, R2[1]); added += 6;
+  }
+  return added;
+}
+function clipRuns(p) { const runs = []; let cur = []; for (const q of p) { if (inBase(q[0], q[1], -4)) cur.push(q); else { if (cur.length > 1) runs.push(cur); cur = []; } } if (cur.length > 1) runs.push(cur); return runs; }
+function buildRoadLayer(widthAdd, yBase, withRanges) {
+  const pos = []; const ranges = new Map(); let v = 0;
+  for (const e of ROAD_EDGES) { const y = yBase + (e.c === 'pedestrian' ? 0 : e.hw ? .06 : .03); let n = 0; for (const run of clipRuns(e.p)) n += ribbonInto(pos, run, e.w + widthAdd, y); if (!n) continue; if (withRanges) ranges.set(e.id, [v, n]); v += n; }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.computeVertexNormals();
+  return { g, ranges, count: v };
+}
+const walkL = buildRoadLayer(7, .4, false);
+const walkMesh = new THREE.Mesh(walkL.g, new THREE.MeshStandardMaterial({ color: 0xf7f8f9, roughness: 1 })); walkMesh.receiveShadow = true; scene.add(walkMesh);
+const asphaltL = buildRoadLayer(0, .7, true);
+const asphaltMat = new THREE.MeshStandardMaterial({ color: 0xd3d8de, roughness: 1, vertexColors: true });
+const asphalt = new THREE.Mesh(asphaltL.g, asphaltMat); asphalt.receiveShadow = true; scene.add(asphalt);
+{ const col = new Float32Array(asphaltL.count * 3).fill(1); for (const e of ROAD_EDGES) { const r = asphaltL.ranges.get(e.id); if (!r) continue; const c = e.c === 'pedestrian' ? [1.1, 1.1, 1.08] : e.hw ? [.86, .88, .9] : [1, 1, 1]; for (let i = r[0]; i < r[0] + r[1]; i++) col.set(c, i * 3); } asphaltL.g.setAttribute('color', new THREE.BufferAttribute(col, 3)); }
+
+// Buildings: one merged mesh with per-vertex attributes for plan height, edit tint, highlight and info-view colors.
+// Facades read as different paper stocks: cool glass towers, sand and pale brick low-rise.
+const FACADE = { glass: lin('#d2dde8'), glass2: lin('#dfe6ee'), office: lin('#f1f2f3'), res: lin('#f4efe7'), brick: lin('#f3e1d9'), retail: lin('#f4f0ea'), civic: lin('#e8eee4'), hotel: lin('#f3ece7'), parking: lin('#e2e4e7'), mixed: lin('#f2efeb') };
+function facadeOf(b, i) {
+  const r = hash2(i, 5);
+  if ((b.k === 'office' || b.k === 'hotel' || b.k === 'mixed') && b.h > 55) return r < .6 ? FACADE.glass : FACADE.glass2;
+  if (b.k === 'office') return r < .3 ? FACADE.glass2 : FACADE.office;
+  if (b.h < 26 && (b.k === 'retail' || b.k === 'mixed' || b.k === 'res') && r < .45) return FACADE.brick;
+  return FACADE[b.k] || FACADE.mixed;
+}
+const NEUTRAL = lin('#e9ebee'), NODATA = lin('#e2e5e9');
+const bU = { uPlan: { value: 1 }, uNight: { value: 0 }, uInfo: { value: 0 } };
+const bRanges = []; let bGeo;
+{
+  const geoms = []; let vc = 0;
+  for (const b of BLD) { const shape = new THREE.Shape(b.p.map(([x, z]) => new THREE.Vector2(x, -z))); const g = new THREE.ExtrudeGeometry(shape, { depth: b.h, bevelEnabled: false, curveSegments: 1 }); g.rotateX(-Math.PI / 2); if (g.index) { const ng = g.toNonIndexed(); g.dispose(); geoms.push(ng); } else geoms.push(g); const n = geoms[geoms.length - 1].attributes.position.count; bRanges.push([vc, n]); vc += n; }
+  bGeo = mergeGeometries(geoms, false); geoms.forEach(g => g.dispose());
+  const n = bGeo.attributes.position.count; const aScale = new Float32Array(n).fill(1), aBase = new Float32Array(n * 3), aTint = new Float32Array(n * 3), aHL = new Float32Array(n), aRand = new Float32Array(n), aBid = new Float32Array(n), aIB = new Float32Array(n * 3), aIP = new Float32Array(n * 3);
+  BLD.forEach((b, i) => { const [s, c] = bRanges[i]; const base = facadeOf(b, i); const j = (hash2(i, 1) - .5) * .05; b.col = [base[0] + j, base[1] + j, base[2] + j]; for (let v = s; v < s + c; v++) { aBase.set(b.col, v * 3); aTint.set(b.col, v * 3); aIB.set(NEUTRAL, v * 3); aIP.set(NEUTRAL, v * 3); aRand[v] = hash2(i, 2); aBid[v] = i; } });
+  for (const [k, a, sz] of [['aScale', aScale, 1], ['aBase', aBase, 3], ['aTint', aTint, 3], ['aHL', aHL, 1], ['aRand', aRand, 1], ['aBid', aBid, 1], ['aInfoB', aIB, 3], ['aInfoP', aIP, 3]]) bGeo.setAttribute(k, new THREE.BufferAttribute(a, sz));
+}
+const bMat = new THREE.MeshStandardMaterial({ roughness: .9, metalness: 0 });
+bMat.onBeforeCompile = (sh) => {
+  Object.assign(sh.uniforms, bU);
+  sh.vertexShader = sh.vertexShader.replace('#include <common>', `#include <common>
+    attribute float aScale; attribute vec3 aBase; attribute vec3 aTint; attribute float aHL; attribute float aRand; attribute vec3 aInfoB; attribute vec3 aInfoP;
+    uniform float uPlan; varying vec3 vCol; varying vec3 vInfo; varying float vHL; varying float vRand; varying vec3 vWP; varying float vWall;`)
+  .replace('#include <begin_vertex>', `#include <begin_vertex>
+    transformed.y *= mix(1.0, aScale, uPlan);
+    vCol = mix(aBase, aTint, uPlan); vInfo = mix(aInfoB, aInfoP, uPlan); vHL = aHL; vRand = aRand; vWall = 1.0 - abs(normal.y);
+    vWP = (modelMatrix * vec4(transformed, 1.0)).xyz;`);
+  sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+    uniform float uNight; uniform float uInfo; varying vec3 vCol; varying vec3 vInfo; varying float vHL; varying float vRand; varying vec3 vWP; varying float vWall;
+    float hsh(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,37.719)))*43758.5453); }`)
+  .replace('#include <color_fragment>', `#include <color_fragment>
+    float ao = 0.80 + 0.20 * smoothstep(0.0, 36.0, vWP.y);
+    vec3 base = vCol * ao;
+    vec3 info = vInfo * (0.9 + 0.1 * smoothstep(0.0, 36.0, vWP.y));
+    diffuseColor.rgb = mix(base, info, uInfo);
+    float sel = step(0.95, vHL), prev = step(0.2, vHL) * (1.0 - sel);
+    float hatch = step(0.5, fract((vWP.x + vWP.z + vWP.y) / 7.0));
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.30, 0.45, 0.85), sel * 0.55);
+    diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(0.95, 0.97, 1.0), vec3(0.35, 0.52, 0.92), hatch), prev * 0.8);`)
+  .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+    float fy = fract(vWP.y/4.2); float cu = fract((vWP.x+vWP.z)/6.5);
+    float lit = step(0.55, hsh(vec3(floor(vWP.y/4.2), floor((vWP.x+vWP.z)/6.5), vRand*97.0)));
+    float win = lit * step(0.28,fy)*step(fy,0.82) * step(0.18,cu)*step(cu,0.82) * step(0.7, vWall) * step(4.0, vWP.y);
+    totalEmissiveRadiance += vec3(1.0,0.78,0.48) * win * uNight * 0.8 * (1.0 - uInfo);
+    totalEmissiveRadiance += vInfo * uInfo * uNight * 0.45;
+    totalEmissiveRadiance += vec3(0.1,0.2,0.5) * step(0.2, vHL) * 0.25;`);
+};
+const bDepth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking });
+bDepth.onBeforeCompile = (sh) => { sh.uniforms.uPlan = bU.uPlan; sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aScale; uniform float uPlan;').replace('#include <begin_vertex>', '#include <begin_vertex>\ntransformed.y *= mix(1.0, aScale, uPlan);'); };
+const buildings = new THREE.Mesh(bGeo, bMat); buildings.castShadow = true; buildings.receiveShadow = true; buildings.customDepthMaterial = bDepth; scene.add(buildings);
+function setBuildingAttr(name, bid, val) { const a = bGeo.attributes[name]; const [s, c] = bRanges[bid]; if (a.itemSize === 1) a.array.fill(val, s, s + c); else for (let v = s; v < s + c; v++) a.array.set(val, v * 3); a.needsUpdate = true; }
+
+// Trees: small rounded blobs in parks and along SoMa streets.
+{
+  const T = []; const A = [150, -460], B = [-1060, 760];
+  const isSoma = (x, z) => (B[0] - A[0]) * (z - A[1]) - (B[1] - A[1]) * (x - A[0]) < 0;
+  for (const pk of W.parks) { if (pk.p.length < 3) continue; const xs = pk.p.map(p => p[0]), zs = pk.p.map(p => p[1]); const step = /plaza|square|place/i.test(pk.n) ? 20 : 13;
+    for (let x = Math.min(...xs); x < Math.max(...xs); x += step) for (let z = Math.min(...zs); z < Math.max(...zs); z += step) { const jx = x + (hash2(x | 0, z | 0) - .5) * step * .7, jz = z + (hash2(z | 0, x | 0) - .5) * step * .7; if (!inPoly(jx, jz, pk.p) || inBuilding(jx, jz) || !inBase(jx, jz, -10)) continue; T.push([jx, jz, 3.4 + hash2(jx | 0, 3) * 2.4]); } }
+  for (const e of EDGES) {
+    if (!['secondary', 'tertiary', 'residential', 'unclassified', 'living_street'].includes(e.c) || e.name === 'Market Street') continue;
+    if (!isSoma(e.mx, e.mz) || !inBox(e.mx, e.mz, -20)) continue;
+    let acc = 0;
+    for (let j = 0; j < e.p.length - 1; j++) { const [x1, z1] = e.p[j], [x2, z2] = e.p[j + 1]; const L = Math.hypot(x2 - x1, z2 - z1); if (L < 1) continue; const nx = -(z2 - z1) / L, nz = (x2 - x1) / L;
+      for (let s = 12 - acc; s < L - 6; s += 19) { for (const side of [-1, 1]) { if (hash2(e.id * 131 + j, Math.round(s) * side + 7) < .32) continue; const off = e.w / 2 + 3.2; const px = x1 + (x2 - x1) * s / L + nx * side * off, pz = z1 + (z2 - z1) * s / L + nz * side * off; if (inBuilding(px, pz)) continue; T.push([px, pz, 2.6 + hash2(px | 0, pz | 0) * 1.2]); } }
+      acc = (acc + L) % 19; }
+  }
+  const n = Math.min(T.length, 7000);
+  const trees = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 2), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 }), n);
+  const m4 = new THREE.Matrix4(), c = new THREE.Color(); const g1 = new THREE.Color(0x8cbf7d), g2 = new THREE.Color(0x6fa86a);
+  for (let i = 0; i < n; i++) { const [x, z, r] = T[i]; m4.makeScale(r, r * .92, r); m4.setPosition(x, r * .92 + 1.4, z); trees.setMatrixAt(i, m4); trees.setColorAt(i, c.copy(g1).lerp(g2, hash2(i, 9))); }
+  trees.castShadow = true; trees.receiveShadow = true; scene.add(trees);
+}
+
+// Crisp diagram dots used by pedestrians.
+const ptsMat = () => new THREE.ShaderMaterial({ transparent: true, depthWrite: false, uniforms: { uScale: { value: Math.min(devicePixelRatio, 2) } },
+  vertexShader: `attribute vec3 aColor; attribute float aSize; attribute float aAlpha; varying vec3 vC; varying float vA; uniform float uScale;
+    void main(){ vC = aColor; vA = aAlpha; vec4 mv = modelViewMatrix * vec4(position,1.0); gl_PointSize = clamp(aSize * uScale * (900.0 / -mv.z), 4.5 * uScale, 20.0 * uScale); gl_Position = projectionMatrix * mv; }`,
+  fragmentShader: `varying vec3 vC; varying float vA; void main(){ float r = length(gl_PointCoord - 0.5) * 2.0; if (r > 1.0) discard; vec3 c = mix(vC, vec3(1.0), smoothstep(0.6, 0.72, r)); float a = (1.0 - smoothstep(0.86, 1.0, r)) * vA; gl_FragColor = vec4(c, a); }` });
+
+// ───────────────────────── per-scenario visual layer ─────────────────────────
+const MAX_CARS = 2400, MAX_PEDS = 5000;
+const carGeo = new THREE.BoxGeometry(15, 6.5, 7.5); carGeo.translate(0, 3.6, 0);
+const COL = { car: lin('#2459d6'), walk: lin('#f0532d'), maria: lin('#c2185b'), tie: lin('#7b3fe4'), edit: lin('#ffcf33'), preview: lin('#5b85e0'), free: lin('#3bb273'), mid: lin('#f39226'), jam: lin('#d7263d') };
+class Visual {
+  constructor(scn) {
+    this.s = scn; this.group = new THREE.Group(); scene.add(this.group);
+    this.cars = new THREE.InstancedMesh(carGeo, new THREE.MeshStandardMaterial({ color: 0x2459d6, roughness: .55, emissive: 0x2459d6, emissiveIntensity: .15 }), MAX_CARS); this.cars.count = 0; this.cars.castShadow = false; this.cars.frustumCulled = false; this.group.add(this.cars);
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(MAX_PEDS * 3), 3)); g.setAttribute('aColor', new THREE.BufferAttribute(new Float32Array(MAX_PEDS * 3), 3)); g.setAttribute('aSize', new THREE.BufferAttribute(new Float32Array(MAX_PEDS), 1)); g.setAttribute('aAlpha', new THREE.BufferAttribute(new Float32Array(MAX_PEDS), 1)); g.setDrawRange(0, 0);
+    this.peds = new THREE.Points(g, ptsMat()); this.peds.frustumCulled = false; this.peds.renderOrder = 4; this.group.add(this.peds);
+    const og = new THREE.BufferGeometry(); og.setAttribute('position', asphaltL.g.attributes.position); this.ocol = new Float32Array(asphaltL.count * 4); og.setAttribute('color', new THREE.BufferAttribute(this.ocol, 4));
+    this.overlay = new THREE.Mesh(og, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 })); this.overlay.position.y = .35; this.overlay.renderOrder = 5; this.group.add(this.overlay);
+    this.hc = document.createElement('canvas'); this.hc.width = this.hc.height = 512; this.hx = this.hc.getContext('2d', { alpha: false }); this.hx.fillStyle = '#000'; this.hx.fillRect(0, 0, 512, 512); this.htex = new THREE.CanvasTexture(this.hc);
+    this.heat = new THREE.Mesh(new THREE.PlaneGeometry(2800, 2800), new THREE.ShaderMaterial({ transparent: true, depthWrite: false, uniforms: { map: { value: this.htex }, uOp: { value: 0 } },
+      vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+      fragmentShader: 'uniform sampler2D map; uniform float uOp; varying vec2 vUv; vec3 ramp(float t){ return mix(mix(vec3(1.0,0.62,0.38), vec3(0.88,0.09,0.03), smoothstep(0.05,0.5,t)), vec3(0.33,0.0,0.05), smoothstep(0.5,1.0,t)); } void main(){ float v = texture2D(map, vUv).r; float a = smoothstep(0.03, 0.4, v); gl_FragColor = vec4(ramp(v), a*uOp*0.82); }' }));
+    this.heat.rotation.x = -Math.PI / 2; this.heat.position.set(0, 1.4, 0); this.heat.renderOrder = 3; this.group.add(this.heat);
+    this.pins = new THREE.InstancedMesh(new THREE.CylinderGeometry(1.6, 1.6, 1, 6).translate(0, .5, 0), new THREE.MeshBasicMaterial({ toneMapped: false }), 6000); this.pins.count = 0; this.pins.visible = false; this.pins.frustumCulled = false; this.group.add(this.pins);
+    this.tiesLine = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x6a2be0, transparent: true, opacity: .8, depthWrite: false, toneMapped: false })); this.tiesLine.visible = false; this.tiesLine.frustumCulled = false; this.group.add(this.tiesLine);
+    this.tiesFaint = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x8a7fb0, transparent: true, opacity: .2, depthWrite: false, toneMapped: false })); this.tiesFaint.visible = false; this.tiesFaint.frustumCulled = false; this.group.add(this.tiesFaint);
+    this.active = []; this.ptr = 0; this.dwell = new Map(); this.edgeCars = new Float32Array(EDGES.length); this.liveCong = new Float32Array(EDGES.length);
+    this.cnt = Object.fromEntries(INLETS.map(n => [n.id, { i: 0, o: 0 }]));
+  }
+}
+const V = { base: new Visual(S.base), plan: new Visual(S.plan) };
+const planGroup = new THREE.Group(); scene.add(planGroup);
+const tableGeo = (() => { const top = new THREE.CylinderGeometry(1.6, 1.6, .5, 8).translate(0, 2.6, 0); const um = new THREE.ConeGeometry(3.2, 1.6, 8).translate(0, 5.2, 0); const pole = new THREE.CylinderGeometry(.2, .2, 5, 4).translate(0, 2.5, 0); return mergeGeometries([top.toNonIndexed(), um.toNonIndexed(), pole.toNonIndexed()]); })();
+const tables = new THREE.InstancedMesh(tableGeo, new THREE.MeshStandardMaterial({ roughness: .8 }), 900); tables.count = 0; tables.castShadow = true; tables.frustumCulled = false; planGroup.add(tables);
+const tableList = [];
+const sparks = []; const sparkGeo = new THREE.RingGeometry(.8, 1, 40).rotateX(-Math.PI / 2);
+const sparkGroup = new THREE.Group(); scene.add(sparkGroup);
+for (let i = 0; i < 80; i++) { const m = new THREE.Mesh(sparkGeo, new THREE.MeshBasicMaterial({ color: 0x7b3fe4, transparent: true, opacity: 0, depthWrite: false, toneMapped: false })); m.visible = false; m.userData = { t: 1, w: null }; sparkGroup.add(m); sparks.push(m); }
+const puffs = []; for (let i = 0; i < 60; i++) { const m = new THREE.Mesh(sparkGeo, new THREE.MeshBasicMaterial({ color: 0x14223a, transparent: true, opacity: 0, depthWrite: false, toneMapped: false })); m.visible = false; m.userData = { t: 1 }; planGroup.add(m); puffs.push(m); }
+let mariaTrail = null; let ghost = [];
+function spark(world, x, z, big) { const m = sparks.find(s => s.userData.t >= 1); if (!m) return; m.userData = { t: 0, w: world, big }; m.position.set(x, 3, z); m.visible = true; }
+function puff(x, z) { const m = puffs.find(s => s.userData.t >= 1); if (!m) return; m.userData = { t: 0 }; m.position.set(x, 3, z); m.visible = true; }
+
+// Inlet markers: a ring on the ground and a slim post, in the inlet's mode color.
+{
+  const ringG = new THREE.RingGeometry(9, 13, 40).rotateX(-Math.PI / 2), postG = new THREE.CylinderGeometry(1.4, 1.4, 32, 8).translate(0, 16, 0), capG = new THREE.SphereGeometry(4.5, 16, 10).translate(0, 33, 0);
+  for (const n of INLETS) { const col = n.mode === 'car' ? 0x2459d6 : 0xf0532d; const mat = new THREE.MeshBasicMaterial({ color: col, toneMapped: false }); const grp = new THREE.Group(); grp.add(new THREE.Mesh(ringG, mat), new THREE.Mesh(postG, new THREE.MeshBasicMaterial({ color: 0x14223a })), new THREE.Mesh(capG, mat)); grp.position.set(n.x, 1.2, n.z); scene.add(grp); }
+}
+
+// ───────────────────────── composer with split-screen compare ─────────────────────────
+const ui = { view: 'plan', compare: false, split: .5, info: null, tool: 'select', time: 400 * 60, rate: 90, playing: true, follow: null, demo: false, diversion: false, settling: false, step: -1 };
+function applyWorld(w) {
+  bU.uPlan.value = w === 'plan' ? 1 : 0;
+  V.base.group.visible = w === 'base'; V.plan.group.visible = w === 'plan'; planGroup.visible = w === 'plan';
+  for (const s of sparks) if (s.userData.w) s.visible = s.userData.t < 1 && s.userData.w === w;
+  if (mariaTrail) mariaTrail.visible = w === 'plan';
+}
+class SplitPass extends Pass {
+  constructor() { super(); this.needsSwap = false; }
+  render(r, writeBuffer, readBuffer) {
+    const auto = r.autoClear; r.autoClear = false; readBuffer.scissorTest = false; r.setRenderTarget(readBuffer); r.setClearColor(0xe7eaee, 1); r.clear();
+    if (!ui.compare) { applyWorld(ui.view); r.render(scene, camera); }
+    else { const w = readBuffer.width, h = readBuffer.height, sx = Math.round(w * ui.split);
+      applyWorld('base'); readBuffer.scissor.set(0, 0, sx, h); readBuffer.scissorTest = true; r.setRenderTarget(readBuffer); r.render(scene, camera);
+      applyWorld('plan'); readBuffer.scissor.set(sx, 0, w - sx, h); r.setRenderTarget(readBuffer); r.render(scene, camera);
+      readBuffer.scissorTest = false; r.setRenderTarget(readBuffer); }
+    r.autoClear = auto;
+  }
+}
+const rt = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType, samples: 4 });
+const composer = new EffectComposer(renderer, rt);
+composer.addPass(new SplitPass());
+composer.addPass(new OutputPass());
+function resize() { const r = stage.getBoundingClientRect(); const w = Math.max(200, r.width), h = Math.max(200, r.height); renderer.setSize(w, h, false); composer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); if (ui.compare) placeHandle(); }
+new ResizeObserver(resize).observe(stage); resize();
+
+// ───────────────────────── camera: free MapControls + presets + fly-to ─────────────────────────
+const cv = renderer.domElement;
+const HERO_MID = HERO_EDGES.length ? EDGES[HERO_EDGES[Math.floor(HERO_EDGES.length / 2)]] : EDGES[0];
+const VIEWS = {
+  overview: { target: [-230, 130], dist: 3650, polar: .7, az: .3 },
+  fidi: { target: [-150, -360], dist: 1750, polar: .6, az: .3 },
+  soma: { target: [-120, 480], dist: 1650, polar: .88, az: .78 },
+  top: { target: [10, 30], dist: 3700, polar: .001, az: 0 },
+  hero: { target: [HERO_MID.mx, HERO_MID.mz], dist: 1450, polar: .66, az: .45 },
+  compare: { target: [-60, 160], dist: 2300, polar: .74, az: .52 },
+};
+const flight = { active: false };
+function sphPos(target, dist, polar, az) { return new THREE.Vector3(target.x + dist * Math.sin(polar) * Math.sin(az), dist * Math.cos(polar), target.z + dist * Math.sin(polar) * Math.cos(az)); }
+function setView(v) { const t = new THREE.Vector3(v.target[0], 0, v.target[1]); camera.position.copy(sphPos(t, v.dist, v.polar, v.az)); controls.target.copy(t); camera.lookAt(t); controls.update(); }
+function flyTo(v, dur = 2.2) {
+  const off = camera.position.clone().sub(controls.target); const d0 = off.length(); const p0 = Math.acos(clamp(off.y / d0, -1, 1)); const a0 = Math.atan2(off.x, off.z);
+  let a1 = v.az; while (a1 - a0 > Math.PI) a1 -= 2 * Math.PI; while (a1 - a0 < -Math.PI) a1 += 2 * Math.PI;
+  Object.assign(flight, { active: true, t: 0, dur, from: { target: controls.target.clone(), dist: d0, polar: p0, az: a0 }, to: { target: new THREE.Vector3(v.target[0], 0, v.target[1]), dist: v.dist, polar: Math.max(.001, v.polar), az: a1 } });
+  return new Promise(res => { flight.done = res; });
+}
+function stepFlight(dt) {
+  if (!flight.active) return; flight.t = Math.min(1, flight.t + dt / flight.dur); const k = easeIO(flight.t), f = flight.from, t = flight.to;
+  const tgt = f.target.clone().lerp(t.target, k); const lift = Math.sin(Math.PI * k) * Math.min(600, f.target.distanceTo(t.target) * .25);
+  controls.target.copy(tgt); camera.position.copy(sphPos(tgt, lerp(f.dist, t.dist, k) + lift, lerp(f.polar, t.polar, k), lerp(f.az, t.az, k))); camera.lookAt(tgt);
+  if (flight.t >= 1) { flight.active = false; controls.update(); flight.done && flight.done(); }
+}
+function cancelFlight() { if (flight.active) { flight.active = false; flight.done && flight.done(); } }
+document.querySelectorAll('[data-cam]').forEach(b => b.onclick = () => { const k = b.dataset.cam; flyTo(VIEWS[k === 'reset' ? 'overview' : k], k === 'reset' ? 1.4 : 1.8); });
+
+// ───────────────────────── live simulation ─────────────────────────
+const AGENT_CAP = 32;
+function posAt(t, s, out) {
+  const c = t.cum; let lo = 0, hi = c.length - 1; s = clamp(s, 0, t.len);
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (c[m] <= s) lo = m; else hi = m; }
+  const a = t.pts[lo], b = t.pts[hi]; const sl = c[hi] - c[lo] || 1; const f = (s - c[lo]) / sl;
+  const dx = (b[0] - a[0]) / sl, dz = (b[1] - a[1]) / sl;
+  const e = EDGES[t.segE[lo]] || EDGES[0]; const off = t.mode === 'car' ? e.w * .22 : (e.w / 2 + 2.2) * t.side;
+  out.x = a[0] + (b[0] - a[0]) * f - dz * off; out.z = a[1] + (b[1] - a[1]) * f + dx * off; out.dx = dx; out.dz = dz; out.e = t.segE[lo]; return out;
+}
+function resetAgents(vis, time, carry) {
+  const trips = vis.s.trips; const old = new Map(); if (carry) for (const a of vis.active) old.set(a.t.p.id + a.t.leg, a);
+  vis.active = []; let i = 0;
+  for (const k in vis.cnt) { vis.cnt[k].i = 0; vis.cnt[k].o = 0; }
+  for (; i < trips.length && trips[i].t0 <= time; i++) { const t = trips[i]; const span = t.dur * 1.35; if (t.gin) vis.cnt[t.gin].i++;
+    if (time < t.t0 + span) { const prev = old.get(t.p.id + t.leg); const s = prev && prev.t.sig === t.sig ? prev.s : clamp((time - t.t0) / span, 0, 1) * t.len; vis.active.push({ t, s, born: prev && prev.t.sig === t.sig ? 1 : 0 }); if (prev) old.delete(t.p.id + t.leg); }
+    else if (t.gout) vis.cnt[t.gout].o++; }
+  vis.ptr = i;
+  if (carry && vis === V.plan) { const q = {}; for (const [, a] of old) { if (a.t.mode === 'car' || Math.random() < .3) { posAt(a.t, a.s, q); puff(q.x, q.z); } } }
+}
+const tmp = {};
+function stepAgents(vis, dtSim, dtAgent) {
+  const trips = vis.s.trips;
+  while (vis.ptr < trips.length && trips[vis.ptr].t0 <= ui.time) { const t = trips[vis.ptr]; vis.active.push({ t, s: 0, born: 0 }); if (t.gin) vis.cnt[t.gin].i++; vis.ptr++; }
+  vis.edgeCars.fill(0); const hm = ui.time / 3600; const peak = Math.exp(-((hm - 8.4) ** 2) / .9) + .9 * Math.exp(-((hm - 17.6) ** 2) / 1.1) + .25;
+  for (const a of vis.active) if (a.t.mode === 'car') { posAt(a.t, a.s, tmp); vis.edgeCars[tmp.e] += 1; }
+  for (let i = 0; i < EDGES.length; i++) { const e = EDGES[i]; if (!e.car) continue; const dens = Math.min(8, vis.edgeCars[i] / Math.max(e.l, 80) * 100 / e.lanes * 1.6 + (vis.s.cong[i] - 1) * 2.6 * peak); vis.liveCong[i] = lerp(vis.liveCong[i], dens, .08); }
+  const keep = [];
+  for (const a of vis.active) {
+    a.born = Math.min(1, a.born + dtSim / 300);
+    let v = a.t.v; if (a.t.mode === 'car') { posAt(a.t, a.s, tmp); const d = vis.liveCong[tmp.e]; v = v * Math.max(.3, 1 / (1 + Math.pow(d / 3.2, 2))); }
+    a.s += v * dtAgent;
+    if (a.s >= a.t.len) { if (a.t.gout) vis.cnt[a.t.gout].o++; if (a.t.poi && a.t.dwell) arriveAt(vis, a.t); continue; }
+    keep.push(a);
+  }
+  vis.active = keep;
+  for (const [pid, d] of vis.dwell) if (ui.time > d.until) vis.dwell.delete(pid);
+}
+function arriveAt(vis, t) {
+  const q = t.poi; const until = ui.time + t.dwell;
+  const here = [...vis.dwell.values()].filter(d => d.q === q);
+  vis.dwell.set(t.p.id, { q, until, p: t.p });
+  if (here.length) { const tie = here.some(d => d.p.office && d.p.office === t.p.office); const w = vis === V.plan ? 'plan' : 'base'; if (Math.random() < (tie ? 1 : .35)) spark(w, q.x, q.z, tie);
+    if (vis === V.plan && t.p.id === MARIA_ID) onMariaMeets(here.map(d => d.p)); }
+  if (vis === V.plan && t.p.id === DEV_ID && vis.dwell.has(MARIA_ID)) onMariaMeets([t.p]);
+}
+const m4 = new THREE.Matrix4(), q4 = new THREE.Quaternion(), sc3 = new THREE.Vector3(), p3 = new THREE.Vector3(), UP = new THREE.Vector3(0, 1, 0);
+function drawAgents(vis) {
+  const carK = clamp(camera.position.distanceTo(controls.target) / 1250, 1, 3.2);
+  const night = bU.uNight.value; let nc = 0, np = 0;
+  const pp = vis.peds.geometry.attributes; const follow = ui.follow;
+  const social = ui.info === 'ties'; const dim = ui.info && ui.info !== 'traffic' && ui.info !== 'foot' ? .55 : 1;
+  for (const a of vis.active) {
+    posAt(a.t, a.s, tmp);
+    if (a.t.mode === 'car') {
+      if (nc >= MAX_CARS) continue; const s = a.born < 1 ? backOut(a.born) : 1; q4.setFromAxisAngle(UP, Math.atan2(-tmp.dz, tmp.dx)); sc3.set(s * carK, s * carK, s * carK); p3.set(tmp.x, .8, tmp.z); m4.compose(p3, q4, sc3); vis.cars.setMatrixAt(nc++, m4);
+    } else {
+      if (np >= MAX_PEDS) continue; const isF = follow && a.t.p.id === follow; pp.position.array.set([tmp.x, isF ? 4 : 2.4, tmp.z], np * 3);
+      const c = isF ? COL.walk : social && a.t.leg.startsWith('lunch') ? COL.tie : COL.walk; pp.aColor.array.set(c, np * 3); pp.aSize.array[np] = isF ? 46 : 21; pp.aAlpha.array[np] = Math.min(1, a.born * 3) * (isF ? 1 : dim); np++;
+    }
+  }
+  vis.cars.count = nc; vis.cars.instanceMatrix.needsUpdate = true; vis.cars.material.emissiveIntensity = .15 + night * .9;
+  for (const k of ['position', 'aColor', 'aSize', 'aAlpha']) pp[k].needsUpdate = true;
+  vis.peds.geometry.setDrawRange(0, np);
+}
+const heatPx = (x) => (x + 1400) / 2800 * 512;
+function drawHeat(vis) {
+  const x = vis.hx; x.globalCompositeOperation = 'source-over'; x.fillStyle = 'rgba(0,0,0,0.05)'; x.fillRect(0, 0, 512, 512);
+  x.globalCompositeOperation = 'lighter'; x.fillStyle = 'rgba(255,255,255,0.05)';
+  for (const a of vis.active) { if (a.t.mode !== 'ped') continue; posAt(a.t, a.s, tmp); const px = heatPx(tmp.x), pz = heatPx(tmp.z); x.beginPath(); x.arc(px, pz, 3.2, 0, 6.283); x.fill(); }
+  for (const [, d] of vis.dwell) { const px = heatPx(d.q.x), pz = heatPx(d.q.z); x.beginPath(); x.arc(px, pz, 3.5, 0, 6.283); x.fill(); }
+  vis.htex.needsUpdate = true;
+}
+function paintOverlay(vis) {
+  const col = vis.ocol; const traffic = ui.info === 'traffic';
+  for (const e of ROAD_EDGES) {
+    const r = asphaltL.ranges.get(e.id); if (!r) continue; let c = null, a = 0;
+    if (vis.s.ped.has(e.id)) { c = COL.edit; a = 1; }
+    else if (ui.diversion && vis === V.plan && e.car) { const d = (S.plan.carFlow[e.id] - S.base.carFlow[e.id]); if (Math.abs(d) >= 1) { c = d > 0 ? COL.jam : COL.free; a = clamp(Math.abs(d) / 14, .3, .95); } }
+    else if (traffic && e.car) { const d = vis.liveCong[e.id]; const t = clamp(d / 2.1, 0, 1); c = t < .5 ? mixc(COL.free, COL.mid, t * 2) : mixc(COL.mid, COL.jam, (t - .5) * 2); a = clamp(.55 + d / 5, .55, 1); }
+    for (let i = r[0]; i < r[0] + r[1]; i++) { if (c) { col[i * 4] = c[0]; col[i * 4 + 1] = c[1]; col[i * 4 + 2] = c[2]; col[i * 4 + 3] = a; } else col[i * 4 + 3] = 0; }
+  }
+  vis.overlay.geometry.attributes.color.needsUpdate = true;
+}
+function paintPins(vis) {
+  const c = new THREE.Color(); let n = 0; const base = S.base.visits;
+  for (const q of vis.s.pois) { const v = vis.s.visits.get(q.id) || 0; if (v < 1) continue; const b = base.get(q.id) || 0; const d = b ? (v - b) / b : 1; const h = 4 + Math.sqrt(v) * 1.8;
+    m4.makeScale(1, h, 1); m4.setPosition(q.x, .5, q.z); vis.pins.setMatrixAt(n, m4);
+    if (vis === V.base || Math.abs(d) < .03) c.set(0x14223a); else if (d > 0) c.set(0x158a5e); else c.set(0xcf3434); vis.pins.setColorAt(n, c); n++; }
+  vis.pins.count = n; vis.pins.instanceMatrix.needsUpdate = true; if (vis.pins.instanceColor) vis.pins.instanceColor.needsUpdate = true;
+}
+const tieKey = (a, b) => Math.min(a.id, b.id) + ':' + Math.max(a.id, b.id);
+function paintTies(vis) {
+  const baseKeys = new Set(S.base.tiePairs.map(([a, b]) => tieKey(a, b)));
+  const mk = (pairs) => { const pos = []; for (const [a, b] of pairs) { const A = a.office ? a.office.c : a.home.c, B = b.office ? b.office.c : b.home.c; const mx = (A[0] + B[0]) / 2, mz = (A[1] + B[1]) / 2; const h = 30 + Math.hypot(A[0] - B[0], A[1] - B[1]) * .35; for (const [ox, oy, oz] of [[0, 0, 0], [1.4, .8, 0], [0, -.8, 1.4], [-1.4, 0, -1.4]]) { let px = A[0] + ox, py = 6 + oy, pz = A[1] + oz; for (let k = 1; k <= 12; k++) { const t = k / 12; const x = lerp(lerp(A[0], mx, t), lerp(mx, B[0], t), t) + ox, z = lerp(lerp(A[1], mz, t), lerp(mz, B[1], t), t) + oz, y = 6 + oy + Math.sin(Math.PI * t) * h; pos.push(px, py, pz, x, y, z); px = x; py = y; pz = z; } } } const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); return g; };
+  const fresh = vis === V.plan ? vis.s.tiePairs.filter(([a, b]) => !baseKeys.has(tieKey(a, b))) : [];
+  vis.newTies = fresh.length;
+  vis.tiesLine.geometry.dispose(); vis.tiesLine.geometry = mk(fresh);
+  vis.tiesFaint.geometry.dispose(); vis.tiesFaint.geometry = mk(vis.s.tiePairs.filter(([a, b]) => vis !== V.plan || baseKeys.has(tieKey(a, b))));
+}
+
+// ───────────────────────── info views ─────────────────────────
+const INFO = {
+  traffic: { label: 'Traffic', kind: 'road', sw: 'linear-gradient(90deg,#3bb273,#f39226,#d7263d)', note: 'live' },
+  foot: { label: 'Foot traffic', kind: 'heat', sw: 'linear-gradient(90deg,#ffd9c2,#f0532d,#6b0612)', note: 'live' },
+  jobs: { label: 'Workplaces', kind: 'block', key: 'jobs', unit: 'jobs per block', ramp: ['#f0f1f6', '#b9c1dd', '#5f6fab', '#252f63'], fmt: (v) => num(v, false) + ' jobs' },
+  res: { label: 'Residents', kind: 'block', key: 'res', unit: 'residents per block', ramp: ['#eef5f0', '#a6d8b4', '#3fa36b', '#0f4d30'], fmt: (v) => num(v, false) + ' residents' },
+  visits: { label: 'Visits', kind: 'block', key: 'visits', unit: 'business visits per block per day', ramp: ['#fbf2e8', '#f6c18e', '#e9772f', '#99380b'], fmt: (v) => num(v, false) + ' visits/day' },
+  zoning: { label: 'Zoning', kind: 'zoning', sw: 'linear-gradient(90deg,#f0a35e 0 20%,#e4604e 20% 40%,#5a82c6 40% 60%,#a88b6c 60% 80%,#6fb38f 80%)' },
+  ties: { label: 'Connections', kind: 'ties', sw: 'linear-gradient(90deg,#efe8fd,#7b3fe4)', note: 'today' },
+  revenue: { label: 'Revenue change', kind: 'div', unit: 'Plan A vs today, per block per day', fmt: (v) => money(v) + '/day' },
+};
+const DIV_NEG = ['#b8322c', '#ee9c90'], DIV_ZERO = '#eceef1', DIV_POS = ['#8fd3c4', '#0f7a66'];
+for (const k in INFO) { const d = INFO[k]; if (d.ramp) { d.rampL = d.ramp.map(lin); d.sw = `linear-gradient(90deg,${d.ramp.join(',')})`; } }
+INFO.revenue.sw = `linear-gradient(90deg,${DIV_NEG[0]},${DIV_ZERO},${DIV_POS[1]})`;
+const DIVL = { n0: lin(DIV_NEG[0]), n1: lin(DIV_NEG[1]), z: lin(DIV_ZERO), p0: lin(DIV_POS[0]), p1: lin(DIV_POS[1]) };
+function divCol(t) { if (Math.abs(t) < .02) return DIVL.z; return t < 0 ? (t > -.5 ? mixc(DIVL.z, DIVL.n1, -t * 2) : mixc(DIVL.n1, DIVL.n0, (-t - .5) * 2)) : (t < .5 ? mixc(DIVL.z, DIVL.p0, t * 2) : mixc(DIVL.p0, DIVL.p1, (t - .5) * 2)); }
+function p95(arr) { const a = [...arr].filter(v => v > 0).sort((x, y) => x - y); return a.length ? a[Math.floor(a.length * .95)] || a[a.length - 1] : 1; }
+let infoData = null;
+function fillInfo(fnB, fnP) {
+  const aB = bGeo.attributes.aInfoB, aP = bGeo.attributes.aInfoP;
+  for (let i = 0; i < BLD.length; i++) { const [s, c] = bRanges[i]; const cb = fnB(i), cp = fnP(i); for (let v = s; v < s + c; v++) { aB.array.set(cb, v * 3); aP.array.set(cp, v * 3); } }
+  aB.needsUpdate = true; aP.needsUpdate = true;
+}
+function paintInfo() {
+  const k = ui.info; const d = INFO[k]; infoData = null;
+  if (!d) return;
+  if (d.kind === 'block') {
+    const sb = blockStats(S.base), sp = blockStats(S.plan); const vb = sb[d.key], vp = sp[d.key]; const max = p95(vb);
+    const col = (v) => v <= 0 ? NODATA : rampAt(d.rampL, .04 + .96 * Math.pow(Math.min(1, v / max), .6));
+    const cb = Array.from(vb, col), cpl = Array.from(vp, col);
+    fillInfo(i => cb[BLK[i]], i => cpl[BLK[i]]); infoData = { vb, vp, max };
+  } else if (d.kind === 'div') {
+    const sb = blockStats(S.base), sp = blockStats(S.plan); const dd = sp.rev.map((v, i) => v - sb.rev[i]); const max = p95(dd.map(Math.abs)) || 1;
+    const cpl = Array.from(dd, v => divCol(clamp(v / max, -1, 1)));
+    fillInfo(() => DIVL.z, i => cpl[BLK[i]]); infoData = { vb: new Float32Array(NBLK), vp: dd, max };
+  } else if (d.kind === 'zoning') {
+    fillInfo(i => ZCOL[zcatOf(BLD[i].k)], i => { const ed = S.plan.blocks.get(i); return ZCOL[zcatOf(ed ? ed.z : BLD[i].k)]; });
+  } else fillInfo(() => NEUTRAL, () => NEUTRAL);
+  renderInfoLegend();
+}
+function renderInfoLegend() {
+  const k = ui.info, d = INFO[k], el = $('#infolegend');
+  if (!d) { el.hidden = true; return; }
+  let body = '';
+  if (d.kind === 'road') body = `<p>Every road colored by how congested it is right now. Buildings fade to white so only the data is colored.</p><div class="ramp" style="background:${d.sw}"></div><div class="ramp-ax"><span>free-flowing</span><span>slow</span><span>jammed</span></div>`;
+  else if (d.kind === 'heat') body = `<p>Where people are walking right now. Darker means more walkers.</p><div class="ramp" style="background:linear-gradient(90deg,rgba(255,158,97,.25),#f0532d,#6b0612)"></div><div class="ramp-ax"><span>a few walkers</span><span>crowded</span></div>`;
+  else if (d.kind === 'ties') body = `<p>Each arc joins two agents who met at the same café or plaza and formed a tie. <b>Bold arcs</b> are ties that only form in Plan A${S.plan.m.ties > S.base.m.ties ? `: <b>${num(S.plan.m.ties - S.base.m.ties)} new connections vs today</b>` : ''}. Faint arcs form either way.</p><div class="cats"><span><i style="background:none;box-shadow:none;border-top:2px solid #7b3fe4;border-radius:8px 8px 0 0;height:8px;width:16px"></i>New tie</span><span><i style="background:#7b3fe4;border-radius:50%"></i>Lunch walker</span></div>`;
+  else if (d.kind === 'zoning') body = `<p>Land use by building. Your rezoning edits show up in Plan A.</p><div class="cats">${ZCAT.map(z => `<span><i style="background:${z[2]}"></i>${z[1]}</span>`).join('')}</div>`;
+  else if (d.kind === 'block' && infoData) body = `<p>Buildings grouped into street blocks. Hover a building to read its block.</p><div class="ramp" style="background:${d.sw}"></div><div class="ramp-ax"><span>0</span><span>${num(infoData.max / 4, false)}</span><span>${num(infoData.max, false)}+</span></div>`;
+  else if (d.kind === 'div' && !S.plan.ped.size && !S.plan.blocks.size) body = `<p>No changes yet. Paint a street or rezone a block to see where money moves.</p>`;
+  else if (d.kind === 'div' && infoData) body = `<p>Business revenue per block in Plan A compared with today. Today's side shows no change by definition.</p><div class="ramp" style="background:${d.sw}"></div><div class="ramp-ax"><span>${money(-infoData.max)}</span><span>no change</span><span>${money(infoData.max)}</span></div>`;
+  el.innerHTML = `<h4>${d.label}<small>${d.unit || ''}</small></h4>${body}`; el.hidden = false;
+}
+function setInfo(k) {
+  $('#tip').hidden = true;
+  if (k === ui.info) k = null;
+  ui.info = k || null;
+  document.querySelectorAll('#infos button').forEach(b => b.classList.toggle('on', b.dataset.info === ui.info));
+  for (const v of Object.values(V)) { v.pins.visible = ui.info === 'visits'; v.tiesLine.visible = ui.info === 'ties'; v.tiesFaint.visible = ui.info === 'ties'; }
+  paintInfo(); if (!ui.info) $('#infolegend').hidden = true;
+}
+$('#infos').innerHTML = Object.entries(INFO).map(([k, d]) => `<li><button data-info="${k}"><span class="sw" style="background:${d.sw}"></span><span>${d.label}</span><small>${d.note || (d.kind === 'block' ? 'per block' : d.kind === 'div' ? 'vs today' : '')}</small></button></li>`).join('');
+document.querySelectorAll('#infos button').forEach(b => b.onclick = () => setInfo(b.dataset.info));
+
+// ───────────────────────── time of day ─────────────────────────
+const SKY = [ // minute, top, horizon, sun, hemi
+  [300, 0x1d2636, 0x2f3a4c, 0, .8], [380, 0xbfcad8, 0xf0e2d8, 1.0, 1.3], [450, 0xdbe3ec, 0xeef0f2, 2.7, 1.1], [600, 0xdfe6ee, 0xeef1f4, 3.1, 1.15],
+  [960, 0xdfe6ee, 0xeef1f4, 3.0, 1.15], [1110, 0xccd5e0, 0xf1e2d6, 2.3, 1.05], [1180, 0x5d6b85, 0xc7a99c, .6, 1.0], [1250, 0x1d2636, 0x2f3a4c, 0, .8], [1440, 0x151c29, 0x242d3b, 0, .75]];
+const cA = new THREE.Color(), cB = new THREE.Color();
+function applyTime() {
+  const m = ui.time / 60; let i = 0; while (i < SKY.length - 2 && SKY[i + 1][0] <= m) i++; const a = SKY[i], b = SKY[i + 1]; const t = clamp((m - a[0]) / (b[0] - a[0]), 0, 1);
+  skyU.top.value.copy(cA.setHex(a[1]).lerp(cB.setHex(b[1]), t)); skyU.hor.value.copy(cA.setHex(a[2]).lerp(cB.setHex(b[2]), t)); scene.fog.color.copy(skyU.hor.value);
+  const si = lerp(a[3], b[3], t); sun.intensity = si; hemi.intensity = lerp(a[4], b[4], t);
+  const dayT = clamp((m - 380) / (1180 - 380), 0, 1); const ang = Math.PI * (.08 + .84 * dayT); const el = .32 + Math.sin(ang) * .38;
+  sun.position.set(Math.cos(ang) * 2600, Math.tan(el) * 2600, -500 + Math.sin(ang) * 300); sun.target.position.set(0, 0, 0);
+  sun.color.setHSL(.09, clamp(.75 - Math.sin(ang), .05, .55), .9);
+  const night = clamp(1 - si / 1.2, 0, 1); bU.uNight.value = night;
+  hemi.color.setHex(0xffffff).lerp(cB.setHex(0x7d8db5), night); hemi.groundColor.setHex(0xd9dde2).lerp(cB.setHex(0x3a4356), night);
+  if (CTX) { const dim = 1 - night * .78; const C = CTX_C;
+    C.fade.setHex(0xe6e9ec).multiplyScalar(dim).lerp(skyU.hor.value, .35 + night * .3); table.material.color.copy(C.fade);
+    CTX.setColors({ fadeColor: C.fade, landColor: C.land.setHex(0xeceef1).multiplyScalar(dim), buildingColor: C.bld.setHex(0xf4f5f7).multiplyScalar(1 - night * .7), roadColor: C.road.setHex(0xd9dde2).multiplyScalar(dim), waterColor: C.water.setHex(0xc4d0da).multiplyScalar(dim), parkColor: C.park.setHex(0xd9e5d0).multiplyScalar(dim) }); }
+  $('#daypart').textContent = m < 375 ? 'Dawn' : m < 600 ? 'Morning rush' : m < 690 ? 'Morning' : m < 840 ? 'Lunch' : m < 990 ? 'Afternoon' : m < 1140 ? 'Evening rush' : m < 1260 ? 'Evening' : 'Night';
+}
+
+// ───────────────────────── labels + inlet callouts ─────────────────────────
+const LABELS = [];
+function addLabel(html, cls, x, y, z, opts = {}) { const el = document.createElement('div'); el.className = 'lbl ' + cls; el.innerHTML = html; $('#labels').append(el); const L = { el, p: new THREE.Vector3(x, y, z), ...opts }; LABELS.push(L); return L; }
+addLabel('Financial District', 'district', -330, 2, -600); addLabel('South of Market', 'district', -200, 2, 640);
+for (const b of BLD) if (b.n && ['Salesforce Tower', 'Transamerica Pyramid', 'San Francisco Ferry Building'].includes(b.n)) addLabel(b.n.replace('San Francisco ', ''), 'landmark', b.c[0], b.h * (b.h > 100 ? 1 : 1) + 8, b.c[1]);
+const CALLOUTS = INLETS.map(n => { const L = addLabel(`<div class="cb"><em>${n.sub === 'BART' ? 'BART' : n.mode === 'car' ? 'car' : ''}</em><b>${n.name}</b><i class="u">▲0</i><i class="d">▼0</i></div><s></s>`, 'callout ' + n.mode, n.x, 38, n.z); L.n = n; L.u = L.el.querySelector('.u'); L.d = L.el.querySelector('.d'); return L; });
+const followLabel = addLabel('', 'pin', 0, 16, 0, { hide: true });
+const followRing = new THREE.Mesh(new THREE.RingGeometry(.8, 1, 48).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x14223a, transparent: true, depthWrite: false, toneMapped: false })); followRing.visible = false; scene.add(followRing);
+const streetLabel = addLabel('', 'street', 0, 6, 0, { hide: true, planOnly: true }); const spillLabel = addLabel('', 'spill', 0, 6, 0, { hide: true, planOnly: true });
+const v3 = new THREE.Vector3();
+function updateLabels() {
+  const r = stage.getBoundingClientRect();
+  const fr = floatRects; const PAD = 8;
+  for (const L of LABELS) { if (L.hide || (L.planOnly && (ui.view === 'base' && !ui.compare || ui.follow))) { L.el.hidden = true; continue; } v3.copy(L.p).project(camera); const vis = v3.z < 1 && Math.abs(v3.x) < 1.05 && Math.abs(v3.y) < 1.08; L.el.hidden = !vis; if (vis) { L.el.style.left = ((v3.x + 1) / 2 * r.width).toFixed(1) + 'px'; L.el.style.top = ((1 - v3.y) / 2 * r.height).toFixed(1) + 'px';
+      if (L.planOnly && ui.compare) { const sx = (v3.x + 1) / 2 * r.width, hx = ui.split * r.width; L.el.hidden = sx - (L.el.offsetWidth || 120) / 2 < hx + 26; }
+      if (L.n) { const x = r.left + (v3.x + 1) / 2 * r.width, y = r.top + (1 - v3.y) / 2 * r.height, w = L.w || 160, h = L.h || 40; const bx0 = x - w / 2, bx1 = x + w / 2, by0 = y - h, by1 = y;
+        const hit = bx0 < r.left + 4 || bx1 > r.right - 4 || by0 < r.top + 4 || fr.some(f => bx0 < f.right + PAD && bx1 > f.left - PAD && by0 < f.bottom + PAD && by1 > f.top - PAD);
+        L.el.style.visibility = hit ? 'hidden' : ''; } } }
+}
+let floatRects = [];
+// Live counts come from the trip schedule (who should be in or on the move at this minute), so they never jump when agents are re-seeded.
+function scheduleCounts(vis) {
+  const T = vis.s.trips, now = ui.time; const cnt = Object.fromEntries(INLETS.map(n => [n.id, { i: 0, o: 0 }])); let ins = 0, outs = 0, cars = 0, walk = 0;
+  for (let i = 0; i < T.length && T[i].t0 <= now; i++) { const t = T[i]; const end = t.t0 + t.dur * 1.35; if (t.gin) { cnt[t.gin].i++; ins++; } if (now < end) t.mode === 'car' ? cars++ : walk++; else if (t.gout) { cnt[t.gout].o++; outs++; } }
+  return { cnt, ins, outs, cars, walk };
+}
+function updateCounters() {
+  const vis = V[activeWorld()];
+  const kf = (v) => v >= 1000 ? (v / 1000).toFixed(v >= 10000 ? 0 : 1) + 'k' : String(Math.round(v));
+  const sch = scheduleCounts(vis);
+  for (const L of CALLOUTS) { const c = sch.cnt[L.n.id]; L.u.textContent = '▲' + kf(c.i * SCALE); L.d.textContent = '▼' + kf(c.o * SCALE); }
+  // Hide callouts that collide with a floating card or the stage edge.
+  stage.classList.toggle('drawer', !insp.hidden || !$('#ai').hidden);
+  const sr = stage.getBoundingClientRect(); const fr = ['#caption', '#legstack', '#presets', '#inspector', '#ai', '#chips', '#tag-l', '#tag-r', '#pitch'].map(q => $(q)).filter(el => el && !el.hidden && el.offsetParent).map(el => el.getBoundingClientRect()).filter(r => r.width > 0);
+  floatRects = fr; for (const L of CALLOUTS) { if (L.el.offsetWidth) { L.w = L.el.offsetWidth; L.h = L.el.offsetHeight; } }
+  const { ins, outs, cars, walk } = sch;
+  $('#st-people').textContent = num((vis.s.m.residents + ins - outs) * SCALE, false); $('#st-cars').textContent = num(cars * SCALE, false); $('#st-walk').textContent = num(walk * SCALE, false);
+  $('#world-note').textContent = ui.compare ? 'Plan A side' : ui.view === 'base' ? 'Today' : 'Plan A';
+}
+
+// ───────────────────────── metrics, value, radar ─────────────────────────
+const AXES = ['Mobility', 'Street life', 'Economy', 'Health', 'Housing'];
+const BASE_SHAPE = [62, 46, 68, 50, 34];
+const VALUE = { vtt: 19.6, voc: .62, tie: 9, encounter: .1, va: .35, propTax: 11, healthPerMin: 25.1 };
+function valueOf(b, p) {
+  const mob = (-(p.delayH - b.delayH) * VALUE.vtt - (p.vmt - b.vmt) * VALUE.voc) * WORKDAYS;
+  let soc = ((p.ties - b.ties) * VALUE.tie + (p.enc - b.enc) * VALUE.encounter) * WORKDAYS; if (p.enc >= b.enc) soc = Math.max(0, soc);
+  const eco = (p.revenue - b.revenue) * VALUE.va * WORKDAYS + p.floorDelta * VALUE.propTax * .03;
+  const hea = (p.walkMin - b.walkMin) * VALUE.healthPerMin;
+  return { mob, soc, eco, hea, total: mob + soc + eco + hea };
+}
+function shapeOf(b, p) {
+  const rel = (x, y) => (y - x) / Math.max(Math.abs(x), 1e-6);
+  const jh = (m) => Math.min(1, m.res / Math.max(m.jobs, 1) / .6);
+  return [
+    BASE_SHAPE[0] - rel(b.delayH, p.delayH) * 45 - rel(b.vmt, p.vmt) * 40,
+    BASE_SHAPE[1] + rel(b.enc, p.enc) * 55 + rel(b.ties, p.ties) * 25,
+    BASE_SHAPE[2] + rel(b.revenue, p.revenue) * 90,
+    BASE_SHAPE[3] + rel(b.walkMin, p.walkMin) * 70,
+    BASE_SHAPE[4] + (jh(p) - jh(b)) * 160 + rel(b.res, p.res) * 20,
+  ].map(v => clamp(v, 6, 98));
+}
+let shown = { val: { mob: 0, soc: 0, eco: 0, hea: 0, total: 0 }, shape: BASE_SHAPE.slice() };
+let target = { val: shown.val, shape: shown.shape };
+function recomputeTargets() { const b = S.base.m, p = S.plan.m; target = { val: valueOf(b, p), shape: shapeOf(b, p) }; }
+function drawRadar(shape) {
+  if (!$('#radar')) return;
+  const cx = 150, cy = 112, R = 84; const pt = (i, v) => { const a = -Math.PI / 2 + i * 2 * Math.PI / 5; return [cx + Math.cos(a) * R * v / 100, cy + Math.sin(a) * R * v / 100]; };
+  let s = '';
+  for (const k of [25, 50, 75, 100]) s += `<polygon points="${AXES.map((_, i) => pt(i, k).join(',')).join(' ')}" fill="none" stroke="#e1e5ea" stroke-width="1"/>`;
+  AXES.forEach((a, i) => { const [x, y] = pt(i, 100); const [lx, ly] = pt(i, 120); s += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#e1e5ea"/><text x="${lx}" y="${ly + 4}" fill="#47566b" font-size="12" font-family="Geist, sans-serif" text-anchor="${Math.abs(lx - cx) < 10 ? 'middle' : lx > cx ? 'start' : 'end'}">${a}</text>`; });
+  s += `<polygon points="${BASE_SHAPE.map((v, i) => pt(i, v).join(',')).join(' ')}" fill="none" stroke="#7a8696" stroke-dasharray="3 3" stroke-width="1.2"/>`;
+  s += `<polygon points="${shape.map((v, i) => pt(i, v).join(',')).join(' ')}" fill="rgba(20,34,58,.08)" stroke="#14223a" stroke-width="1.6"/>`;
+  shape.forEach((v, i) => { const [x, y] = pt(i, v); s += `<circle cx="${x}" cy="${y}" r="2.6" fill="#14223a"/>`; });
+  s += `<g font-family="Geist, sans-serif" font-size="11" fill="#7a8696"><line x1="-36" y1="212" x2="-20" y2="212" stroke="#7a8696" stroke-dasharray="3 3"/><text x="-16" y="215">today</text><line x1="30" y1="212" x2="46" y2="212" stroke="#14223a" stroke-width="1.6"/><text x="50" y="215">Plan A</text></g>`;
+  $('#radar').innerHTML = s;
+}
+function spillPct() { const dl = (sc, i) => sc.carFlow[i] * EDGES[i].l / SPEED[EDGES[i].c] * (sc.cong[i] - 1); let tot = 0, up = 0; for (let i = 0; i < EDGES.length; i++) { if (!EDGES[i].car) continue; const b = dl(S.base, i), q = dl(S.plan, i); tot += b; if (S.plan.carFlow[i] > S.base.carFlow[i] && q > b) up += q - b; } return tot ? up / tot : 0; }
+const fmtMin = (d) => Math.abs(d) < .05 ? 'no change' : (d >= 0 ? '+' : '−') + Math.abs(d).toFixed(1) + ' min/trip';
+const dmin = (b, p) => fmtMin(minPerTrip(p) - minPerTrip(b));
+function drawPillars() {
+  const b = S.base.m, p = S.plan.m, v = shown.val, f = (x) => `<b class="${Math.abs(x) < 500 ? '' : x >= 0 ? 'up' : 'down'}">${money(x)}</b>`;
+  const rel = (x, y) => pct((y - x) / Math.max(Math.abs(x), 1e-6));
+  $('#pillars').innerHTML = `
+    <div class="pill"><small>Mobility</small>${f(v.mob)}<span>cars ${num(((p.car - b.car)) * SCALE)}/day · spillover ${S.plan.ped.size ? pct(spillPct()) : '0%'}</span></div>
+    <div class="pill"><small>Street life</small>${f(v.soc)}<span>chance encounters ${rel(b.enc, p.enc)}</span></div>
+    <div class="pill"><small>Local economy</small>${f(v.eco)}<span>shop revenue ${money((p.revenue - b.revenue))}/day</span></div>
+    <div class="pill"><small>Health</small>${f(v.hea)}<span>walking ${num((p.walkMin - b.walkMin) / 60)} h/day</span></div>`;
+  if (ui.demo) { const { cars, walk } = scheduleCounts(V[activeWorld()]);
+    $('#mini').innerHTML = `<span><i class="k-car"></i> driving<b>${num(cars * SCALE, false)}</b></span><span><i class="k-walk"></i> walking<b>${num(walk * SCALE, false)}</b></span><i class="sep"></i><span>Mobility<b>${money(v.mob)}</b></span><span>Street life<b>${money(v.soc)}</b></span><span>Economy<b>${money(v.eco)}</b></span><span>Health<b>${money(v.hea)}</b></span>`; }
+  const cvEl = $('#cv'); cvEl.textContent = ui.view === 'base' && !ui.compare ? '$0' : money(v.total); cvEl.style.color = v.total < -500 ? 'var(--bad)' : Math.abs(v.total) < 500 ? 'var(--ink)' : '';
+}
+function tickMetrics(dt) {
+  const k = 1 - Math.pow(.02, dt);
+  for (const key of Object.keys(target.val)) shown.val[key] = lerp(shown.val[key], target.val[key], k);
+  shown.shape = shown.shape.map((v, i) => lerp(v, target.shape[i], k));
+}
+
+// ───────────────────────── citizen feed ─────────────────────────
+const FEED = [];
+const TAGC = { driving: ['#e3ebfb', '#2459d6'], switched: ['#fde6e0', '#c23a17'], lunch: ['#fde6e0', '#c23a17'], 'new connection': ['#efe8fd', '#6230c4'], plan: ['#e3ebfb', '#2459d6'] };
+function post(name, text, pid, tag) {
+  FEED.unshift({ name, text, pid, time: fmtClock(ui.time / 60), min: ui.time / 60, tag, fresh: true }); if (FEED.length > 14) FEED.pop(); renderFeed();
+}
+function renderFeed() {
+  $('#feed').innerHTML = FEED.map((f) => { const tc = TAGC[f.tag] || ['#eef1f4', '#47566b']; return `<div class="post ${f.fresh ? 'new' : ''}" data-pid="${f.pid ?? ''}"><div class="av">${f.name.split(' ').map(s => s[0]).join('').slice(0, 2)}</div><div><div class="who">${f.name}<em>${f.time}</em>${f.tag ? `<i class="tag" style="background:${tc[0]};color:${tc[1]}">${f.tag}</i>` : ''}</div><p>${f.text}</p></div></div>`; }).join('');
+  FEED.forEach(f => f.fresh = false);
+}
+$('#feed').addEventListener('click', (e) => { const el = e.target.closest('.post'); if (el && el.dataset.pid) followPerson(+el.dataset.pid); });
+let lastAmbient = 0; const recentStuck = [];
+function ambientPost() {
+  const vis = V[ui.view === 'base' && !ui.compare ? 'base' : 'plan']; if (!vis.active.length) return;
+  for (let tries = 0; tries < 12; tries++) {
+    const a = vis.active[Math.floor(Math.random() * vis.active.length)]; posAt(a.t, a.s, tmp); const e = EDGES[tmp.e]; const st = e?.name || 'the street';
+    if (a.t.mode === 'car' && vis.liveCong[tmp.e] > 3.2 && !recentStuck.includes(st)) { recentStuck.unshift(st); recentStuck.length = Math.min(recentStuck.length, 4); const T = [`Stuck on ${st} again. Two blocks in ten minutes.`, `${st} is a parking lot right now.`, `Crawling down ${st}. Should have taken BART.`, `Ten minutes to get through ${st}. Every day.`]; return post(a.t.p.name, T[Math.floor(Math.random() * T.length)], a.t.service ? null : a.t.p.id, 'driving'); }
+    if (a.t.mode === 'ped' && vis.s.ped.has(tmp.e)) return post(a.t.p.name, `Walking ${st} with tables in the street feels like a different city.`, a.t.p.id, 'walking');
+    if (a.t.mode === 'ped' && a.t.leg === 'lunch' && a.t.poi) return post(a.t.p.name, `Heading to ${a.t.poi.n} for lunch.`, a.t.p.id, 'lunch');
+    if (a.t.mode === 'ped' && a.t.leg === 'am' && a.t.p.reg && S.base.modes.get(a.t.p.id) === 'car' && vis === V.plan) return post(a.t.p.name, `Took BART in instead of driving today. Out at ${a.t.p.reg.st.name.replace(' Street', '')} and walking from there.`, a.t.p.id, 'switched');
+  }
+}
+
+// ───────────────────────── edits + settle ─────────────────────────
+let chipT; function showChips(html) { $('#chips').innerHTML = html; clearTimeout(chipT); if (html && !html.includes('replanning')) chipT = setTimeout(() => { $('#chips').innerHTML = ''; }, 8000); }
+async function settle(label, kind = 'street') {
+  if (ui.settling) return; ui.settling = true; const prevM = S.plan.m;
+  const dots = (k) => `<span class="dots">${[0, 1, 2, 3, 4].map(i => `<i class="${i < k ? 'on' : ''}"></i>`).join('')}</span>`;
+  for (let d = 0; d < 5; d++) { showChips(`<div class="chip float" style="position:static">Agents replanning · day ${d + 1} of 5 ${dots(d + 1)}</div>`); await sleep(d === 0 ? 60 : 260); if (d === 0) S.plan.settle(baseCarRoutes(), 5); }
+  afterSettle();
+  const b = S.base.m, p = S.plan.m; const dCar = (b.car - p.car) * SCALE; const evap = (p.gone - b.gone) * SCALE;
+  const X = '<button class="x" aria-label="Dismiss" onclick="this.parentNode.remove()">×</button>';
+  if (kind === 'block') { const dv = valueOf(b, p).total - valueOf(b, prevM).total;
+    showChips(`<div class="chip float" id="evap" style="position:static">${X}<h5>${label}</h5><div class="row"><span>Residents</span><b>${num(p.res - prevM.res)}</b></div><div class="row"><span>Jobs</span><b>${num(p.jobs - prevM.jobs)}</b></div><div class="row"><span>Car trips per day</span><b>${num((p.car - prevM.car) * SCALE)}</b></div><div class="row" style="margin-top:6px;align-items:baseline"><span>City value</span><span class="big" style="color:${dv >= 0 ? 'var(--good)' : 'var(--bad)'}">${money(dv)}/yr</span></div></div>`); }
+  else showChips(`<div class="chip float" id="evap" style="position:static">${X}<h5>${label}</h5><div class="row"><span>Car trips per day</span><b>${num(-dCar)}</b></div><div class="row"><span>now ride BART</span><b>${num(Math.max(0, dCar - evap), false)}</b></div><div class="row"><span>trips not made</span><b>${num(Math.max(0, evap), false)}</b></div><div class="row" style="margin-top:6px;align-items:baseline"><span>Foot traffic on ${label.includes('2nd') ? '2nd St' : 'edited streets'}</span><span class="big">${pedStreetDelta()}</span></div></div>`);
+  ui.settling = false; $('#settle-note').textContent = 'after agents replanned';
+  if (ui.demo) { const tok = demoToken; setTimeout(() => { if (tok === demoToken) showChips(''); }, 7000); }
+}
+function afterSettle() { $('#settle-note').textContent = S.plan.ped.size || S.plan.blocks.size ? 'after agents replanned' : 'no changes yet'; resetAgents(V.plan, ui.time, true); paintTies(V.plan); paintPins(V.plan); paintPins(V.base); refreshTables(); recomputeTargets(); paintInfo(); }
+function pedStreetDelta() { let a = 0, b = 0; for (const e of S.plan.ped) { a += S.plan.pedFlow[e]; b += S.base.pedFlow[e]; } return b ? pct((a - b) / b) : '—'; }
+function refreshTables() {
+  tableList.length = 0; const c = new THREE.Color(); const cols = [0xffffff, 0xffcf33, 0x14223a, 0xffffff];
+  for (const id of S.plan.ped) { const e = EDGES[id]; const pts = e.p; let acc = 0; for (let j = 0; j < pts.length - 1; j++) { const [x1, z1] = pts[j], [x2, z2] = pts[j + 1]; const L = Math.hypot(x2 - x1, z2 - z1); const nx = -(z2 - z1) / L, nz = (x2 - x1) / L; for (let s = 9 - acc; s < L; s += 16) { for (const side of [-1, 1]) { if (hash2(id * 100 + j, Math.round(s) * side) < .25) continue; tableList.push({ x: x1 + (x2 - x1) * s / L + nx * side * e.w * .28, z: z1 + (z2 - z1) * s / L + nz * side * e.w * .28, c: cols[(tableList.length * 7) % 4], t0: tableList.length * .015 }); } } acc = (acc + L) % 16; } }
+  tables.count = Math.min(tableList.length, 900); tableList.slice(0, 900).forEach((t, i) => { tables.setColorAt(i, c.setHex(t.c)); t.age = 0; }); if (tables.instanceColor) tables.instanceColor.needsUpdate = true;
+}
+function animTables(dt) { for (let i = 0; i < tables.count; i++) { const t = tableList[i]; t.age = Math.min(1.5, (t.age || 0) + dt); const k = clamp((t.age - t.t0) / .45, 0, 1); const s = k <= 0 ? .001 : backOut(k); m4.makeScale(s, s, s); m4.setPosition(t.x, .8, t.z); tables.setMatrixAt(i, m4); } tables.instanceMatrix.needsUpdate = true; }
+function togglePed(id, on) { const e = EDGES[id]; if (!e || e.hw) return false; if (on) { S.plan.ped.add(id); const q = {}; V.plan.active = V.plan.active.filter(a => { if (a.t.mode !== 'car' || !a.t.edges.includes(id)) return true; posAt(a.t, a.s, q); puff(q.x, q.z); return false; }); } else S.plan.ped.delete(id); S.plan.cache.clear(); return true; }
+const scaleAnim = new Map();
+function setBlock(bids, s, z) {
+  for (const bid of bids) { const b = BLD[bid]; const prev = S.plan.blocks.get(bid); const from = prev ? prev.s : 1; if (s === 1 && z === b.k) S.plan.blocks.delete(bid); else S.plan.blocks.set(bid, { s, z }); scaleAnim.set(bid, { from: scaleAnim.has(bid) ? scaleAnim.get(bid).cur : from, to: s, t: 0, cur: from });
+    setBuildingAttr('aTint', bid, z !== b.k ? ZONE_TINT[z] : b.col); }
+  if (ui.info === 'zoning' || ui.info === 'jobs' || ui.info === 'res') paintInfo();
+}
+function animScales(dt) { for (const [bid, a] of scaleAnim) { a.t = Math.min(1, a.t + dt / .9); a.cur = lerp(a.from, a.to, backOut(a.t)); setBuildingAttr('aScale', bid, a.cur); if (a.t >= 1) scaleAnim.delete(bid); } }
+function blockOf(bid) {
+  const b = BLD[bid]; const out = [bid];
+  for (const o of BLD) { if (o.id === bid || !o.inside) continue; const d = Math.hypot(o.c[0] - b.c[0], o.c[1] - b.c[1]); if (d > 95) continue; if (!crossesRoad(b.c, o.c)) out.push(o.id); }
+  return out;
+}
+let hl = [];
+function highlight(bids, v = 1) { for (const b of hl) setBuildingAttr('aHL', b, 0); hl = bids; for (const b of bids) setBuildingAttr('aHL', b, v); }
+
+// ───────────────────────── inspectors ─────────────────────────
+const insp = $('#inspector');
+function closeInspector() { insp.hidden = true; highlight([]); if (ui.follow && !ui.demo) unfollow(); }
+function row(k, a, b, fmt = (x) => num(x, false), better = 1) { const d = b - a; const cls = Math.abs(d) < 1e-6 ? '' : (d * better > 0 ? 'up' : 'down'); return `<span>${k}</span><span>${fmt(a)}</span><span class="${cls}">${fmt(b)}</span>`; }
+const KVH = '<span class="h"></span><span class="h">Today</span><span class="h">Plan A</span>';
+function inspectStreet(id) {
+  const e = EDGES[id]; const hrs = 2.2; const cb = S.base.carFlow[id] * SCALE / hrs, cp = S.plan.carFlow[id] * SCALE / hrs, pb = S.base.pedFlow[id] * SCALE, pp = S.plan.pedFlow[id] * SCALE;
+  insp.innerHTML = `<button class="x" aria-label="Close">×</button><h3>${e.name || 'Unnamed street'}</h3><div class="sub">${e.c.replace('_', ' ')} · ${e.lanes} lane${e.lanes > 1 ? 's' : ''} · ${Math.round(e.l)} m segment${S.plan.ped.has(id) ? ' · <b style="background:var(--edit);color:var(--ink);padding:0 4px">car-free in Plan A</b>' : ''}</div>
+  <div class="kv">${KVH}${row('<i class="k-car"></i> Cars / hr (AM peak)', cb, cp, undefined, -1)}${row('<i class="k-walk"></i> Walkers / day', pb, pp)}${row('Congestion ×', S.base.cong[id], S.plan.cong[id], (x) => x.toFixed(2), -1)}</div>
+  <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap"><button class="btn" id="div-btn">${ui.diversion ? 'Hide' : 'Show'} where traffic went</button>${e.hw ? '' : `<button class="btn" id="ped-one">${S.plan.ped.has(id) ? 'Reopen to cars' : 'Make car-free'}</button>`}</div>`;
+  insp.hidden = false; insp.querySelector('.x').onclick = closeInspector;
+  $('#div-btn').onclick = () => { ui.diversion = !ui.diversion; inspectStreet(id); };
+  const pb2 = $('#ped-one'); if (pb2) pb2.onclick = async () => { togglePed(id, !S.plan.ped.has(id)); switchView('plan'); await settle('Street edit'); inspectStreet(id); };
+}
+function inspectBlock(bid) {
+  const bids = blockOf(bid); highlight(bids); const b = BLD[bid]; const ed = S.plan.blocks.get(bid) || { s: 1, z: b.k };
+  let jb = 0, rb = 0, jp = 0, rp = 0; for (const i of bids) { const o = BLD[i]; const c0 = capOf(o.k, o.floor); const e = S.plan.blocks.get(i); const c1 = e ? capOf(e.z, o.floor * e.s) : c0; jb += c0.jobs; rb += c0.res; jp += c1.jobs; rp += c1.res; }
+  const z = ZONES[ed.z] ? ed.z : 'mixed';
+  insp.innerHTML = `<button class="x" aria-label="Close">×</button><h3>${b.n || 'Block near ' + nearestStreetName(b.c[0], b.c[1])}</h3><div class="sub">${bids.length} building${bids.length > 1 ? 's' : ''} · tallest ${Math.round(Math.max(...bids.map(i => BLD[i].h)))} m · today ${ZONES[BLD[bid].k] || 'Mixed use'}</div>
+  <div class="kv">${KVH}${row('Jobs', jb, jp)}${row('Residents', rb, rp)}</div>
+  <div class="lab-s" style="margin-top:12px">Zoning</div>
+  <div class="zones">${Object.entries(ZONES).map(([k, v]) => `<button data-z="${k}" class="${k === z ? 'on' : ''}"><i style="background:${ZCAT[zcatOf(k)][2]}"></i>${v}</button>`).join('')}</div>
+  <div style="display:flex;justify-content:space-between" class="lab-s"><span>Density</span><span id="dens-v" style="font-family:var(--f-data);letter-spacing:0;text-transform:none">${ed.s.toFixed(1)}× height</span></div>
+  <input type="range" id="dens" min="0.5" max="3" step="0.1" value="${ed.s}">
+  <div style="font-size:11px;color:var(--dim);margin-top:6px;line-height:1.4">Office conversions assume vacant floors convert first (FiDi office vacancy is about 35%).</div>`;
+  insp.hidden = false; insp.querySelector('.x').onclick = closeInspector;
+  let cur = { s: ed.s, z }; let timer;
+  const commit = () => { clearTimeout(timer); timer = setTimeout(async () => { switchView('plan'); await settle('Block edit', 'block'); inspectBlock(bid); }, 450); };
+  insp.querySelectorAll('[data-z]').forEach(btn => btn.onclick = () => { cur.z = btn.dataset.z; setBlock(bids, cur.s, cur.z); insp.querySelectorAll('[data-z]').forEach(x => x.classList.toggle('on', x === btn)); commit(); });
+  $('#dens').oninput = (e) => { cur.s = +e.target.value; $('#dens-v').textContent = cur.s.toFixed(1) + '× height'; setBlock(bids, cur.s, cur.z); commit(); };
+}
+function nearestStreetName(x, z) { const id = edgeAt(x, z, 80); return id >= 0 ? EDGES[id].name || 'the street' : 'the street'; }
+function hourly(q, scn) { const c = q.c; const shape = (h) => c === 'cafe' ? Math.exp(-((h - 8.5) ** 2) / 3) + .8 * Math.exp(-((h - 12.5) ** 2) / 2) + .4 * Math.exp(-((h - 15) ** 2) / 2) : c === 'bar' ? Math.exp(-((h - 19.5) ** 2) / 5) : c === 'shop' ? Math.exp(-((h - 13) ** 2) / 12) : Math.exp(-((h - 12.4) ** 2) / 1.2) + .6 * Math.exp(-((h - 19) ** 2) / 3); const hs = []; let t = 0; for (let h = 6; h < 24; h++) { const v = shape(h); hs.push(v); t += v; } const total = scn.visits.get(q.id) || 0; return hs.map(v => v / t * total); }
+function inspectPoi(q) {
+  const vb = S.base.visits.get(q.id) || 0, vp = S.plan.visits.get(q.id) || 0, t = CAT[q.c].ticket; const hb = hourly(q, S.base), hp = hourly(q, S.plan); const mx = Math.max(...hb, ...hp, 1);
+  insp.innerHTML = `<button class="x" aria-label="Close">×</button><h3>${q.n}</h3><div class="sub">${CAT[q.c].label} · avg ticket $${t}${q.virtual ? ' · added by your zoning' : ''}</div>
+  <div class="kv">${KVH}${row('Visits / day', vb, vp)}${row('Revenue / day', vb * t, vp * t, (x) => money(x, false))}</div>
+  <div class="bars">${hb.map((v, i) => `<div><i style="height:${v / mx * 100}%"></i><em style="height:${hp[i] / mx * 100}%"></em></div>`).join('')}</div>
+  <div class="axis"><span>6a</span><span>noon</span><span>6p</span><span>mid</span></div>
+  <div style="font-size:11px;color:var(--dim);margin-top:8px;line-height:1.4">Wide gray bars are today, thin ink bars are Plan A. Most of the change comes from people walking past more often.</div>`;
+  insp.hidden = false; insp.querySelector('.x').onclick = closeInspector;
+}
+function diaryFor(p) {
+  const mb = S.base.modes.get(p.id), mp = S.plan.modes.get(p.id);
+  const lines = []; const lunch = S.plan.lunchAt.get(p.id);
+  if (p.kind === 'worker') {
+    if (mb === 'car' && mp !== 'car') lines.push([fmtClock(p.arrive / 60 - 25), `Skipped the drive in on ${INLET[p.reg.car].name}. BART to ${p.reg.st.name.replace(' Street', '')}, then a walk ${S.plan.ped.size ? 'down a car-free street' : 'to work'}.`]);
+    else if (mp === 'car') lines.push([fmtClock(p.arrive / 60 - 10), `Drove in from the ${p.reg.name} via ${INLET[p.reg.car].name}.`]);
+    else lines.push([fmtClock(p.arrive / 60 - 8), `BART to ${p.reg.st.name.replace(' Street', '')}, then on foot to the office.`]);
+    if (lunch) lines.push([fmtClock(p.lunchT / 60), `Lunch at ${lunch.n}.${S.plan.pedPoiBonus.has(lunch.id) ? ' Ate outside at a table in the street.' : ''}`]);
+    if (p.id === MARIA_ID && mariaMet) lines.push([fmtClock(mariaMetT / 60), `Ran into ${mariaMet.name.split(' ')[0]} from the 9th floor. Coffee again Thursday.`]);
+    lines.push([fmtClock(p.leave / 60), mp === 'car' ? 'Drove home.' : 'Walked back to the station.']);
+  } else { lines.push(['', `Lives near ${nearestStreetName(p.home.c[0], p.home.c[1])}.`]); if (p.evening) lines.push([fmtClock(p.eveT / 60), 'Evening out in the neighborhood.']); }
+  return { lines, mb, mp };
+}
+const stamp = (t) => { if (!t) return ''; const [h, mm] = t.split(':').map(Number); const fut = h * 60 + mm > ui.time / 60 + .5; return `<span class="t"${fut ? ' style="color:var(--dim)"' : ''}>${t}${fut ? ' · planned' : ''}</span>`; };
+function inspectPerson(pid) {
+  const p = S.plan.pmap.get(pid) || S.base.pmap.get(pid); if (!p) return; const d = diaryFor(p); const m = (x) => x === 'car' ? '<span class="m-car">Car</span>' : x === 'gone' ? 'Stayed home' : x === 'transit' ? '<span class="m-walk">BART + walk</span>' : '<span class="m-walk">Walk</span>';
+  insp.classList.toggle('compact', ui.demo);
+  if (ui.demo) { const last = pid === MARIA_ID && mariaMet ? d.lines.find(l => l[1].startsWith('Ran into')) : d.lines.find(l => l[1].startsWith('Lunch')) || d.lines[0];
+    insp.innerHTML = `<h3>${p.name}</h3><div class="sub" style="margin-bottom:6px">${m(d.mb)} → ${m(d.mp)}</div><div class="diary" style="margin-top:0;padding-top:8px"><p>${stamp(last[0])}${last[1]}</p></div>`; insp.hidden = false; return; }
+  const tc = (s) => (s.personTrips.get(pid) || []).reduce((a, t) => a + t.dur, 0) / 60;
+  const ties = S.plan.tiePairs.filter(([a, b]) => a.id === pid || b.id === pid).length;
+  insp.innerHTML = `<button class="x" aria-label="Close">×</button><h3>${p.name}</h3><div class="sub">${p.kind === 'worker' ? `Works at ${p.office.n || 'an office near ' + nearestStreetName(p.office.c[0], p.office.c[1])} · from the ${p.reg.name}` : 'Resident'} · income ${['lower', 'middle', 'upper'][p.income]} third</div>
+  <div class="kv">${KVH}<span>Mode</span><span>${m(d.mb)}</span><span>${m(d.mp)}</span>${row('Minutes on the move here', tc(S.base), tc(S.plan), (x) => Math.round(x))}${row('New connections today', 0, ties)}</div>
+  <div class="diary">${d.lines.map(([t, l]) => `<p>${stamp(t)}${l}</p>`).join('')}</div>`;
+  insp.hidden = false; insp.querySelector('.x').onclick = closeInspector;
+}
+
+// ───────────────────────── follow an agent ─────────────────────────
+let mariaMet = null;
+let mariaMetT = 0;
+function onMariaMeets(people) { if (mariaMet) return; const dev = people.find(p => p.id === DEV_ID); if (!dev) return; mariaMet = dev; mariaMetT = ui.time; post(MARIA_NAME, `Bumped into ${mariaMet.name.split(' ')[0]} at lunch. We've worked on the same floor for a year and never talked.`, MARIA_ID, 'new connection'); if (ui.follow === MARIA_ID) inspectPerson(MARIA_ID); }
+function followPerson(pid) {
+  ui.follow = pid; inspectPerson(pid);
+  if (mariaTrail) { planGroup.remove(mariaTrail); mariaTrail.geometry.dispose(); mariaTrail = null; }
+  const trips = (S.plan.personTrips.get(pid) || []).filter(t => t.mode === 'ped' || t.leg === 'am');
+  const geos = []; for (const t of trips) { const pts = t.pts.map(([x, z], i) => { const tm = {}; posAt(t, t.cum[i], tm); return new THREE.Vector3(tm.x, 3, tm.z); }); if (pts.length < 2) continue; const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal', .1); geos.push(new THREE.TubeGeometry(curve, Math.min(400, pts.length * 6), 1.5, 5, false).toNonIndexed()); }
+  if (geos.length) { mariaTrail = new THREE.Mesh(mergeGeometries(geos), new THREE.MeshBasicMaterial({ color: 0xf0532d, toneMapped: false, transparent: true, opacity: .55 })); planGroup.add(mariaTrail); }
+}
+function unfollow() { ui.follow = null; if (mariaTrail) { planGroup.remove(mariaTrail); mariaTrail = null; } }
+
+// ───────────────────────── picking + tools ─────────────────────────
+const ray = new THREE.Raycaster(); const ndc = new THREE.Vector2(); const ground = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+function toNdc(ev) { const r = cv.getBoundingClientRect(); ndc.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1); return r; }
+function groundAt(ev) { toNdc(ev); ray.setFromCamera(ndc, camera); const p = new THREE.Vector3(); return ray.ray.intersectPlane(ground, p) ? p : null; }
+function buildingAt(ev) { toNdc(ev); ray.setFromCamera(ndc, camera); const hit = ray.intersectObject(buildings, false)[0]; if (!hit) return -1; return bGeo.attributes.aBid.array[hit.face.a]; }
+function agentAt(ev) {
+  const r = toNdc(ev); const vis = V[activeWorld()]; let best = null, bd = 12;
+  for (const a of vis.active) { posAt(a.t, a.s, tmp); v3.set(tmp.x, 2, tmp.z).project(camera); const sx = (v3.x + 1) / 2 * r.width, sy = (1 - v3.y) / 2 * r.height; const d = Math.hypot(sx - (ev.clientX - r.left), sy - (ev.clientY - r.top)); if (d < bd) { bd = d; best = a; } }
+  return best;
+}
+function poiAt(ev) { if (ui.info !== 'visits') return null; const r = toNdc(ev); let best = null, bd = 12; for (const q of S[activeWorld()].pois) { v3.set(q.x, 8, q.z).project(camera); const d = Math.hypot((v3.x + 1) / 2 * r.width - (ev.clientX - r.left), (1 - v3.y) / 2 * r.height - (ev.clientY - r.top)); if (d < bd) { bd = d; best = q; } } return best; }
+const activeWorld = () => ui.compare ? 'plan' : ui.view;
+let stroke = null, down = null;
+// Registered before MapControls so a paint stroke can switch the controls off before they see the event.
+cv.addEventListener('pointerdown', (ev) => {
+  down = { x: ev.clientX, y: ev.clientY, b: ev.button };
+  if (ui.demo || ev.button !== 0) return;
+  if (ui.tool === 'ped') { const g = groundAt(ev); const id = g ? edgeAt(g.x, g.z) : -1; if (id < 0) return; if (EDGES[id].hw) { toast('Freeways can’t be made car-free.'); return; } controls.enabled = false; cancelFlight(); stroke = { erase: S.plan.ped.has(id), touched: new Set() }; paintEdge(id); cv.setPointerCapture(ev.pointerId); }
+});
+function handleClick(ev) {
+  if (ui.tool === 'density' || ui.tool === 'zoning') { const b = buildingAt(ev); if (b >= 0) inspectBlock(b); return; }
+  if (ui.tool === 'ped') return;
+  const q = poiAt(ev); if (q) return inspectPoi(q);
+  const a = agentAt(ev); if (a) { if (a.t.service) { toast(`${a.t.p.name}: a service trip that is the same in both scenarios.`); return; } return followPerson(a.t.p.id); }
+  const b = buildingAt(ev); const g = groundAt(ev); const id = g ? edgeAt(g.x, g.z, 6) : -1;
+  if (b >= 0) return inspectBlock(b); if (id >= 0) return inspectStreet(id);
+  closeInspector();
+}
+function paintEdge(id) { if (!stroke || stroke.touched.has(id)) return; stroke.touched.add(id); togglePed(id, !stroke.erase); if (ui.view !== 'plan' && !ui.compare) switchView('plan'); const e = EDGES[id]; for (let k = 0; k < 3; k++) { const p = e.p[Math.floor(k / 2 * (e.p.length - 1))]; puff(p[0], p[1]); } }
+cv.addEventListener('pointermove', (ev) => {
+  if (stroke) { const g = groundAt(ev); const id = g ? edgeAt(g.x, g.z) : -1; if (id >= 0 && !EDGES[id].hw) paintEdge(id); return; }
+  const tip = $('#tip'); if (ui.demo || ev.buttons) { tip.hidden = true; return; }
+  let html = '';
+  if (ui.tool === 'ped' || ui.tool === 'select') { const g = groundAt(ev); const id = g ? edgeAt(g.x, g.z, 8) : -1; if (id >= 0 && buildingAt(ev) < 0) html = (EDGES[id].name || 'Street') + (ui.tool === 'ped' ? `<small>${S.plan.ped.has(id) ? 'click to reopen to cars' : 'click or drag to make car-free'}</small>` : ''); }
+  if (!html && ui.tool !== 'ped') { const b = buildingAt(ev); if (b >= 0) html = tipFor(b); }
+  tip.hidden = !html; tip.innerHTML = html; const sr = stage.getBoundingClientRect(); tip.style.left = (ev.clientX - sr.left + 14) + 'px'; tip.style.top = (ev.clientY - sr.top + 10) + 'px';
+});
+function tipFor(b) {
+  const B = BLD[b], d = INFO[ui.info]; const name = B.n || ZONES[B.k] || 'Building';
+  if (d && infoData && (d.kind === 'block' || d.kind === 'div')) { const k = BLK[b]; const n = BLOCKS[k].length; const w = activeWorld(); const v = w === 'plan' ? infoData.vp[k] : infoData.vb[k];
+    const extra = d.kind === 'block' && w === 'plan' && Math.abs(infoData.vp[k] - infoData.vb[k]) > .5 ? ` (today ${d.fmt(infoData.vb[k])})` : '';
+    return `${d.fmt(v)}${extra}<small>block of ${n} building${n > 1 ? 's' : ''} · ${name}</small>`; }
+  if (d && d.kind === 'zoning') { const ed = activeWorld() === 'plan' ? S.plan.blocks.get(b) : null; return `${ZCAT[zcatOf(ed ? ed.z : B.k)][1]}<small>${name} · ${Math.round(B.h)} m</small>`; }
+  return `${name}<small>${Math.round(B.h)} m · click to inspect</small>`;
+}
+cv.addEventListener('pointerleave', () => { $('#tip').hidden = true; });
+cv.addEventListener('pointerup', async (ev) => {
+  if (stroke) { const n = stroke.touched.size; stroke = null; controls.enabled = true; if (n) await settle('Street edit'); return; }
+  if (down && down.b === 0 && !ui.demo && Math.hypot(ev.clientX - down.x, ev.clientY - down.y) < 5) handleClick(ev);
+  down = null;
+});
+
+const controls = new MapControls(camera, cv);
+Object.assign(controls, { enableDamping: true, dampingFactor: .09, zoomToCursor: true, minDistance: 160, maxDistance: 6800, maxPolarAngle: 1.32, minPolarAngle: 0, screenSpacePanning: false, zoomSpeed: 1.1 });
+controls.addEventListener('start', () => { cancelFlight(); $('#tip').hidden = true; });
+controls.addEventListener('change', () => { const t = controls.target; const cx = clamp(t.x, BASE.x0, BASE.x1), cz = clamp(t.z, BASE.z0, BASE.z1); if (cx !== t.x || cz !== t.z || t.y !== 0) { const d = new THREE.Vector3(cx - t.x, -t.y, cz - t.z); t.add(d); camera.position.add(d); } });
+setView(VIEWS.overview);
+
+const TOOL_HINT = { select: 'Click anything to inspect it. Drag to pan, right-drag to rotate, scroll to zoom.', ped: 'Click or drag along streets to make them car-free. Drag elsewhere to move the camera.', density: 'Click a block, then drag the slider to make it taller or shorter.', zoning: 'Click a block and pick a new land use.' };
+function setTool(t) { ui.tool = t; document.querySelectorAll('[data-tool]').forEach(b => b.classList.toggle('on', b.dataset.tool === t)); cv.style.cursor = t === 'ped' ? 'crosshair' : ''; $('#tool-hint').textContent = TOOL_HINT[t]; }
+document.querySelectorAll('[data-tool]').forEach(b => b.onclick = () => setTool(b.dataset.tool));
+const INFO_KEYS = Object.keys(INFO);
+addEventListener('keydown', (e) => { if (e.target.tagName === 'INPUT') return; const k = e.key.toLowerCase(); if (k === 'v') setTool('select'); if (k === 'p') setTool('ped'); if (k === 'd') setTool('density'); if (k === 'z') setTool('zoning'); if (k >= '1' && k <= '8') setInfo(INFO_KEYS[+k - 1]); if (k === '0') setInfo(null); if (k === ' ') { e.preventDefault(); togglePlay(); } if (k === 'escape') { if ($('#pitch')) { $('#pitch').remove(); return; } closeInspector(); setInfo(null); } });
+function switchView(w) { ui.view = w; $('#tab-base').classList.toggle('on', w === 'base'); $('#tab-plan').classList.toggle('on', w === 'plan'); }
+$('#tab-base').onclick = () => switchView('base'); $('#tab-plan').onclick = () => switchView('plan');
+const ICON_PAUSE = '<svg width="12" height="12" viewBox="0 0 12 12"><rect x="1.5" y="1" width="3" height="10" fill="currentColor"/><rect x="7.5" y="1" width="3" height="10" fill="currentColor"/></svg>', ICON_PLAY = '<svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 1l9 5-9 5z" fill="currentColor"/></svg>';
+function togglePlay(on) { ui.playing = on === undefined ? !ui.playing : on; $('#play').innerHTML = ui.playing ? ICON_PAUSE : ICON_PLAY; }
+togglePlay(true);
+$('#play').onclick = () => togglePlay();
+function setRate(r) { ui.rate = r; document.querySelectorAll('#speeds button').forEach(b => b.classList.toggle('on', +b.dataset.s === r)); }
+document.querySelectorAll('#speeds button').forEach(b => b.onclick = () => setRate(+b.dataset.s));
+$('#scrub').addEventListener('input', (e) => jumpTo(+e.target.value * 60));
+function jumpTo(t) { ui.time = t; if (FEED.some(f => f.min > t / 60 + .5)) { const keep = FEED.filter(f => f.min <= t / 60 + .5); FEED.length = 0; FEED.push(...keep); renderFeed(); } lastAmbient = Math.min(lastAmbient, t); for (const v of Object.values(V)) { resetAgents(v, t, false); v.dwell.clear(); } }
+function setCompare(on) { ui.compare = on; $('#handle').hidden = !on; $('#tag-l').hidden = !on; $('#tag-r').hidden = !on; $('#compare-btn').classList.toggle('primary', on); placeHandle(); }
+function placeHandle() { const w = stage.clientWidth; $('#handle').style.left = (ui.split * w) + 'px'; $('#tag-l').style.left = Math.max(12, ui.split * w - 84) + 'px'; $('#tag-r').style.left = (ui.split * w + 14) + 'px'; }
+$('#compare-btn').onclick = () => setCompare(!ui.compare);
+{ let drag = false; $('#handle').addEventListener('pointerdown', (e) => { drag = true; e.target.setPointerCapture(e.pointerId); }); $('#handle').addEventListener('pointermove', (e) => { if (!drag) return; const r = stage.getBoundingClientRect(); ui.split = clamp((e.clientX - r.left) / r.width, .05, .95); placeHandle(); }); $('#handle').addEventListener('pointerup', () => drag = false); }
+let toastT; function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2800); }
+
+// ───────────────────────── AI planner (scripted for the mockup) ─────────────────────────
+function candidateOptions() {
+  const hx = HERO_EDGES.length ? EDGES[HERO_EDGES[0]] : EDGES[0];
+  const low = BLD.filter(b => b.inside && b.h < 16 && b.area > 600 && Math.hypot(b.c[0] - hx.mx, b.c[1] - hx.mz) < 420).sort((a, b) => b.area - a.area)[0];
+  const tower = BLD.filter(b => b.inside && b.k === 'office' && !/moscone|convention|center|centre/i.test(b.n || '') && b.h > 40 && b.h < 90 && Math.hypot(b.c[0] - hx.mx, b.c[1] - hx.mz) < 700)[0];
+  const alley = [['Minna Street', '2nd Street', 'New Montgomery Street'], ['Natoma Street', '2nd Street', 'New Montgomery Street'], ['Minna Street', '1st Street', '2nd Street'], ['Natoma Street', '1st Street', '2nd Street']].map(a => [a, stretch(...a)]).find(([, e]) => e.length);
+  const nm = stretch('New Montgomery Street', 'Market Street', 'Howard Street');
+  return [
+    low && { kind: 'block', title: `Upzone the low-rise block near ${nearestStreetName(low.c[0], low.c[1])}`, why: 'One-story buildings next to the new promenade. Mixed use at 3× height adds homes and ground-floor shops where foot traffic is now highest.', apply: (s) => { for (const b of blockOf(low.id)) s.blocks.set(b, { s: 3, z: 'mixed' }); }, preview: () => ({ bids: blockOf(low.id) }), animate: () => setBlock(blockOf(low.id), 3, 'mixed') },
+    nm.length && { title: 'Extend the promenade along New Montgomery St', why: 'Links 2nd St to Montgomery Station. It mostly carries walkers already, so the car impact is small.', apply: (s) => nm.forEach(e => s.ped.add(e)), preview: () => ({ edges: nm }), animate: () => nm.forEach(e => togglePed(e, true)) },
+    alley && { title: `Make ${alley[0][0].replace(' Street', '')} St a shared alley`, why: `A quiet alley off 2nd St between ${alley[0][1].replace(' Street', '')} and ${alley[0][2].replace(' Street', '')}. Almost no through traffic, and it gives cafés room for tables.`, apply: (s) => alley[1].forEach(e => s.ped.add(e)), preview: () => ({ edges: alley[1] }), animate: () => alley[1].forEach(e => togglePed(e, true)) },
+    tower && { kind: 'block', title: `Convert ${tower.n || 'a mid-rise office tower'} to housing`, why: 'Uses vacant office floors. Residents keep the street busy after 6pm, which helps restaurants and bars.', apply: (s) => s.blocks.set(tower.id, { s: 1, z: 'res' }), preview: () => ({ bids: [tower.id] }), animate: () => setBlock([tower.id], 1, 'res') },
+  ].filter(Boolean);
+}
+function trial(opt) { const t = new Scenario('trial', true); S.plan.ped.forEach(e => t.ped.add(e)); S.plan.blocks.forEach((v, k) => t.blocks.set(k, v)); opt.apply(t); if (t.ped.size === S.plan.ped.size) for (const [k, v] of S.plan.cache) if (k.startsWith('ped')) t.cache.set(k, v); t.cong.set(S.plan.cong); t.settle(baseCarRoutes(), 5); const v = valueOf(S.base.m, t.m), cur = valueOf(S.base.m, S.plan.m); return { dv: v.total - cur.total, drev: t.m.revenue - S.plan.m.revenue, dmin: minPerTrip(t.m) - minPerTrip(S.plan.m), dhomes: (t.m.res - S.plan.m.res), dcar: (t.m.car - S.plan.m.car) * SCALE }; }
+const minPerTrip = (m) => m.delayH * 60 / Math.max(1, m.car * SCALE * 2);
+function setGhost(pv) { clearGhost(); if (!pv) return; if (pv.bids) highlight(pv.bids, .5); if (pv.edges) ghost = pv.edges; }
+function clearGhost() { highlight([]); ghost = []; }
+async function typeInto(el, text, cps = 70) { el.textContent = ''; for (let i = 0; i < text.length; i++) { el.textContent += text[i]; if (i % 2 === 0) await sleep(1000 / cps); } }
+async function askAI(q, typed) {
+  const box = $('#ai'); box.hidden = false; const why = /why|explain|how come/i.test(q);
+  box.innerHTML = `<button class="x" aria-label="Close">×</button><div class="mock">Human Project planner · scripted for this mockup</div><div class="q">${typed ? '' : q.replace(/</g, '&lt;')}</div><div class="a" id="ai-a"></div><div id="ai-opts"></div>`;
+  box.querySelector('.x').onclick = () => { box.hidden = true; clearGhost(); };
+  if (typed) await typeInto(box.querySelector('.q'), q, 34);
+  const a = $('#ai-a');
+  if (why) { const b = S.base.m, p = S.plan.m; await typeInto(a, S.plan.ped.size ? `Revenue is up ${money(p.revenue - b.revenue)}/day because foot traffic on the edited streets rose ${pedStreetDelta()}. Walkers pass more storefronts and stop more often. They don't spend more per visit, they visit more. Cafés and quick-lunch spots gain the most. Car trips fell by ${num((b.car - p.car) * SCALE, false)}/day. The rest rerouted, so the average car trip ${dmin(b, p) === 'no change' ? 'was unchanged' : 'changed by ' + dmin(b, p)}.` : 'Nothing has changed yet. Try making a street car-free or rezoning a block, then ask again.'); return; }
+  await typeInto(a, 'Looking at foot traffic, vacancy and congestion around 2nd St. I tested each idea in the simulation and kept only the ones that pay off without slowing the bridge approach:');
+  const res = candidateOptions().map(o => ({ o, r: trial(o) })).filter(x => x.r.dv > 0 && x.r.dmin <= .3).sort((x, y) => y.r.dv - x.r.dv).slice(0, 3); const opts = res.map(x => x.o);
+  $('#ai-opts').innerHTML = res.map(({ o, r }, i) => `<div class="opt" data-i="${i}"><b>${o.title}</b><div class="why">${o.why}</div><div class="nums"><span class="${r.dv >= 0 ? 'up' : 'down'}">${money(r.dv)}/yr</span>${r.dhomes > 1 ? `<span>${num(r.dhomes)} residents</span>` : `<span>shops ${money(r.drev)}/day</span>`}<span style="color:${r.dmin > .3 ? 'var(--bad)' : 'var(--ink-2)'}">delay ${fmtMin(r.dmin)}</span><span style="color:var(--ink-2)">${Math.abs(r.dmin) <= .3 ? 'bridge approach unchanged' : 'slower bridge approach'}</span></div><button class="btn apply">Apply</button></div>`).join('');
+  box.querySelectorAll('.opt').forEach(el => { const o = opts[+el.dataset.i]; el.onmouseenter = () => setGhost(o.preview()); el.onmouseleave = clearGhost; el.querySelector('.apply').onclick = async (e) => { e.stopPropagation(); await applyOption(o); }; });
+  return opts;
+}
+async function applyOption(o) { clearGhost(); o.animate(); switchView('plan'); $('#ai').hidden = true; await settle('Planner suggestion applied', o.kind || 'street'); post('Planner', `Applied: ${o.title}.`, null, 'plan'); }
+$('#ask').addEventListener('submit', (e) => { e.preventDefault(); const q = $('#ask-in').value.trim(); if (q) askAI(q); $('#ask-in').value = ''; });
+
+// ───────────────────────── pitch card ─────────────────────────
+function openPitch() {
+  recomputeTargets(); shown = { val: { ...target.val }, shape: target.shape.slice() }; drawPillars();
+  $('#pitch')?.remove();
+  recomputeTargets(); const b = S.base.m, p = S.plan.m, v = target.val; const parts = [['Mobility', v.mob, '#2459d6'], ['Street life', v.soc, '#7b3fe4'], ['Local economy', v.eco, '#158a5e'], ['Health', v.hea, '#1a9e8f']];
+  const pos = parts.filter(x => x[1] > 0).reduce((a, x) => a + x[1], 0) || 1;
+  const name = [S.plan.ped.size ? (HERO_EDGES.some(e => S.plan.ped.has(e)) ? '2nd Street Promenade' : 'Street changes') : null, S.plan.blocks.size ? (() => { const ks = [...S.plan.blocks.keys()]; const grp = []; for (const k of ks) { const g = grp.find(g => g.some(o => Math.hypot(BLD[o].c[0] - BLD[k].c[0], BLD[o].c[1] - BLD[k].c[1]) < 160)); g ? g.push(k) : grp.push([k]); } const n = grp.length; return `${n} rezoned block${n > 1 ? 's' : ''}`; })() : null].filter(Boolean).join(' + ') || 'No changes yet';
+  const tier = [0, 1, 2].map(i => { const dt = (p.tierTime[i] - b.tierTime[i]); const dw = p.tierWalk[i] - b.tierWalk[i]; return -dt * VALUE.vtt / 60 * WORKDAYS + dw * VALUE.healthPerMin / SCALE * 12; });
+  const ap = (x) => clamp(Math.round(x), 8, 96);
+  const merch = ap(55 + (p.revenue - b.revenue) / Math.max(b.revenue, 1) * 260), resi = ap(52 + (p.enc - b.enc) / Math.max(b.enc, 1) * 60 + (p.res - b.res) / Math.max(b.res, 1) * 40), drv = ap(50 - (p.delayH - b.delayH) / Math.max(b.delayH, 1) * 220 - (S.plan.ped.size ? 12 : 0)), trn = ap(58 + (p.tr - b.tr) / Math.max(b.tr, 1) * 120 + 8);
+  const v2 = document.createElement('div'); v2.className = 'veil'; v2.id = 'pitch';
+  v2.innerHTML = `<div class="sheet pitch" style="position:relative"><button class="x" id="pitch-x" aria-label="Close">×</button><button class="btn" id="pitch-copy" style="position:absolute;right:40px;top:12px;padding:4px 10px;font-size:12px">Copy summary</button><div class="eyebrow">${ui.demo ? 'Step 6 of 6 · ' : ''}Pitch to the Board of Supervisors · Plan A</div><h2>${name}</h2>
+  <div class="total" style="color:${v.total < 0 ? 'var(--bad)' : ''}">${money(v.total)}<span style="font-size:22px;color:var(--dim)"> /yr</span></div>
+  <div style="color:var(--ink-2)">Net value to the city versus today. One simulated day projected to ${WORKDAYS} workdays.</div>
+  <div class="stack">${parts.filter(x => x[1] > 0).map(x => `<div style="width:${x[1] / pos * 100}%;background:${x[2]}"></div>`).join('')}</div>
+  <div class="legend2">${parts.map(x => `<span><i style="background:${x[2]}"></i>${x[0]} <b class="${x[1] >= 0 ? 'up' : 'down'}">${money(x[1])}</b></span>`).join('')}</div>
+  <div class="grid2"><div><h4>Key changes per day</h4><table>
+    <tr><td>Car trips into the area</td><td>${num((p.car - b.car) * SCALE)}</td></tr>
+    <tr><td>Delay per car trip</td><td>${dmin(b, p)}</td></tr>
+    <tr><td>Extra delay on parallel streets</td><td>${pct(spillPct())}</td></tr>
+    <tr><td>Local business revenue <span style="color:var(--dim)">(35% counted as value)</span></td><td>${money(p.revenue - b.revenue)}</td></tr>
+    <tr><td>Chance encounters</td><td>${num(p.enc - b.enc)}</td></tr>
+    <tr><td>New connections</td><td>${num(p.ties - b.ties)}</td></tr>
+    <tr><td>New homes (residents)</td><td>${num(p.res - b.res)}</td></tr></table>
+</div>
+  <div><h4>Projected approval <span style="text-transform:none;letter-spacing:0;font-weight:400">(simulated survey of agents)</span></h4>${[['Merchants', merch], ['Residents', resi], ['Transit riders', trn], ['Drivers', drv]].map(([k, x]) => `<div class="appr"><div><span>${k}</span><span>${x}%</span></div><div class="track"><i style="width:${x}%;background:${x < 45 ? 'var(--bad)' : x < 60 ? '#e07b00' : 'var(--good)'}"></i></div></div>`).join('')}
+  <h4 style="margin-top:18px">Trade-offs to address</h4><table><tr><td>Spillover onto parallel streets</td><td>${spillText()}</td></tr><tr><td>Rent pressure near the promenade</td><td>${S.plan.ped.size ? 'moderate' : 'low'}</td></tr></table></div></div>
+  <details class="foot"><summary>How we value this</summary>Valuation: USDOT value of travel time $19.60/h and vehicle operating cost $0.62/mi; WHO HEAT walking benefit with VSL $13.7M; 35% value added on retail revenue; $9 per new connection and $0.10 per chance encounter (adjustable). Each dot = 6 people. Mockup with illustrative numbers.</details>
+</div>`;
+  stage.append(v2);
+  $('#pitch-x').onclick = () => v2.remove(); v2.onclick = (e) => { if (e.target === v2) v2.remove(); };
+  $('#pitch-copy').onclick = () => { const t = `The Human Project · ${name}: ${money(v.total)}/yr net value. Revenue ${money(p.revenue - b.revenue)}/day, car trips ${num((p.car - b.car) * SCALE)}/day, new connections ${num(p.ties - b.ties)}/day.`; navigator.clipboard?.writeText(t).then(() => toast('Summary copied'), () => toast(t)); };
+}
+function spill() { let best = -1, bd = 0; for (const e of EDGES) { if (!e.car || S.plan.ped.has(e.id) || e.hw || !e.name || S.base.carFlow[e.id] < 12) continue; const d = S.plan.carFlow[e.id] - S.base.carFlow[e.id]; if (d > bd) { bd = d; best = e.id; } } return best >= 0 ? { e: EDGES[best], pct: bd / S.base.carFlow[best], vph: bd * SCALE / 2.2 } : null; }
+function spillText() { const s = spill(); return s ? `${s.e.name} +${Math.round(s.vph)} cars/hr` : 'none'; }
+$('#pitch-btn').onclick = openPitch;
+
+// ───────────────────────── the story: sidebar + scripted demo ─────────────────────────
+const STEPS = [
+  { t: 'Morning rush', s: 'Cars and BART riders pour in' },
+  { t: 'Close 2nd St to cars', s: 'Paint Market → Folsom car-free' },
+  { t: 'Compare with today', s: 'Swipe today vs Plan A' },
+  { t: 'Follow Maria', s: 'One commuter, one new friend' },
+  { t: 'Ask the AI planner', s: 'Only options that pay off' },
+  { t: 'Pitch to the Board', s: 'Net value and trade-offs' },
+];
+$('#steps').innerHTML = STEPS.map((s, i) => `<li class="step" data-i="${i}"><button><span class="n">${i + 1}</span><span><b>${s.t}</b><small>${s.s}</small></span></button></li>`).join('');
+document.querySelectorAll('.step > button').forEach((b, i) => b.onclick = () => { if (ui.demo) endDemo(); runDemo(i); });
+function markSteps(i) { ui.step = i; document.querySelectorAll('.step').forEach((el, k) => { el.classList.toggle('on', k === i); el.classList.toggle('done', i >= 0 && k < i); }); }
+let demoToken = 0, skip = false;
+function caption(i, title, text) {
+  markSteps(i); const c = $('#caption'); c.hidden = false; stage.classList.add('has-cap');
+  c.innerHTML = `<div class="num">${i + 1}</div><div><small>Step ${i + 1} of ${STEPS.length} · ${STEPS[i].t}</small><b>${title}</b><p>${text}</p></div><div class="ctl"><button id="cap-next">Next ›</button><button id="cap-exit">Exit</button></div>`;
+  $('#cap-next').onclick = () => { skip = true; }; $('#cap-exit').onclick = () => { endDemo(); toast('Demo stopped. Plan A keeps your changes. Press Today to compare.'); };
+}
+async function wait(ms, tok) { const end = performance.now() + ms; while (performance.now() < end) { if (tok !== demoToken) throw 'stop'; if (skip) { skip = false; throw 'skip'; } await sleep(50); } }
+async function fly(v, tok, dur) { flyTo(v, dur); while (flight.active) await wait(50, tok); }
+async function beat(fn) { try { await fn(); } catch (e) { if (e === 'stop') throw e; if (e !== 'skip') console.error(e); } }
+function endDemo() { demoToken++; ui.demo = false; $('#app').classList.remove('demo'); insp.classList.remove('compact'); skip = false; $('#caption').hidden = true; stage.classList.remove('has-cap'); $('#brush').hidden = true; $('#demo-btn span').textContent = 'Play demo'; markSteps(-1); }
+function resetPlan() {
+  for (const e of [...S.plan.ped]) S.plan.ped.delete(e); for (const [bid] of S.plan.blocks) { setBuildingAttr('aTint', bid, BLD[bid].col); setBuildingAttr('aScale', bid, 1); } S.plan.blocks.clear(); S.plan.cache.clear(); S.plan.settle(baseCarRoutes(), 5);
+  refreshTables(); recomputeTargets(); shown = { val: { ...target.val }, shape: target.shape.slice() }; $('#settle-note').textContent = 'no changes yet'; FEED.length = 0; renderFeed(); lastAmbient = 0; mariaMet = null; unfollow(); setCompare(false); switchView('plan'); setInfo(null); showChips(''); ui.diversion = false; streetLabel.hide = true; spillLabel.hide = true; paintTies(V.plan); paintPins(V.plan);
+}
+function closeHeroNow() { for (const id of HERO_EDGES) togglePed(id, true); S.plan.settle(baseCarRoutes(), 5); afterSettle(); showHeroLabel(); }
+function showHeroLabel() { streetLabel.el.textContent = '2nd St · car-free'; streetLabel.p.set(HERO_MID.mx, 10, HERO_MID.mz); streetLabel.hide = false; }
+const BEATS = [
+  async (tok) => {
+    caption(0, 'The morning rush', 'About 31,000 people arrive. <b style="display:inline;font:inherit;color:var(--car)">Blue cars</b> come off the Bay Bridge, US-101 and the feeder streets. <b style="display:inline;font:inherit;color:var(--walk)">Coral walkers</b> come up from BART. Each callout counts people entering ▲ and leaving ▼.');
+    await fly(VIEWS.overview, tok, 2); await wait(5000, tok);
+    setInfo('traffic'); caption(0, 'Traffic builds on the SoMa arterials', 'Info view: <b style="display:inline;font:inherit">Traffic</b>. Roads go from green to red as they jam, and everything else fades to white so only the data is colored.');
+    await fly(VIEWS.soma, tok, 2.4);
+    while (ui.time < 485 * 60) await wait(200, tok); setRate(30); await wait(2500, tok);
+  },
+  async (tok) => {
+    setInfo(null); setRate(30); jumpTo(ui.time); caption(1, 'Close 2nd Street to cars', 'From Market to Folsom. The street turns yellow, café tables come out, and every agent replans its day around the change.');
+    await fly(VIEWS.hero, tok, 2); setTool('ped');
+    const r = stage.getBoundingClientRect(); const br = $('#brush'); br.hidden = false;
+    for (const id of HERO_EDGES) { const e = EDGES[id]; for (let k = 0; k <= 4; k++) { const p = e.p[Math.round(k / 4 * (e.p.length - 1))]; v3.set(p[0], 1, p[1]).project(camera); br.style.left = ((v3.x + 1) / 2 * r.width) + 'px'; br.style.top = ((1 - v3.y) / 2 * r.height) + 'px'; await wait(55, tok); } togglePed(id, true); puff(e.mx, e.mz); }
+    br.hidden = true; showHeroLabel();
+    await settle('2nd St · Market → Folsom'); setTool('select');
+    setInfo('foot'); caption(1, 'Walkers fill the new street', 'Info view: <b style="display:inline;font:inherit">Foot traffic</b>. Former drivers now arrive by BART and walk, so 2nd St and the streets around it get busier.'); await wait(7000, tok);
+  },
+  async (tok) => {
+    setTool('select'); setInfo('traffic'); caption(2, 'Swipe: today vs Plan A, same moment', 'Left is the city today, right is the plan, both running live. Fewer cars come in, and some traffic spills onto a parallel street.');
+    await fly(VIEWS.compare, tok, 2); setCompare(true);
+    for (let t = 0; t <= 1; t += .02) { ui.split = lerp(.95, .5, ease(t)); placeHandle(); await wait(25, tok); }
+    const s = spill(); if (s) { spillLabel.el.textContent = `Spillover: ${s.e.name} +${Math.round(s.vph)} cars/hr`; spillLabel.p.set(s.e.mx, 10, s.e.mz); spillLabel.hide = false; }
+    for (let t = 0; t <= 1; t += .01) { ui.split = .5 + Math.sin(t * Math.PI * 2) * .14; placeHandle(); await wait(40, tok); }
+    await wait(2500, tok); setCompare(false); spillLabel.hide = true;
+  },
+  async (tok) => {
+    setInfo(null); showChips(''); caption(3, 'Follow Maria', 'She used to drive in over the Bay Bridge. Now she rides BART to Embarcadero, walks down car-free 2nd St and eats lunch outside.');
+    jumpTo(726 * 60); setRate(30); followPerson(MARIA_ID); const p = S.plan.pmap.get(MARIA_ID);
+    await fly({ target: [p.office.c[0], p.office.c[1]], dist: 1000, polar: .55, az: .45 }, tok, 2.2);
+    for (let i = 0; i < 160 && !mariaMet; i++) await wait(100, tok);
+    await wait(3000, tok); setInfo('ties'); unfollow(); closeInspector();
+    caption(3, 'Every new connection made today', 'Info view: <b style="display:inline;font:inherit">Connections</b>. Each arc links two agents who met at the same café or plaza. Car-free streets add chance encounters, so more of these arcs form.');
+    await fly({ target: [HERO_MID.mx, HERO_MID.mz], dist: 1900, polar: .6, az: .45 }, tok, 2.4); await wait(4500, tok); setInfo(null);
+  },
+  async (tok) => {
+    showChips(''); caption(4, 'Ask the AI planner', 'A judge types a goal. The planner tests ideas in the simulation, keeps only the ones that pay off, and previews each one on the map before anything is applied.');
+    await fly(VIEWS.hero, tok, 2);
+    const goal = 'Boost small business in SoMa without slowing Bay Bridge traffic';
+    const opts = await askAI(goal, true); await wait(1200, tok);
+    const els = [...document.querySelectorAll('.opt')]; for (let i = 0; i < els.length; i++) { els[i].classList.add('hover'); els[i].scrollIntoView({ block: 'nearest', behavior: 'smooth' }); setGhost(opts[i].preview()); await wait(2500, tok); els[i].classList.remove('hover'); }
+    if (opts[0]) { els[0].classList.add('hover'); await wait(600, tok); await applyOption(opts[0]); }
+    setInfo('revenue'); caption(4, 'Where the money moves', 'Info view: <b style="display:inline;font:inherit">Revenue change</b>. Green blocks earn more than today and red blocks earn less. The gains follow the walkers.');
+    await wait(5500, tok); setInfo(null);
+  },
+  async (tok) => { caption(5, 'Pitch to the Board', 'One scorecard: net value to the city, the trade-offs, who gains, and who still needs convincing.'); await wait(1800, tok); $('#caption').hidden = true; stage.classList.remove('has-cap'); openPitch(); await wait(7500, tok); },
+];
+async function runDemo(start = 0) {
+  const tok = ++demoToken; ui.demo = true; $('#app').classList.add('demo'); skip = false; $('#demo-btn span').textContent = 'Stop demo'; $('#intro')?.remove(); closeInspector(); $('#ai').hidden = true; $('#pitch')?.remove();
+  resetPlan(); setTool('select'); togglePlay(true);
+  if (start === 0) { jumpTo(400 * 60); setRate(300); }
+  else { jumpTo((start === 1 ? 485 : start >= 4 ? 760 : 500) * 60); setRate(30); }
+  if (start >= 2) closeHeroNow();
+  try {
+    for (let i = start; i < BEATS.length; i++) await beat(() => BEATS[i](tok));
+    endDemo(); toast('Demo finished. Everything is live now: try painting a street.');
+  } catch (e) { if (e !== 'stop') console.error(e); }
+}
+$('#demo-btn').onclick = () => ui.demo ? endDemo() : runDemo();
+$('#intro-demo').onclick = () => runDemo();
+$('#intro-free').onclick = () => { $('#intro').remove(); setRate(90); };
+
+// ───────────────────────── main loop ─────────────────────────
+let last = performance.now(), heatT = 0, uiT = 0, cntT = 0, lastFrame = 0;
+recomputeTargets(); drawRadar(shown.shape); drawPillars(); paintPins(V.base); paintPins(V.plan); paintTies(V.base); paintTies(V.plan);
+jumpTo(ui.time); $('#loading').remove(); markSteps(-1);
+post('Rosa S.', 'Fog burning off over the Bay Bridge. Here we go.', null, 'morning');
+function frame(now) { requestAnimationFrame(frame); lastFrame = performance.now(); tick(now); }
+function tick(now) {
+  const dt = Math.min(.05, Math.max(0, (now - last) / 1000)); last = now;
+  if (ui.playing) {
+    const dtSim = dt * ui.rate, dtAgent = dt * Math.min(ui.rate, AGENT_CAP);
+    ui.time += dtSim; if (ui.time > 1440 * 60) jumpTo(345 * 60);
+    stepAgents(V.base, dtSim, dtAgent); stepAgents(V.plan, dtSim, dtAgent);
+    $('#scrub').value = Math.floor(ui.time / 60);
+    if (ui.time - lastAmbient > 1800 && !ui.settling) { lastAmbient = ui.time; if (Math.random() < .7) ambientPost(); }
+  }
+  $('#clock').textContent = fmtClock(ui.time / 60);
+  applyTime();
+  for (const k of ['base', 'plan']) { if (ui.compare || k === ui.view) { drawAgents(V[k]); paintOverlay(V[k]); } }
+  heatT += dt; if (heatT > .12) { heatT = 0; drawHeat(V.base); drawHeat(V.plan); }
+  for (const v of Object.values(V)) v.heat.material.uniforms.uOp.value = lerp(v.heat.material.uniforms.uOp.value, ui.info === 'foot' ? 1 : 0, .12);
+  bU.uInfo.value = lerp(bU.uInfo.value, ui.info ? 1 : 0, 1 - Math.pow(.004, dt));
+  if (ghost.length) { const col = V.plan.ocol; const pulse = .5 + .45 * Math.sin(now / 160); for (const e of ghost) { const r = asphaltL.ranges.get(e); if (!r) continue; for (let i = r[0]; i < r[0] + r[1]; i++) col.set([COL.preview[0], COL.preview[1], COL.preview[2], pulse], i * 4); } V.plan.overlay.geometry.attributes.color.needsUpdate = true; }
+  for (const s of sparks) { if (s.userData.t >= 1) { s.visible = false; continue; } s.userData.t += dt / (s.userData.big ? 1.6 : 1.1); const t = s.userData.t; s.scale.setScalar(4 + t * (s.userData.big ? 46 : 26)); s.material.opacity = (1 - t) * (s.userData.big ? .95 : .6); }
+  for (const p of puffs) { if (p.userData.t >= 1) { p.visible = false; continue; } p.userData.t += dt / .7; p.scale.setScalar(3 + p.userData.t * 22); p.material.opacity = (1 - p.userData.t) * .5; }
+  animTables(dt); animScales(dt); CTX?.update(dt);
+  // camera: scripted flights, demo follow, then free controls
+  { const vis = V[activeWorld()]; const a = ui.follow ? vis.active.find(a => a.t.p.id === ui.follow) : null; const fp = ui.follow != null ? (S.plan.pmap.get(ui.follow) || S.base.pmap.get(ui.follow)) : null;
+    let have = false; if (a) { posAt(a.t, a.s, tmp); have = true; } else if (fp) { const d = vis.dwell.get(fp.id); const c = d ? [d.q.x, d.q.z] : (fp.office || fp.home).c; tmp.x = c[0]; tmp.z = c[1]; have = true; }
+    if (have) { followLabel.p.set(tmp.x, a ? 34 : 44, tmp.z); followLabel.hide = false; followLabel.el.textContent = fp.name.split(' ')[0] + (vis.dwell.get(fp.id) ? ' · at lunch' : ''); const k = (now / 1200) % 1; followRing.visible = true; followRing.position.set(tmp.x, 2.2, tmp.z); followRing.scale.setScalar(8 + k * 26); followRing.material.opacity = (1 - k) * .9; }
+    else { followLabel.hide = true; followRing.visible = false; } }
+  stepFlight(dt);
+  if (ui.follow && ui.demo && !flight.active) { const a = V.plan.active.find(a => a.t.p.id === ui.follow); if (a) { posAt(a.t, a.s, tmp); const k = 1 - Math.pow(.2, dt); const d = new THREE.Vector3((tmp.x - controls.target.x) * k, 0, (tmp.z - controls.target.z) * k); controls.target.add(d); camera.position.add(d); } }
+  if (!flight.active) controls.update();
+  tickMetrics(dt); uiT += dt; if (uiT > .15) { uiT = 0; drawRadar(shown.shape); drawPillars(); }
+  cntT += dt; if (cntT > .25) { cntT = 0; updateCounters(); }
+  composer.render(); updateLabels();
+}
+requestAnimationFrame(frame);
+// When the pane is hidden, rAF stalls; keep the sim and scripted camera moving at a low rate.
+setInterval(() => { if (performance.now() - lastFrame > 400) tick(performance.now()); }, 200);
+window.__bw = { afterSettle, CAL, scene, sun, hemi, renderer, S, V, ui, EDGES, HERO_EDGES, INLETS, BLOCKS, setInfo, flyTo, runDemo, endDemo, jumpTo, setCompare, switchView, camera, controls, snap: () => { tick(performance.now()); let im = document.getElementById('snap'); if (!im) { im = document.createElement('img'); im.id = 'snap'; im.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none'; cv.after(im); } im.src = cv.toDataURL('image/jpeg', .85); }, unsnap: () => document.getElementById('snap')?.remove(), run: (n = 30) => { for (let i = 0; i < n; i++) { last -= 33; tick(performance.now()); } } };
+</script>

@@ -1,0 +1,7 @@
+{
+  "get": "group(B08136)",
+  "for": "county:075",
+  "in": "state:06",
+  "url": "https://api.census.gov/data/2023/acs/acs5",
+  "fetched_at": "2026-10-24T21:52:04+00:00"
+}

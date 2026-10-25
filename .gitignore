@@ -1,42 +1,32 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
+# Secrets
+.env
+.env.*
 !.env.example
 
-# vercel
-.vercel
+# Environments and dependencies
+.venv/
+venv/
+node_modules/
+__pycache__/
+*.pyc
+.pytest_cache/
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# OS / editor
+.DS_Store
+.claude/
+
+# Runtime
+.run/
+*.log
+*.pid
+
+# Large public downloads the data pipeline can re-fetch (see backend/README.md)
+data/cache/lodes/
+data/cache/bart/
+
+# Build outputs copied next to each page by scripts/build_mockup.py
+mockup/variants/*/backend-snapshot/
+mockup/variants/*/live.mjs
+
+# Droid run artifacts
+backend/droid/runs/

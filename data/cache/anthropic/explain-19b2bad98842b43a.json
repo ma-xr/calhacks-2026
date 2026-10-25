@@ -1,0 +1,19 @@
+{
+ "answer": "Revenue rose by about $18,064 per day across the study area, mostly because far more people now walk 2nd Street. Foot traffic there is up 82,740 per day, while car traffic is down 144,477 per day. Visits rise by about 1,203 per day.\n\nThe biggest gainers are on or near 2nd St:\n- Village Tea House: +$6,934 per day\n- Lao Table: +$6,386\n- Pie Punks: +$5,934\n- Sammy's on 2nd: +$5,236\n- Blue Bottle Coffee: +$4,335, with visits rising from 2,133 to 2,753\n\nThere are losers too. The Sentinel (\u2212$1,619), Flower Cart (\u2212$1,485) and Local Kitchen & Wine Merchant (\u2212$1,204) all lose visits. Foot traffic falls on New Montgomery and Beale Streets.\n\nCaveats: the model leans on assumed parameters, including the walking comfort bonus from car-free streets and the share of revenue counted as net new. It also doesn't report a step-by-step breakdown of why each shop gains",
+ "grounding": {
+  "scenario": "84731cbe0c91",
+  "keys": [
+   "scenario",
+   "metrics_plan",
+   "delta_vs_baseline",
+   "value_usd_per_yr",
+   "value_lines",
+   "car_traffic_change_by_street",
+   "foot_traffic_change_by_street",
+   "biggest_business_changes",
+   "assumptions_flagged",
+   "scale_people_per_agent"
+  ]
+ },
+ "model": "claude-sonnet-5-5"
+}

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HP modules harness</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+  :root { color-scheme: dark; }
+  html, body { height: 100%; margin: 0; }
+  body { background: #a9d3ef; font: 13px/1.4 Inter, system-ui, sans-serif; color: #f3f7fc; overflow: hidden; }
+  #map { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; }
+  #ui { position: fixed; inset: 0; pointer-events: none; }
+  #bar { position: fixed; top: 12px; left: 12px; right: 12px; z-index: 9; display: flex; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 14px;
+    background: rgba(16,32,60,.86); backdrop-filter: blur(14px); box-shadow: 0 10px 30px rgba(9,24,50,.26); }
+  #bar b { font-weight: 700; margin-right: 6px; }
+  #bar button { font: inherit; font-weight: 600; color: #fff; background: rgba(255,255,255,.08); border: 0; border-radius: 8px; height: 30px; padding: 0 12px; cursor: pointer; }
+  #bar button:hover { background: rgba(255,255,255,.16); }
+  #bar .s { margin-left: auto; color: #a9bad1; font-size: 12px; }
+  #log { position: fixed; right: 12px; top: 64px; width: 330px; max-height: 40vh; overflow: auto; z-index: 9; padding: 8px 10px; border-radius: 12px; background: rgba(4,12,28,.78);
+    font: 11px/1.45 ui-monospace, Menlo, monospace; color: #c9d8ec; }
+  #log div { border-bottom: 1px solid rgba(255,255,255,.06); padding: 2px 0; word-break: break-word; }
+  #log b { color: #7fd3ff; }
+  #toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 9; padding: 9px 16px; border-radius: 12px; background: rgba(14,28,54,.94); font-weight: 500; opacity: 0; transition: opacity .2s; }
+  #toast.on { opacity: 1; }
+</style>
+</head>
+<body>
+<canvas id="map"></canvas>
+<div id="bar"><b>Module harness</b>
+  <button data-t="ask">Ask</button><button data-t="policy">Policy Book</button><button data-t="live">Live panel</button>
+  <span class="s" id="status">connecting…</span></div>
+<div id="ui"></div>
+<div id="log"></div>
+<div id="toast"></div>
+
+<script src="../lib/hp-backend.js"></script>
+<script src="../lib/hp-ask.js"></script>
+<script src="../lib/hp-policy.js"></script>
+<script src="../lib/hp-live.js"></script>
+<script>
+(async () => {
+  const $log = document.getElementById('log');
+  const calls = [];   // window.__calls for automated checks
+  window.__calls = calls;
+  function log(name, data) {
+    calls.push({ name, data, t: Date.now() });
+    const d = document.createElement('div');
+    let s = ''; try { s = JSON.stringify(data); } catch (_) { s = String(data); }
+    d.innerHTML = `<b>${name}</b> ${(s || '').replace(/</g, '&lt;').slice(0, 260)}`;
+    $log.prepend(d); while ($log.children.length > 80) $log.lastChild.remove();
+  }
+  const errors = []; window.__errors = errors;
+  window.addEventListener('error', (e) => errors.push(String(e.message)));
+  window.addEventListener('unhandledrejection', (e) => errors.push('unhandled: ' + (e.reason?.message || e.reason)));
+
+  const params = new URLSearchParams(location.search);
+  const B = await HPBackend.connect(params.has('api') ? { api: params.get('api') } : {});
+  // World geometry: the repo's world.json (from the project root) or the copy next to this page.
+  let W = null;
+  for (const u of ['../../data/processed/world.json', './world.json']) { try { const r = await fetch(u); if (r.ok) { W = await r.json(); break; } } catch (_) { /* next */ } }
+  W = W || { edges: [], buildings: [], bbox: { minX: -1500, maxX: 1500, minZ: -1500, maxZ: 1500 } };
+  document.getElementById('status').textContent = `mode: ${B.mode} · edges ${W.edges.length}`;
+
+  // ── a tiny top-down map so flyTo / highlight / cursors are visible ──
+  const cv = document.getElementById('map'), cx = cv.getContext('2d');
+  const view = { x: 0, z: 0, r: 1400 }; let target = null;
+  let hl = { edges: new Set(), buildings: new Set(), pois: new Set() }, cursors = [];
+  const plan = { pedestrianized: [], blocks: {}, policies: [], reopened: [] };
+  let scenarioId = 'baseline', liveSet = new Set();
+  const ped = () => new Set([...(plan.pedestrianized || []), ...liveSet]);
+  function fit() { cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio; }
+  addEventListener('resize', fit); fit();
+  const scale = () => Math.min(cv.width, cv.height) / (2 * view.r);
+  const toScreen = (x, z) => [cv.width / 2 + (x - view.x) * scale(), cv.height / 2 + (z - view.z) * scale()];
+  const toWorld = (sx, sy) => [view.x + (sx * devicePixelRatio - cv.width / 2) / scale(), view.z + (sy * devicePixelRatio - cv.height / 2) / scale()];
+  function draw() {
+    if (target) { const k = 0.12; view.x += (target.x - view.x) * k; view.z += (target.z - view.z) * k; view.r += (target.r - view.r) * k; if (Math.abs(target.r - view.r) < 1) target = null; }
+    cx.fillStyle = '#a9d3ef'; cx.fillRect(0, 0, cv.width, cv.height);
+    cx.fillStyle = 'rgba(40,70,110,.18)';
+    W.buildings.forEach((b, i) => { if (!b.p) return; cx.beginPath(); b.p.forEach(([x, z], j) => { const [sx, sy] = toScreen(x, z); j ? cx.lineTo(sx, sy) : cx.moveTo(sx, sy); }); cx.closePath();
+      cx.fillStyle = hl.buildings.has(i) ? 'rgba(255,79,163,.85)' : 'rgba(40,70,110,.22)'; cx.fill(); });
+    const P = ped();
+    W.edges.forEach((e, i) => { cx.beginPath(); e.p.forEach(([x, z], j) => { const [sx, sy] = toScreen(x, z); j ? cx.lineTo(sx, sy) : cx.moveTo(sx, sy); });
+      cx.strokeStyle = hl.edges.has(i) ? '#ff4fa3' : P.has(i) ? '#b46cff' : 'rgba(255,255,255,.85)'; cx.lineWidth = (hl.edges.has(i) || P.has(i) ? 5 : 1.6) * devicePixelRatio; cx.stroke(); });
+    (B.world?.pois || []).forEach((p) => { if (!hl.pois.has(p.id)) return; const [sx, sy] = toScreen(p.x, p.z); cx.fillStyle = '#ffad1f'; cx.beginPath(); cx.arc(sx, sy, 6 * devicePixelRatio, 0, 7); cx.fill(); });
+    for (const c of cursors) { const [sx, sy] = toScreen(c.x, c.z); cx.fillStyle = c.color; cx.beginPath(); cx.arc(sx, sy, 7 * devicePixelRatio, 0, 7); cx.fill();
+      cx.font = `${12 * devicePixelRatio}px Inter`; cx.fillStyle = '#0d2142'; cx.fillText(c.name, sx + 10 * devicePixelRatio, sy + 4 * devicePixelRatio); }
+    requestAnimationFrame(draw);
+  }
+  draw();
+  function nearestEdge(x, z) {
+    let best = -1, bd = 25;
+    W.edges.forEach((e, i) => { for (let j = 1; j < e.p.length; j++) { const [ax, az] = e.p[j - 1], [bx, bz] = e.p[j]; const dx = bx - ax, dz = bz - az; const L = dx * dx + dz * dz || 1;
+      const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / L)); const d = Math.hypot(x - ax - t * dx, z - az - t * dz); if (d < bd) { bd = d; best = i; } } });
+    return best;
+  }
+
+  const toastEl = document.getElementById('toast'); let toastT;
+  const ui = document.getElementById('ui');
+  // ── the host API (docs/fully-functional-spec.md §2) ──
+  const host = {
+    B, world: W, mount: ui, theme: 'skyline-clean',
+    getPlanEdits: () => JSON.parse(JSON.stringify(plan)),
+    async applyEdits(edits, label) {
+      log('applyEdits', { label, edits });
+      Object.assign(plan, { pedestrianized: [], blocks: {}, policies: [], reopened: [] }, edits);
+      if (!edits.reopen_mode) delete plan.reopen_mode;
+      const res = await B.scenario(plan, { onProgress: (p) => log('progress', p) });
+      scenarioId = res?.id || (res ? 'baseline' : scenarioId);
+      log('settled', res ? { id: res.id, value_total: res.value?.total, cached: res.cached } : 'no engine result (estimate)');
+      return res;
+    },
+    currentScenarioId: () => scenarioId,
+    getTime: () => 8 * 3600,
+    flyTo(f) { log('flyTo', f); target = { x: f.x, z: f.z, r: Math.max(150, f.radius || 300) * 1.3 }; },
+    highlight(h) { log('highlight', h); hl = { edges: new Set(h.edges || []), buildings: new Set(h.buildings || []), pois: new Set(h.pois || []) }; },
+    setInfoView(k) { log('setInfoView', k); },
+    setTime(s) { log('setTime', s); },
+    toast(m) { log('toast', m); toastEl.textContent = m; toastEl.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('on'), 2200); },
+    showCursors(list) { cursors = list; if (list.length) log('showCursors', list.map((c) => `${c.name}@${c.x.toFixed(0)},${c.z.toFixed(0)}`)); },
+    async loadLivePlan({ planId, edits, result }) {
+      log('loadLivePlan', { planId, streets: edits.pedestrianized.length, blocks: Object.keys(edits.blocks).length, value_total: result?.value?.total });
+      liveSet = new Set(edits.pedestrianized); scenarioId = planId || 'baseline';
+      if (planId && B.mode === 'live') { try { const r = await fetch(`${B.api}/scenario/${planId}?lite=1`); log('GET /scenario/{plan_id}', { status: r.status }); } catch (e) { log('GET failed', e.message); } }
+    },
+    onLiveChange(on) { log('onLiveChange', on); if (!on) liveSet = new Set(); },
+    onLiveAvailable(ok) { log('onLiveAvailable', ok); },
+  };
+  window.__host = host;
+
+  const mods = window.__mods = {
+    ask: HPAsk.mount(host),
+    policy: HPPolicy.mount(host),
+    live: HPLive.mount(host, { liveUrl: params.get('live') || './live.mjs' }),
+  };
+  document.querySelectorAll('[data-t]').forEach((b) => b.addEventListener('click', () => {
+    for (const [k, m] of Object.entries(mods)) if (k !== b.dataset.t && k !== 'live') m.close();
+    mods[b.dataset.t].toggle();
+  }));
+
+  // Map input: pointer -> live cursor; click a street -> toggle car-free (shared plan when live, local otherwise).
+  cv.addEventListener('pointermove', (e) => { const [x, z] = toWorld(e.clientX, e.clientY); mods.live.cursor(x, z); });
+  cv.addEventListener('click', (e) => {
+    const [x, z] = toWorld(e.clientX, e.clientY); const id = nearestEdge(x, z); if (id < 0) return;
+    const on = !ped().has(id);
+    if (mods.live.setPedestrian([id], on)) log('live.setPedestrian', { id, on });
+    else { const s = new Set(plan.pedestrianized); on ? s.add(id) : s.delete(id); host.applyEdits({ ...plan, pedestrianized: [...s] }, `Street ${id} ${on ? 'car-free' : 'reopened'}`); }
+  });
+  cv.addEventListener('wheel', (e) => { view.r = Math.max(120, Math.min(3000, view.r * (e.deltaY > 0 ? 1.1 : 0.9))); target = null; }, { passive: true });
+  if (params.has('open')) params.get('open').split(',').forEach((k) => mods[k]?.open());
+})();
+</script>
+</body>
+</html>

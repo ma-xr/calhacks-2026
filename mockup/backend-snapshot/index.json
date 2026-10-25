@@ -1,0 +1,361 @@
+{
+ "version": "0.2",
+ "world": "world.json",
+ "results": {
+  "baseline": "baseline.json",
+  "84731cbe0c91": "plan-84731cbe0c91.json",
+  "2bb61d605398": "plan-2bb61d605398.json",
+  "606fb416cb5f": "plan-606fb416cb5f.json",
+  "d0e9cf4c3dd1": "plan-d0e9cf4c3dd1.json",
+  "3615dcb696da": "plan-3615dcb696da.json",
+  "c12151ecb6fa": "plan-c12151ecb6fa.json",
+  "1c767872af44": "plan-1c767872af44.json"
+ },
+ "edits": {
+  "84731cbe0c91": {
+   "pedestrianized": [
+    268,
+    291,
+    292,
+    744,
+    832,
+    1021,
+    1070,
+    1133,
+    1134,
+    1397,
+    1398,
+    1399,
+    1423,
+    1424
+   ],
+   "reopened": [],
+   "reopen_mode": "",
+   "blocks": {},
+   "policies": []
+  },
+  "2bb61d605398": {
+   "pedestrianized": [
+    29,
+    30,
+    116,
+    216,
+    1020,
+    1104,
+    1105,
+    1106,
+    1107,
+    1263
+   ],
+   "reopened": [],
+   "reopen_mode": "",
+   "blocks": {},
+   "policies": [
+    {
+     "kind": "congestion_charge",
+     "target": "fol",
+     "amount": 3.0
+    }
+   ]
+  },
+  "606fb416cb5f": {
+   "pedestrianized": [
+    88,
+    89,
+    90,
+    1017,
+    1139,
+    1258
+   ],
+   "reopened": [],
+   "reopen_mode": "",
+   "blocks": {},
+   "policies": []
+  },
+  "d0e9cf4c3dd1": {
+   "pedestrianized": [
+    27,
+    28,
+    88,
+    89,
+    90,
+    209,
+    214,
+    215,
+    1017,
+    1129,
+    1139,
+    1258,
+    1422
+   ],
+   "reopened": [],
+   "reopen_mode": "",
+   "blocks": {},
+   "policies": []
+  },
+  "3615dcb696da": {
+   "pedestrianized": [
+    29,
+    30,
+    116,
+    216,
+    268,
+    291,
+    292,
+    744,
+    832,
+    1020,
+    1021,
+    1070,
+    1104,
+    1105,
+    1106,
+    1107,
+    1133,
+    1134,
+    1263,
+    1397,
+    1398,
+    1399,
+    1423,
+    1424
+   ],
+   "reopened": [],
+   "reopen_mode": "",
+   "blocks": {},
+   "policies": [
+    {
+     "kind": "congestion_charge",
+     "target": "fol",
+     "amount": 3.0
+    }
+   ]
+  },
+  "c12151ecb6fa": {
+   "pedestrianized": [
+    88,
+    89,
+    90,
+    268,
+    291,
+    292,
+    744,
+    832,
+    1017,
+    1021,
+    1070,
+    1133,
+    1134,
+    1139,
+    1258,
+    1397,
+    1398,
+    1399,
+    1423,
+    1424
+   ],
+   "reopened": [],
+   "reopen_mode": "",
+   "blocks": {},
+   "policies": []
+  },
+  "1c767872af44": {
+   "pedestrianized": [
+    27,
+    28,
+    88,
+    89,
+    90,
+    209,
+    214,
+    215,
+    268,
+    291,
+    292,
+    744,
+    832,
+    1017,
+    1021,
+    1070,
+    1129,
+    1133,
+    1134,
+    1139,
+    1258,
+    1397,
+    1398,
+    1399,
+    1422,
+    1423,
+    1424
+   ],
+   "reopened": [],
+   "reopen_mode": "",
+   "blocks": {},
+   "policies": []
+  }
+ },
+ "agents": {
+  "baseline:3951": "agent-baseline-3951.json",
+  "84731cbe0c91:3951": "agent-84731cbe0c91-3951.json"
+ },
+ "narrative": {
+  "planner": {
+   "goal": "Boost small business in SoMa without slowing Bay Bridge traffic",
+   "options": [
+    {
+     "title": "Minna Street car-free + $3 AM-peak charge at the Folsom \u00b7 6th St inlet",
+     "edits": {
+      "pedestrianized": [
+       29,
+       30,
+       116,
+       216,
+       1020,
+       1104,
+       1105,
+       1106,
+       1107,
+       1263
+      ],
+      "blocks": {},
+      "policies": [
+       {
+        "kind": "congestion_charge",
+        "target": "fol",
+        "amount": 3.0
+       }
+      ]
+     },
+     "rationale": "This is the only plan that doesn't add delay: total delay changes by -0.46 hours. Revenue rises by $6,475, and the plan is valued at about $16.8M per year, with car commuters down 357 and walkers up 336. The trade-offs are 84 commuters who stop commuting (\"gone\") and 168 fewer bike commuters. The model does not report Bay Bridge or I-80 delay separately, and the $3 charge is an assumed level.",
+     "result_id": "2bb61d605398",
+     "value_total": 16765461.35,
+     "deltas": {
+      "commuters": {
+       "car": -357,
+       "transit": 105,
+       "walk": 336,
+       "bike": -168,
+       "gone": 84
+      },
+      "delay_hours_total": -0.46,
+      "revenue": 6475.4,
+      "new_ties": 96.3,
+      "co2_tonnes": -5.41,
+      "rent_pressure_index": -0.02
+     },
+     "combined_result_id": "3615dcb696da"
+    },
+    {
+     "title": "Clementina Street car-free (single street)",
+     "edits": {
+      "pedestrianized": [
+       88,
+       89,
+       90,
+       1017,
+       1139,
+       1258
+      ],
+      "blocks": {},
+      "policies": []
+     },
+     "rationale": "Walkers rise by 462 and revenue by $3,577, and the plan is valued at about $14.5M per year. Delay rises by 6.17 hours and car, transit and bike commuters each fall (168, 126 and 168), so it is a small gain for local shops with a small traffic cost. The model does not break out Bay Bridge delay.",
+     "result_id": "606fb416cb5f",
+     "value_total": 14540738.27,
+     "deltas": {
+      "commuters": {
+       "car": -168,
+       "transit": -126,
+       "walk": 462,
+       "bike": -168,
+       "gone": 0
+      },
+      "delay_hours_total": 6.17,
+      "revenue": 3577.49,
+      "new_ties": 55.0,
+      "co2_tonnes": -0.24,
+      "rent_pressure_index": -0.02
+     },
+     "combined_result_id": "c12151ecb6fa"
+    },
+    {
+     "title": "Clementina + Stevenson Streets car-free",
+     "edits": {
+      "pedestrianized": [
+       27,
+       28,
+       88,
+       89,
+       90,
+       209,
+       214,
+       215,
+       1017,
+       1129,
+       1139,
+       1258,
+       1422
+      ],
+      "blocks": {},
+      "policies": []
+     },
+     "rationale": "This plan has the highest revenue gain of the three, $6,637 per year, and walkers rise by 567. It is valued at about $17.7M per year. It adds 23.56 hours of delay, and transit commuters fall by 168, so it is the weakest fit for the goal of not slowing traffic. Choose it only if the retail gain matters more than the delay, since the model does not isolate Bay Bridge traffic.",
+     "result_id": "d0e9cf4c3dd1",
+     "value_total": 17733745.41,
+     "deltas": {
+      "commuters": {
+       "car": -210,
+       "transit": -168,
+       "walk": 567,
+       "bike": -210,
+       "gone": 21
+      },
+      "delay_hours_total": 23.56,
+      "revenue": 6637.33,
+      "new_ties": 70.13,
+      "co2_tonnes": -1.12,
+      "rent_pressure_index": -0.02
+     },
+     "combined_result_id": "1c767872af44"
+    }
+   ],
+   "evaluated": 4,
+   "model": "claude-sonnet-5-5"
+  },
+  "posts": {
+   "84731cbe0c91": {
+    "posts": [
+     {
+      "agent_id": null,
+      "name": "Citizen",
+      "text": "",
+      "tag": "social"
+     }
+    ],
+    "model": "claude-haiku-5-5"
+   }
+  },
+  "explain": {
+   "84731cbe0c91": {
+    "answer": "The model shows total revenue up $21,337 per day across the study area. It doesn't report a 2nd Street-only figure.\n\n**Why it rose:** Foot traffic on 2nd Street rises by 84,168 per day, while car traffic falls by 103,432 per day. Walking minutes and chance encounters also go up. More people on foot means more visits, which is 1,351 more per day overall.\n\n**Who gains:** Village Tea House (+$6,928 per day), Lao Table (+$6,399), Pie Punks (+$5,950), Sammy's on 2nd (+$5,217) and Blue Bottle (+$4,345).\n\n**Who loses:** The Sentinel (\u2212$1,615), Flower Cart (\u2212$1,485), Local Kitchen & Wine Merchant (\u2212$1,204) and others. Foot traffic also falls on New Montgomery and Beale.\n\n**Trade-offs:** Car traffic moves to 5th Street (",
+    "grounding": {
+     "scenario": "84731cbe0c91",
+     "keys": [
+      "scenario",
+      "metrics_plan",
+      "delta_vs_baseline",
+      "value_usd_per_yr",
+      "value_lines",
+      "car_traffic_change_by_street",
+      "foot_traffic_change_by_street",
+      "biggest_business_changes",
+      "assumptions_flagged",
+      "scale_people_per_agent"
+     ]
+    },
+    "model": "claude-sonnet-5-5"
+   }
+  }
+ }
+}

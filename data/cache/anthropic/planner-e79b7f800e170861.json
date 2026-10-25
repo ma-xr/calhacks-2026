@@ -1,0 +1,165 @@
+{
+ "goal": "Boost small business in SoMa without slowing Bay Bridge traffic",
+ "options": [
+  {
+   "title": "SoMa alleys: Clementina + Minna + Natoma",
+   "edits": {
+    "pedestrianized": [
+     29,
+     30,
+     34,
+     35,
+     36,
+     37,
+     38,
+     88,
+     89,
+     90,
+     116,
+     216,
+     364,
+     1017,
+     1020,
+     1104,
+     1105,
+     1106,
+     1107,
+     1139,
+     1258,
+     1263
+    ],
+    "blocks": {},
+    "policies": []
+   },
+   "rationale": "This plan adds 651 walking commuters and is valued at about $22.3M per year, mostly from mobility and health. However, the model shows revenue down $18,535 and total delay up 60.33 hours, and the model does not report Bay Bridge traffic separately, so it fails both the small-business goal and the no-slowdown goal.",
+   "result_id": "35c9646f714f",
+   "value_total": 22258879.63,
+   "deltas": {
+    "commuters": {
+     "car": -336,
+     "transit": -231,
+     "walk": 651,
+     "bike": -168,
+     "gone": 84
+    },
+    "delay_hours_total": 60.33,
+    "revenue": -18535.29,
+    "new_ties": 118.64,
+    "co2_tonnes": -0.63,
+    "rent_pressure_index": -0.02
+   }
+  },
+  {
+   "title": "Clementina + Minna + Stevenson with $5 Bay Bridge (I-80) charge",
+   "edits": {
+    "pedestrianized": [
+     27,
+     28,
+     29,
+     30,
+     88,
+     89,
+     90,
+     116,
+     209,
+     214,
+     215,
+     216,
+     1017,
+     1020,
+     1104,
+     1105,
+     1106,
+     1107,
+     1129,
+     1139,
+     1258,
+     1263,
+     1422
+    ],
+    "blocks": {},
+    "policies": [
+     {
+      "kind": "congestion_charge",
+      "target": "i80",
+      "amount": 5.0
+     }
+    ]
+   },
+   "rationale": "This is the only plan that meets both goals. Revenue rises $9,948, total delay falls 773.53 hours, and the plan is valued at about $35.1M per year. The costs are 3,297 fewer car commuters, a mobility value of -$25.7M per year, and a rent pressure index that rises slightly (+0.03). The $5 charge is my assumed level, not a tested optimum, and the model does not report Bay Bridge traffic on its own.",
+   "result_id": "6a984521b34c",
+   "value_total": 35142380.05,
+   "deltas": {
+    "commuters": {
+     "car": -3297,
+     "transit": 2772,
+     "walk": 651,
+     "bike": -168,
+     "gone": 42
+    },
+    "delay_hours_total": -773.53,
+    "revenue": 9948.44,
+    "new_ties": 136.17,
+    "co2_tonnes": -43.09,
+    "rent_pressure_index": 0.03
+   }
+  },
+  {
+   "title": "Main Street + Clementina + Ellis",
+   "edits": {
+    "pedestrianized": [
+     88,
+     89,
+     90,
+     150,
+     159,
+     310,
+     311,
+     483,
+     595,
+     596,
+     625,
+     671,
+     676,
+     711,
+     736,
+     770,
+     789,
+     845,
+     1015,
+     1016,
+     1017,
+     1037,
+     1064,
+     1065,
+     1139,
+     1183,
+     1258,
+     1259,
+     1395
+    ],
+    "blocks": {},
+    "policies": []
+   },
+   "rationale": "This plan has the most new social ties (250) and a value of about $19.9M per year, driven by mobility, health and social gains. Revenue is essentially flat (-$180) and delay rises 193.59 hours, so it does little for small business and risks slowing traffic. I'd treat it as a community-focused fallback, not a Bay Bridge-safe option.",
+   "result_id": "b8f25fb2b99a",
+   "value_total": 19936113.55,
+   "deltas": {
+    "commuters": {
+     "car": -378,
+     "transit": -21,
+     "walk": 420,
+     "bike": -126,
+     "gone": 105
+    },
+    "delay_hours_total": 193.59,
+    "revenue": -180.03,
+    "new_ties": 250.26,
+    "co2_tonnes": -4.03,
+    "rent_pressure_index": -0.01
+   }
+  }
+ ],
+ "evaluated": 3,
+ "model": "claude-sonnet-5-5"
+}

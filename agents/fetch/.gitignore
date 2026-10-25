@@ -1,0 +1,7 @@
+.venv/
+.seeds/
+.env
+*_data.json
+__pycache__/
+live.log
+live.pid

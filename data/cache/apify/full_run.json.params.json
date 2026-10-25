@@ -1,0 +1,53 @@
+{
+  "actor": "compass~crawler-google-places",
+  "input": {
+    "searchStringsArray": [
+      "restaurant",
+      "coffee shop",
+      "fast food",
+      "bar",
+      "store",
+      "grocery store"
+    ],
+    "customGeolocation": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            -122.4095,
+            37.7975
+          ],
+          [
+            -122.388,
+            37.7975
+          ],
+          [
+            -122.388,
+            37.78
+          ],
+          [
+            -122.4095,
+            37.78
+          ],
+          [
+            -122.4095,
+            37.7975
+          ]
+        ]
+      ]
+    },
+    "maxCrawledPlacesPerSearch": 150,
+    "language": "en",
+    "scrapePlaceDetailPage": true,
+    "skipClosedPlaces": false,
+    "maxReviews": 0,
+    "maxImages": 0,
+    "maxQuestions": 0,
+    "scrapeContacts": false,
+    "includeWebResults": false,
+    "scrapeDirectories": false,
+    "scrapeTableReservationProvider": false
+  },
+  "maxTotalChargeUsd": 8.0,
+  "fetched_at": "2026-10-24T22:02:28+00:00"
+}

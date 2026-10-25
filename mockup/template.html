@@ -1,0 +1,1391 @@
+<meta charset="utf-8">
+<title>Blockwise Demo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: full-height control room. 3D stage in the middle, a slim tool rail floating on it,
+   metrics column on the right, transport bar along the bottom. Single dark look by choice. */
+:root {
+  --bg: #0a1016;
+  --panel: #111a22;
+  --raised: #18232d;
+  --line: #233140;
+  --fg: #e8edf1;
+  --dim: #8a9bab;
+  --accent: #ff5b1f;      /* international orange: edits, City Value */
+  --walk: #ffcc66;        /* pedestrians */
+  --social: #ff6fae;      /* connections */
+  --good: #3fd69a;
+  --bad: #ff5468;
+  --cool: #59b8ff;
+  --f-display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --f-ui: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --f-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-ui); font-size: 13px; overflow: hidden; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#app {
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-rows: 56px minmax(0, 1fr) 60px;
+  gap: 10px;
+  padding-block: 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+
+/* Top bar */
+#top { grid-column: 1 / -1; display: flex; align-items: center; gap: 18px; padding: 0 14px; }
+.brand { display: flex; align-items: baseline; gap: 10px; }
+.brand b { font-family: var(--f-display); font-weight: 800; font-size: 26px; letter-spacing: .02em; text-transform: uppercase; }
+.brand span { color: var(--dim); font-size: 12px; }
+.tabs { display: flex; gap: 4px; background: var(--bg); padding: 3px; border-radius: 8px; border: 1px solid var(--line); }
+.tabs button { padding: 6px 12px; border-radius: 6px; color: var(--dim); font-weight: 500; }
+.tabs button.on { background: var(--raised); color: var(--fg); }
+.tabs button[disabled] { opacity: .4; cursor: default; }
+.clock { font-family: var(--f-data); font-size: 13px; color: var(--dim); display: flex; gap: 8px; align-items: center; }
+.clock b { color: var(--fg); font-size: 18px; font-weight: 500; }
+.spacer { flex: 1; }
+.cv { display: flex; align-items: baseline; gap: 10px; }
+.cv small { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+.cv b { font-family: var(--f-display); font-size: 32px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+.cv i { font-style: normal; color: var(--dim); font-family: var(--f-data); font-size: 12px; }
+.btn { padding: 8px 14px; border-radius: 7px; background: var(--raised); border: 1px solid var(--line); font-weight: 600; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #1a0a03; }
+.btn:hover { filter: brightness(1.12); }
+
+/* Stage */
+#stage { position: relative; overflow: hidden; border-radius: 10px; border: 1px solid var(--line); background: #0d151c; min-height: 0; }
+#stage canvas { display: block; width: 100%; height: 100%; }
+#labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.lbl { position: absolute; transform: translate(-50%, -100%); white-space: nowrap; font-family: var(--f-data); font-size: 10.5px; letter-spacing: .06em; color: #f3f6f8; text-shadow: 0 1px 3px rgba(0,0,0,.8); }
+.lbl.district { font-family: var(--f-display); font-size: 22px; font-weight: 700; letter-spacing: .3em; color: rgba(255,255,255,.55); transform: translate(-50%, -50%); }
+.lbl.landmark::after { content: ""; display: block; width: 1px; height: 14px; background: rgba(255,255,255,.6); margin: 2px auto 0; }
+.lbl.station { background: #0f3f6e; border: 1px solid #5aa9ff; padding: 1px 6px; border-radius: 9px; font-size: 10px; }
+.lbl.gw { color: var(--accent); font-weight: 500; }
+.lbl.street { background: var(--accent); color: #1a0a03; padding: 2px 7px; border-radius: 4px; font-weight: 500; transform: translate(-50%, -50%); }
+.lbl.spill { background: var(--bad); color: #fff; padding: 2px 7px; border-radius: 4px; transform: translate(-50%, -50%); }
+
+#rail { position: absolute; left: 12px; top: 12px; display: flex; flex-direction: column; gap: 10px; z-index: 3; }
+.group { background: rgba(14,21,28,.86); backdrop-filter: blur(8px); border: 1px solid var(--line); border-radius: 10px; padding: 6px; display: flex; flex-direction: column; gap: 2px; width: 150px; }
+.group h4 { margin: 4px 6px 4px; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); font-weight: 600; }
+.tool { display: flex; align-items: center; gap: 9px; padding: 7px 8px; border-radius: 7px; text-align: left; color: #c9d3dc; }
+.tool:hover { background: var(--raised); }
+.tool.on { background: var(--raised); color: var(--fg); box-shadow: inset 2px 0 0 var(--accent); }
+.tool .sw { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.tool kbd { margin-left: auto; font-family: var(--f-data); font-size: 10px; color: var(--dim); }
+
+#caption { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); z-index: 4; max-width: min(680px, calc(100% - 340px)); background: rgba(10,16,22,.9); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; display: flex; gap: 12px; align-items: flex-start; }
+#caption .beat { font-family: var(--f-display); font-size: 20px; font-weight: 700; color: var(--accent); line-height: 1; padding-top: 2px; white-space: nowrap; }
+#caption .txt b { display: block; font-size: 14px; margin-bottom: 2px; }
+#caption .txt { color: #c6d0d9; line-height: 1.4; }
+#caption .ctl { display: flex; gap: 6px; margin-left: auto; }
+#caption .ctl button { font-size: 11px; color: var(--dim); padding: 3px 6px; border-radius: 5px; border: 1px solid var(--line); white-space: nowrap; }
+
+#chips { position: absolute; right: 12px; top: 96px; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; z-index: 3; }
+.chip { background: rgba(10,16,22,.9); border: 1px solid var(--line); border-radius: 9px; padding: 8px 12px; font-family: var(--f-data); font-size: 11.5px; }
+.chip .dots { display: inline-flex; gap: 4px; margin-left: 8px; vertical-align: middle; }
+.chip .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
+.chip .dots i.on { background: var(--accent); }
+#evap { width: 250px; }
+#evap h5 { margin: 0 0 6px; font-family: var(--f-ui); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+#evap .row { display: flex; justify-content: space-between; padding: 2px 0; }
+#evap .big { font-family: var(--f-display); font-size: 26px; font-weight: 700; color: var(--walk); }
+
+#inspector { position: absolute; left: 174px; bottom: 12px; width: 300px; z-index: 3; padding: 12px 14px; background: rgba(14,21,28,.94); backdrop-filter: blur(8px); }
+#inspector h3 { margin: 0; font-size: 15px; font-weight: 600; }
+#inspector .sub { color: var(--dim); font-size: 11.5px; margin: 2px 0 10px; }
+#inspector .x { position: absolute; right: 8px; top: 6px; color: var(--dim); font-size: 16px; padding: 2px 6px; }
+.kv { display: grid; grid-template-columns: 1fr auto auto; gap: 3px 10px; font-family: var(--f-data); font-size: 11.5px; align-items: baseline; }
+.kv span:nth-child(3n+1) { color: var(--dim); font-family: var(--f-ui); }
+.kv .h { color: var(--dim); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
+.up { color: var(--good); } .down { color: var(--bad); }
+.diary { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); line-height: 1.5; color: #cfd8e0; }
+.diary p { margin: 0 0 6px; }
+.diary .t { font-family: var(--f-data); color: var(--walk); margin-right: 6px; font-size: 11px; }
+.zones { display: flex; flex-wrap: wrap; gap: 5px; margin: 8px 0; }
+.zones button { padding: 5px 9px; border-radius: 6px; border: 1px solid var(--line); font-size: 12px; }
+.zones button.on { border-color: var(--accent); color: var(--accent); }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.bars { display: flex; align-items: flex-end; gap: 2px; height: 54px; margin: 8px 0 2px; }
+.bars div { flex: 1; position: relative; height: 100%; }
+.bars i, .bars em { position: absolute; bottom: 0; left: 0; right: 0; border-radius: 2px 2px 0 0; }
+.bars i { background: #34495c; }
+.bars em { background: var(--accent); opacity: .85; left: 25%; right: 25%; }
+.axis { display: flex; justify-content: space-between; font-family: var(--f-data); font-size: 9.5px; color: var(--dim); }
+
+#handle { position: absolute; top: 0; bottom: 0; width: 2px; background: #fff; z-index: 3; cursor: ew-resize; box-shadow: 0 0 12px rgba(255,255,255,.6); }
+#handle::after { content: "⇆"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 34px; height: 34px; border-radius: 50%; background: #fff; color: #111; display: grid; place-items: center; font-size: 16px; }
+.side-tag { position: absolute; top: 56px; z-index: 3; font-family: var(--f-display); font-weight: 700; letter-spacing: .2em; font-size: 15px; padding: 4px 10px; border-radius: 6px; background: rgba(10,16,22,.85); border: 1px solid var(--line); }
+
+#ai { position: absolute; right: 12px; bottom: 12px; width: 360px; z-index: 4; padding: 14px; background: rgba(14,21,28,.96); max-height: calc(100% - 24px); overflow: auto; }
+#ai .q { background: var(--raised); border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; }
+#ai .a { line-height: 1.5; color: #cfd8e0; margin-bottom: 10px; }
+.opt { border: 1px solid var(--line); border-radius: 9px; padding: 10px; margin-bottom: 8px; cursor: pointer; }
+.opt:hover, .opt.hover { border-color: var(--accent); }
+.opt b { display: block; margin-bottom: 3px; }
+.opt .why { color: var(--dim); font-size: 12px; line-height: 1.4; }
+.opt .nums { display: flex; gap: 12px; margin-top: 7px; font-family: var(--f-data); font-size: 11px; }
+.opt .apply { margin-top: 8px; }
+.mock { font-size: 10px; color: var(--dim); letter-spacing: .08em; text-transform: uppercase; }
+
+/* Side column */
+#side { display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: auto; }
+#side section { padding: 12px 14px; }
+#side h2 { margin: 0 0 8px; font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--dim); font-weight: 600; display: flex; justify-content: space-between; }
+#radar { width: 100%; height: auto; display: block; }
+.pillars { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pill { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; min-width: 0; }
+.pill small { display: block; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+.pill b { display: block; font-family: var(--f-display); font-size: 22px; font-weight: 700; margin: 2px 0 1px; font-variant-numeric: tabular-nums; }
+.pill span { font-family: var(--f-data); font-size: 10.5px; color: var(--dim); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.feed { display: flex; flex-direction: column; gap: 10px; }
+.post { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 9px; cursor: pointer; }
+.post .av { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-weight: 600; font-size: 11px; color: #0a1016; }
+.post .who { font-size: 12px; } .post .who em { font-style: normal; color: var(--dim); font-family: var(--f-data); font-size: 10.5px; margin-left: 4px; }
+.post p { margin: 2px 0 0; color: #cfd8e0; line-height: 1.4; }
+.post.new { animation: slide .5s ease-out; }
+@keyframes slide { from { opacity: 0; transform: translateY(-6px); } }
+
+/* Bottom bar */
+#bottom { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; padding: 0 12px; }
+#play { width: 36px; height: 36px; border-radius: 50%; background: var(--raised); border: 1px solid var(--line); font-size: 14px; }
+.scrub { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 120px; }
+.scrub span { font-family: var(--f-data); font-size: 11px; color: var(--dim); }
+.speeds { display: flex; gap: 2px; }
+.speeds button { padding: 5px 8px; border-radius: 6px; font-family: var(--f-data); font-size: 11px; color: var(--dim); }
+.speeds button.on { background: var(--raised); color: var(--fg); }
+#ask { display: flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 0 6px 0 10px; width: 360px; }
+#ask input { flex: 1; min-width: 0; background: none; border: 0; color: var(--fg); font: inherit; padding: 9px 0; outline: none; }
+.note { font-family: var(--f-data); font-size: 10.5px; color: var(--dim); white-space: nowrap; }
+
+/* Modals */
+.veil { position: absolute; inset: 0; z-index: 10; background: rgba(6,10,14,.72); backdrop-filter: blur(4px); display: grid; place-items: center; padding: 16px; }
+.card { width: min(720px, 100%); max-height: 100%; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 26px 28px; }
+.intro h1 { font-family: var(--f-display); font-size: 56px; line-height: .95; margin: 0 0 10px; text-transform: uppercase; font-weight: 800; text-wrap: balance; }
+.intro h1 em { font-style: normal; color: var(--accent); }
+.intro p { color: #c6d0d9; line-height: 1.55; font-size: 14px; max-width: 58ch; }
+.intro .row { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+.intro .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 18px; font-size: 12px; color: var(--dim); }
+.intro .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+.pitch .eyebrow { font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--dim); }
+.pitch h2 { font-family: var(--f-display); font-size: 34px; margin: 4px 0 2px; font-weight: 700; text-wrap: balance; }
+.pitch .total { font-family: var(--f-display); font-size: 64px; font-weight: 800; color: var(--accent); line-height: 1; margin: 12px 0 4px; }
+.stack { display: flex; height: 14px; border-radius: 4px; overflow: hidden; margin: 12px 0 6px; background: var(--bg); }
+.stack div { height: 100%; }
+.legend2 { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: #c6d0d9; }
+.legend2 i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 6px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-top: 20px; }
+.grid2 h4 { margin: 0 0 8px; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+td { padding: 5px 0; border-bottom: 1px solid var(--line); }
+td:last-child { text-align: right; font-family: var(--f-data); }
+.appr { margin-bottom: 9px; }
+.appr div { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px; }
+.appr .track { height: 7px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+.appr .track i { display: block; height: 100%; background: var(--good); border-radius: 4px; }
+.foot { margin-top: 18px; font-size: 11px; color: var(--dim); line-height: 1.5; }
+#toast { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 6; background: var(--raised); border: 1px solid var(--line); padding: 8px 14px; border-radius: 8px; }
+#tip { position: absolute; z-index: 5; pointer-events: none; background: rgba(10,16,22,.92); border: 1px solid var(--line); padding: 4px 8px; border-radius: 6px; font-size: 11.5px; white-space: nowrap; }
+#brush { position: absolute; z-index: 5; width: 28px; height: 28px; margin: -14px 0 0 -14px; border-radius: 50%; border: 2px solid var(--accent); box-shadow: 0 0 14px var(--accent); pointer-events: none; }
+#loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--dim); font-family: var(--f-data); z-index: 2; }
+
+@media (max-width: 900px) {
+  body { overflow: auto; }
+  #app { height: auto; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 62vh auto auto; }
+  #top { flex-wrap: wrap; padding: 10px 12px; gap: 10px; }
+  #side { overflow: visible; }
+  #bottom { flex-wrap: wrap; padding: 10px 12px; }
+  #ask { width: 100%; }
+  .group { width: auto; }
+  #rail { flex-direction: row; flex-wrap: wrap; right: 12px; }
+  .group h4, .tool kbd { display: none; }
+  .group { flex-direction: row; flex-wrap: wrap; }
+  #inspector { left: 12px; right: 12px; width: auto; }
+  #ai { left: 12px; width: auto; }
+  #caption { max-width: calc(100% - 24px); top: auto; bottom: 12px; }
+  .grid2 { grid-template-columns: 1fr; }
+  .intro h1 { font-size: 40px; }
+  .note { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .post.new { animation: none; } }
+</style>
+
+<div id="app">
+  <header id="top" class="panel">
+    <div class="brand"><b>Blockwise</b><span>FiDi + SoMa · weekday</span></div>
+    <div class="tabs" role="tablist">
+      <button id="tab-base" role="tab">Baseline</button>
+      <button id="tab-plan" role="tab" class="on">Plan A</button>
+      <button disabled title="Fork a second plan">+ Plan B</button>
+    </div>
+    <div class="clock"><b id="clock">05:45</b><span id="daypart">Dawn</span></div>
+    <div class="spacer"></div>
+    <div class="cv"><small>City value vs baseline</small><b id="cv">$0</b><i>/yr</i></div>
+    <button class="btn" id="pitch-btn">Pitch to the Board</button>
+    <button class="btn primary" id="demo-btn">▶ Play demo</button>
+  </header>
+
+  <main id="stage">
+    <div id="loading">Loading San Francisco…</div>
+    <div id="labels"></div>
+    <div id="rail">
+      <div class="group" id="tools">
+        <h4>Edit</h4>
+        <button class="tool on" data-tool="select"><span class="sw" style="background:#8a9bab"></span>Select<kbd>V</kbd></button>
+        <button class="tool" data-tool="ped"><span class="sw" style="background:var(--accent)"></span>Pedestrianize<kbd>P</kbd></button>
+        <button class="tool" data-tool="density"><span class="sw" style="background:#c9a6ff"></span>Density<kbd>D</kbd></button>
+        <button class="tool" data-tool="zoning"><span class="sw" style="background:#f4c27a"></span>Zoning<kbd>Z</kbd></button>
+      </div>
+      <div class="group" id="layers">
+        <h4>Layers</h4>
+        <button class="tool" data-layer="traffic"><span class="sw" style="background:linear-gradient(90deg,#59b8ff,#ffb020,#ff3b3b)"></span>Traffic</button>
+        <button class="tool" data-layer="foot"><span class="sw" style="background:var(--walk)"></span>Foot traffic</button>
+        <button class="tool" data-layer="social"><span class="sw" style="background:var(--social)"></span>Social ties</button>
+        <button class="tool" data-layer="business"><span class="sw" style="background:var(--good)"></span>Business</button>
+      </div>
+    </div>
+    <div id="caption" hidden></div>
+    <div id="chips"></div>
+    <div id="inspector" class="panel" hidden></div>
+    <div id="ai" class="panel" hidden></div>
+    <div id="handle" hidden></div>
+    <div class="side-tag" id="tag-l" hidden>BASELINE</div>
+    <div class="side-tag" id="tag-r" hidden>PLAN A</div>
+    <div id="tip" hidden></div>
+    <div id="brush" hidden></div>
+    <div id="toast" hidden></div>
+    <div class="veil" id="intro">
+      <div class="card intro">
+        <h1>What if <em>2nd Street</em> belonged to people?</h1>
+        <p>Blockwise simulates a weekday in San Francisco's Financial District and upper SoMa, using real buildings and streets from OpenStreetMap. Every dot is a sim with a commute, a lunch spot and coworkers. Change a street or a block, and the city replans around your edit. Every result is measured against the unchanged city.</p>
+        <p style="color:var(--dim);font-size:12.5px">This is a design mockup. The sims run on simple rules and the numbers are illustrative.</p>
+        <div class="row">
+          <button class="btn primary" id="intro-demo">▶ Play the 3-minute demo</button>
+          <button class="btn" id="intro-free">Explore on my own</button>
+        </div>
+        <div class="legend">
+          <span><i style="background:var(--walk)"></i>Pedestrian</span>
+          <span><i style="background:#dfe6ee"></i>Car</span>
+          <span><i style="background:var(--social)"></i>New connection</span>
+          <span><i style="background:var(--accent)"></i>Your edits</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <aside id="side">
+    <section class="panel">
+      <h2><span>City shape</span><span id="radar-legend" style="letter-spacing:0;text-transform:none;font-weight:400">— baseline &nbsp;■ plan</span></h2>
+      <svg id="radar" viewBox="-40 0 380 220" role="img" aria-label="Radar chart of five city pillars, baseline versus plan"></svg>
+    </section>
+    <section class="panel">
+      <h2><span>Pillars · Δ vs baseline</span><span id="settle-note"></span></h2>
+      <div class="pillars" id="pillars"></div>
+    </section>
+    <section class="panel" style="flex:1">
+      <h2><span>Citizen feed</span><span style="letter-spacing:0;text-transform:none;font-weight:400">simulated</span></h2>
+      <div class="feed" id="feed"></div>
+    </section>
+  </aside>
+
+  <footer id="bottom" class="panel">
+    <button id="play" aria-label="Play or pause">❚❚</button>
+    <div class="scrub"><span>06:00</span><input type="range" id="scrub" min="345" max="1440" step="1" value="345" aria-label="Time of day"><span>24:00</span></div>
+    <div class="speeds" id="speeds">
+      <button data-s="30">1×</button><button data-s="90" class="on">3×</button><button data-s="300">10×</button>
+    </div>
+    <button class="btn" id="compare-btn">Compare ⇆</button>
+    <form id="ask"><span style="color:var(--accent)">✦</span><input id="ask-in" placeholder="Ask Blockwise AI, e.g. “why did revenue go up?”" autocomplete="off"><button class="btn" style="padding:5px 10px">Ask</button></form>
+    <span class="note">1 sim = 6 people · © OpenStreetMap contributors</span>
+  </footer>
+</div>
+
+<script id="world" type="application/json">__WORLD__</script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { Pass } from 'three/addons/postprocessing/Pass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+
+// ───────────────────────── data + helpers ─────────────────────────
+const W = JSON.parse(document.getElementById('world').textContent);
+const $ = (s) => document.querySelector(s);
+const NODES = W.nodes, EDGES = W.edges, NAMES = W.names, BLD = W.buildings;
+const BB = W.bbox;
+const SCALE = 6;             // 1 sim = 6 people
+const WORKDAYS = 250;
+const inBox = (x, z, m = 0) => x > BB.x0 - m && x < BB.x1 + m && z > BB.z0 - m && z < BB.z1 + m;
+function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const hash2 = (a, b) => { let h = Math.imul(a + 0x9e3779b9, 0x85ebca6b) ^ Math.imul(b + 0x7f4a7c15, 0xc2b2ae35); h ^= h >>> 13; h = Math.imul(h, 0x27d4eb2f); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
+const gumbel = (u) => -Math.log(-Math.log(Math.min(Math.max(u, 1e-9), 1 - 1e-9)));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const ease = (t) => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+const backOut = (t) => { const c = 1.9; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const fmtClock = (min) => { min = ((min % 1440) + 1440) % 1440; return String(Math.floor(min / 60)).padStart(2, '0') + ':' + String(Math.floor(min % 60)).padStart(2, '0'); };
+function money(v, sign = true) {
+  const s = v < 0 ? '−' : (sign ? '+' : ''); const a = Math.abs(v);
+  if (a >= 1e6) return s + '$' + (a / 1e6).toFixed(a >= 1e7 ? 1 : 2) + 'M';
+  if (a >= 1e3) return s + '$' + Math.round(a / 1e3) + 'K';
+  return s + '$' + Math.round(a);
+}
+const pct = (v) => (v >= 0 ? '+' : '−') + Math.abs(v * 100).toFixed(Math.abs(v) < .1 ? 1 : 0) + '%';
+const num = (v, sign = true) => (v < 0 ? '−' : (sign && v > 0 ? '+' : '')) + Math.round(Math.abs(v)).toLocaleString('en-US');
+function polyArea(p) { let a = 0; for (let i = 0, j = p.length - 1; i < p.length; j = i++) a += (p[j][0] + p[i][0]) * (p[j][1] - p[i][1]); return Math.abs(a / 2); }
+
+// ───────────────────────── road graph ─────────────────────────
+const SPEED = { motorway: 22, motorway_link: 13, trunk: 16, trunk_link: 11, primary: 11, primary_link: 9, secondary: 10, secondary_link: 8, tertiary: 9, tertiary_link: 7, residential: 7, unclassified: 7, living_street: 4 };
+const LANES = { motorway: 4, motorway_link: 1, trunk: 3, primary: 3, secondary: 2, tertiary: 2, residential: 1, unclassified: 1, living_street: 1 };
+const WIDTH = { motorway: 18, motorway_link: 8, trunk: 16, trunk_link: 8, primary: 17, primary_link: 8, secondary: 14, secondary_link: 8, tertiary: 11, tertiary_link: 7, residential: 8, unclassified: 8, living_street: 6, pedestrian: 6 };
+EDGES.forEach((e, i) => {
+  e.id = i; e.car = e.c in SPEED; e.ped = !e.c.startsWith('motorway') && !e.c.startsWith('trunk');
+  e.lanes = e.ln || LANES[e.c] || 1; e.w = WIDTH[e.c] || 8; e.name = NAMES[e.n] || '';
+  const m = e.p[Math.floor(e.p.length / 2)]; e.mx = (e.p[0][0] + e.p[e.p.length - 1][0] + m[0] * 2) / 4; e.mz = (e.p[0][1] + e.p[e.p.length - 1][1] + m[1] * 2) / 4;
+  e.hw = e.c.startsWith('motorway');
+});
+const arcs = []; const carOut = NODES.map(() => []), carIn = NODES.map(() => []), pedOut = NODES.map(() => []);
+EDGES.forEach((e) => {
+  if (e.car) {
+    if (e.o >= 0) { const k = arcs.length; arcs.push({ e: e.id, from: e.a, to: e.b, rev: false }); carOut[e.a].push(k); carIn[e.b].push(k); }
+    if (e.o <= 0) { const k = arcs.length; arcs.push({ e: e.id, from: e.b, to: e.a, rev: true }); carOut[e.b].push(k); carIn[e.a].push(k); }
+  }
+});
+const pedArcs = [];
+EDGES.forEach((e) => { if (e.ped) { pedArcs.push({ e: e.id, from: e.a, to: e.b, rev: false }); pedOut[e.a].push(pedArcs.length - 1); pedArcs.push({ e: e.id, from: e.b, to: e.a, rev: true }); pedOut[e.b].push(pedArcs.length - 1); } });
+
+class Heap { constructor() { this.k = []; this.v = []; } get size() { return this.k.length; }
+  push(k, v) { const K = this.k, V = this.v; let i = K.length; K.push(k); V.push(v); while (i > 0) { const p = (i - 1) >> 1; if (K[p] <= k) break; K[i] = K[p]; V[i] = V[p]; i = p; } K[i] = k; V[i] = v; }
+  pop() { const K = this.k, V = this.v; const rk = K[0], rv = V[0]; const lk = K.pop(), lv = V.pop(); const n = K.length; if (n) { let i = 0; for (;;) { let l = 2 * i + 1, r = l + 1, m = i; let mk = lk; if (l < n && K[l] < mk) { m = l; mk = K[l]; } if (r < n && K[r] < mk) { m = r; } if (m === i) break; K[i] = K[m]; V[i] = V[m]; i = m; } K[i] = lk; V[i] = lv; } return [rk, rv]; } }
+function dijkstra(sources, outList, arcList, cost, reverse) {
+  const n = NODES.length, dist = new Float64Array(n).fill(Infinity), prev = new Int32Array(n).fill(-1), h = new Heap();
+  for (const s of sources) { dist[s] = 0; h.push(0, s); }
+  while (h.size) { const [d, u] = h.pop(); if (d > dist[u]) continue;
+    for (const ai of outList[u]) { const a = arcList[ai]; const c = cost(a); if (c === Infinity) continue; const v = reverse ? a.from : a.to; const nd = d + c; if (nd < dist[v]) { dist[v] = nd; prev[v] = ai; h.push(nd, v); } } }
+  return { dist, prev, reverse, arcList };
+}
+// Arc ids from tree root to target (forward tree) or from target to root (reverse tree).
+function treePath(tree, target) {
+  const out = []; let v = target, guard = 0;
+  if (tree.dist[target] === Infinity) return null;
+  while (tree.prev[v] !== -1 && guard++ < 5000) { const a = tree.arcList[tree.prev[v]]; out.push(tree.prev[v]); v = tree.reverse ? a.to : a.from; }
+  if (!tree.reverse) out.reverse();
+  return out;
+}
+// Node spatial grid for snapping.
+const G = 60, nodeGrid = new Map();
+const gk = (x, z) => Math.floor(x / G) + ',' + Math.floor(z / G);
+NODES.forEach(([x, z], i) => { const k = gk(x, z); if (!nodeGrid.has(k)) nodeGrid.set(k, []); nodeGrid.get(k).push(i); });
+function nearestNode(x, z, ok) {
+  let best = -1, bd = Infinity;
+  for (let r = 0; r < 6 && best < 0; r++) for (let dx = -r; dx <= r; dx++) for (let dz = -r; dz <= r; dz++) {
+    const list = nodeGrid.get((Math.floor(x / G) + dx) + ',' + (Math.floor(z / G) + dz)); if (!list) continue;
+    for (const i of list) { if (!ok(i)) continue; const d = (NODES[i][0] - x) ** 2 + (NODES[i][1] - z) ** 2; if (d < bd) { bd = d; best = i; } }
+  }
+  return best;
+}
+const isLocalCar = (i) => carOut[i].length && carIn[i].length && carOut[i].some(a => !EDGES[arcs[a].e].hw);
+const isPed = (i) => pedOut[i].length > 0;
+// Edge segment grid for picking and block detection.
+const segGrid = new Map();
+EDGES.forEach((e) => { for (let j = 0; j < e.p.length - 1; j++) { const [x1, z1] = e.p[j], [x2, z2] = e.p[j + 1]; const cells = new Set([gk(x1, z1), gk(x2, z2), gk((x1 + x2) / 2, (z1 + z2) / 2)]); for (const k of cells) { if (!segGrid.has(k)) segGrid.set(k, []); segGrid.get(k).push([e.id, j]); } } });
+function segDist(px, pz, x1, z1, x2, z2) { const dx = x2 - x1, dz = z2 - z1; const t = clamp(((px - x1) * dx + (pz - z1) * dz) / (dx * dx + dz * dz || 1), 0, 1); return Math.hypot(px - x1 - t * dx, pz - z1 - t * dz); }
+function edgeAt(x, z, maxD = 14) {
+  let best = -1, bd = maxD; const cx = Math.floor(x / G), cz = Math.floor(z / G);
+  for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) { const l = segGrid.get((cx + dx) + ',' + (cz + dz)); if (!l) continue;
+    for (const [ei, j] of l) { const e = EDGES[ei]; if (!e.car && e.c !== 'pedestrian') continue; const d = segDist(x, z, e.p[j][0], e.p[j][1], e.p[j + 1][0], e.p[j + 1][1]) - e.w / 2; if (d < bd) { bd = d; best = ei; } } }
+  return best;
+}
+function segCross(a, b, c, d) { const o = (p, q, r) => Math.sign((q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0])); return o(a, b, c) !== o(a, b, d) && o(c, d, a) !== o(c, d, b); }
+function crossesRoad(a, b) {
+  const cells = new Set(); const steps = Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 30) + 1;
+  for (let i = 0; i <= steps; i++) cells.add(gk(lerp(a[0], b[0], i / steps), lerp(a[1], b[1], i / steps)));
+  for (const k of cells) { const l = segGrid.get(k); if (!l) continue; for (const [ei, j] of l) { const e = EDGES[ei]; if (!e.car || e.hw) continue; if (segCross(a, b, e.p[j], e.p[j + 1])) return true; } }
+  return false;
+}
+
+// ───────────────────────── places ─────────────────────────
+BLD.forEach((b, i) => {
+  b.id = i; b.area = polyArea(b.p); b.inside = inBox(b.c[0], b.c[1]);
+  b.pedNode = nearestNode(b.c[0], b.c[1], isPed); b.carNode = nearestNode(b.c[0], b.c[1], isLocalCar);
+  b.floor = b.area * Math.max(1, Math.round(b.h / 3.6));
+});
+const capOf = (kind, floor) => ({
+  jobs: kind === 'office' ? floor / 18 : kind === 'mixed' ? floor / 60 : kind === 'retail' ? floor / 50 : kind === 'hotel' ? floor / 80 : kind === 'civic' ? floor / 70 : 0,
+  res: kind === 'res' ? floor / 45 : kind === 'mixed' ? floor / 140 : 0,
+});
+const offices = BLD.filter(b => b.inside && b.pedNode >= 0 && b.carNode >= 0 && (b.k === 'office' || (b.k === 'mixed' && b.h > 24) || b.k === 'hotel'));
+const homes = BLD.filter(b => b.inside && b.pedNode >= 0 && (b.k === 'res' || (b.k === 'mixed' && b.h < 70)));
+const CAT = {
+  cafe: { w: 1.2, ticket: 9, capture: .028, lunch: .8, label: 'Café' },
+  restaurant: { w: 1.5, ticket: 26, capture: .012, lunch: 1.3, label: 'Restaurant' },
+  fast_food: { w: 1.1, ticket: 13, capture: .02, lunch: 1.1, label: 'Quick bite' },
+  bar: { w: 1, ticket: 30, capture: .008, lunch: .2, label: 'Bar' },
+  shop: { w: .8, ticket: 38, capture: .009, lunch: 0, label: 'Shop' },
+};
+const BASE_POIS = W.pois.filter(p => CAT[p.c] && inBox(p.x, p.z, 40)).map((p, i) => ({ ...p, id: i, node: nearestNode(p.x, p.z, isPed), q: .6 + hash2(i, 7) * .8 }));
+const poiGrid = new Map();
+const PG = 120;
+function indexPois(list) { const g = new Map(); list.forEach(p => { const k = Math.floor(p.x / PG) + ',' + Math.floor(p.z / PG); if (!g.has(k)) g.set(k, []); g.get(k).push(p); }); return g; }
+function poisNear(grid, x, z, r) { const out = []; const R = Math.ceil(r / PG); const cx = Math.floor(x / PG), cz = Math.floor(z / PG); for (let dx = -R; dx <= R; dx++) for (let dz = -R; dz <= R; dz++) { const l = grid.get((cx + dx) + ',' + (cz + dz)); if (l) for (const p of l) if (Math.hypot(p.x - x, p.z - z) < r) out.push(p); } return out; }
+// Edges within 22 m of each POI: its walk-by exposure.
+function poiEdges(p) { const s = new Set(); const cx = Math.floor(p.x / G), cz = Math.floor(p.z / G); for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) { const l = segGrid.get((cx + dx) + ',' + (cz + dz)); if (l) for (const [ei, j] of l) { const e = EDGES[ei]; if (e.ped && segDist(p.x, p.z, e.p[j][0], e.p[j][1], e.p[j + 1][0], e.p[j + 1][1]) < e.w / 2 + 16) s.add(ei); } } return [...s]; }
+BASE_POIS.forEach(p => { p.edges = poiEdges(p); });
+
+const STATIONS = W.stations.map(s => ({ ...s, nodes: [...new Set(s.e.map(([x, z]) => nearestNode(x, z, isPed)))].filter(n => n >= 0) }));
+const stationBy = (n) => STATIONS.find(s => s.name === n) || STATIONS[0];
+const sinks = NODES.map((_, i) => i).filter(i => carIn[i].length && !carOut[i].length);
+const gwNodes = (names, dir) => W.gateways.filter(g => names.includes(g.name) && g[dir]).map(g => g.node);
+function exitsFor(entries, names) {
+  const named = gwNodes(names, 'out'); if (named.length) return named;
+  const out = []; for (const en of entries) { let best = -1, bd = Infinity; for (const s of sinks) { const d = Math.hypot(NODES[s][0] - NODES[en][0], NODES[s][1] - NODES[en][1]); if (d < bd) { bd = d; best = s; } } if (best >= 0 && bd < 900) out.push(best); }
+  return out.length ? [...new Set(out)] : sinks.slice(0, 1);
+}
+const REGIONS = [
+  { name: 'East Bay', share: .34, gw: ['I-80 · Bay Bridge'], station: 'Embarcadero', carBase: 30, trBase: 27 },
+  { name: 'Peninsula', share: .22, gw: ['US-101 / I-80 West'], station: 'Salesforce Transit Center', carBase: 36, trBase: 42 },
+  { name: 'Western SF', share: .22, gw: ['Market Street', 'Mission Street', 'Broadway'], station: 'Powell Street', carBase: 20, trBase: 22 },
+  { name: 'Mission', share: .13, gw: ['Folsom Street', '6th Street'], station: 'Montgomery Street', carBase: 17, trBase: 18 },
+  { name: 'North Beach', share: .09, gw: ['Columbus Avenue', 'Stockton Street', 'Powell Street'], station: 'Chinatown-Rose Pak', carBase: 14, trBase: 17 },
+].map(r => { const entries = gwNodes(r.gw, 'in'); return { ...r, entries, exits: exitsFor(entries, r.gw), st: stationBy(r.station) }; }).filter(r => r.entries.length);
+
+// ───────────────────────── population (shared by both scenarios) ─────────────────────────
+const FIRST = ['Maria', 'Dev', 'Ana', 'James', 'Wei', 'Priya', 'Luis', 'Sam', 'Grace', 'Omar', 'Hana', 'Tom', 'Rosa', 'Kenji', 'Aisha', 'Ben', 'Lena', 'Marco', 'Nia', 'Raj', 'Elena', 'Chris', 'Mei', 'Jorge', 'Sofia', 'Andre', 'Yuki', 'Dana', 'Ivan', 'Leah'];
+const LAST = ['Okafor', 'Patel', 'Nguyen', 'Garcia', 'Chen', 'Kim', 'Rossi', 'Lopez', 'Wright', 'Haddad', 'Sato', 'Murphy', 'Silva', 'Cohen', 'Diaz', 'Park', 'Reyes', 'Ali', 'Lee', 'Novak'];
+function pickWeighted(list, wfn, r) { let t = 0; const ws = list.map(x => { const w = wfn(x); t += w; return w; }); let u = r() * t; for (let i = 0; i < list.length; i++) { u -= ws[i]; if (u <= 0) return list[i]; } return list[list.length - 1]; }
+function normal(r) { return Math.sqrt(-2 * Math.log(r() + 1e-9)) * Math.cos(2 * Math.PI * r()); }
+function makeWorker(id, r, office) {
+  const reg = pickWeighted(REGIONS, x => x.share, r);
+  const income = r() < .28 ? 0 : r() < .62 ? 1 : 2;
+  return {
+    id, kind: 'worker', name: FIRST[Math.floor(r() * FIRST.length)] + ' ' + LAST[Math.floor(r() * LAST.length)][0] + '.',
+    reg, office, income, asc: normal(r) * .9 - .2 + income * .35, eps: gumbel(r()) - gumbel(r()), evap: r(),
+    entry: reg.entries[Math.floor(r() * reg.entries.length)], exit: reg.exits[Math.floor(r() * reg.exits.length)],
+    arrive: clamp(510 + normal(r) * 45, 400, 640) * 60, leave: clamp(1050 + normal(r) * 55, 930, 1230) * 60,
+    lunch: r() < .66, lunchT: clamp(740 + normal(r) * 24, 680, 830) * 60, lunchDur: (22 + r() * 22) * 60,
+    coffee: r() < .22, coffeeT: (870 + r() * 80) * 60, open: r(),
+  };
+}
+function makeResident(id, r, home) {
+  return {
+    id, kind: 'resident', name: FIRST[Math.floor(r() * FIRST.length)] + ' ' + LAST[Math.floor(r() * LAST.length)][0] + '.',
+    home, income: r() < .45 ? 0 : r() < .75 ? 1 : 2, open: r(), evap: r(),
+    commute: r() < .5, st: STATIONS.reduce((a, s) => Math.hypot(s.c[0] - home.c[0], s.c[1] - home.c[1]) < Math.hypot(a.c[0] - home.c[0], a.c[1] - home.c[1]) ? s : a, STATIONS[0]),
+    out1: clamp(450 + r() * 70, 430, 540) * 60, back1: clamp(1080 + r() * 60, 1040, 1180) * 60,
+    errand: r() < .55, errandT: (540 + r() * 150) * 60, evening: r() < .6, eveT: (1110 + r() * 150) * 60, eveDur: (40 + r() * 50) * 60,
+  };
+}
+const BASE_PERSONS = (() => {
+  const r = mulberry32(2026); const P = [];
+  for (let i = 0; i < 5200; i++) P.push(makeWorker(i, r, pickWeighted(offices, b => capOf(b.k, b.floor).jobs + 50, r)));
+  for (let i = 0; i < 760; i++) P.push(makeResident(P.length, r, pickWeighted(homes, b => capOf(b.k, b.floor).res + 5, r)));
+  return P;
+})();
+
+// ───────────────────────── scenario: plans, settle loop, projections ─────────────────────────
+const ZONES = { res: 'Residential', office: 'Office', retail: 'Commercial', mixed: 'Mixed use' };
+const ZONE_TINT = { res: [0.98, 0.76, 0.46], office: [0.62, 0.77, 1.0], retail: [1.0, 0.6, 0.47], mixed: [0.79, 0.65, 1.0] };
+class Scenario {
+  constructor(name, isPlan) { this.name = name; this.isPlan = isPlan; this.ped = new Set(); this.blocks = new Map(); this.cong = new Float32Array(EDGES.length).fill(1); this.cache = new Map(); this.version = 0; }
+  carCost = (a) => this.ped.has(a.e) ? Infinity : EDGES[a.e].l / SPEED[EDGES[a.e].c] * this.cong[a.e];
+  pedCost = (a) => { const e = EDGES[a.e]; let m = this.ped.has(a.e) ? .7 : 1; if (e.c === 'primary' || e.c === 'secondary') m *= 1.12; if (e.c === 'pedestrian') m *= .85; return e.l / 1.35 * m; };
+  tree(kind, key, sources) {
+    const k = kind + ':' + key; let t = this.cache.get(k); if (t) return t;
+    if (kind === 'car') t = dijkstra(sources, carOut, arcs, this.carCost, false);
+    else if (kind === 'carRev') t = dijkstra(sources, carIn, arcs, this.carCost, true);
+    else t = dijkstra(sources, pedOut, pedArcs, this.pedCost, false);
+    this.cache.set(k, t); return t;
+  }
+  clearCarTrees() { for (const k of [...this.cache.keys()]) if (k.startsWith('car')) this.cache.delete(k); }
+  pedTreeFrom(node) { return this.tree('ped', node, [node]); }
+  stationTree(st) { return this.tree('ped', 'st' + st.name, st.nodes); }
+  // Persons and POIs for this scenario: base pool plus anything the block edits add or remove.
+  buildPopulation() {
+    const P = []; const removedJobs = new Map(); const extra = [];
+    this.pois = BASE_POIS.slice();
+    for (const [bid, ed] of this.blocks) {
+      const b = BLD[bid]; const before = capOf(b.k, b.floor), after = capOf(ed.z, b.floor * ed.s);
+      const dJobs = after.jobs - before.jobs, dRes = after.res - before.res; const r = mulberry32(bid * 31 + 7);
+      if (dJobs < 0) removedJobs.set(bid, Math.min(1, -dJobs / Math.max(before.jobs, 1) * .65));  // vacant floors convert first
+      for (let i = 0; i < Math.min(160, Math.round(Math.max(0, dJobs) / SCALE)); i++) extra.push(makeWorker(100000 + bid * 400 + i, r, b));
+      for (let i = 0; i < Math.min(120, Math.round(Math.max(0, dRes) / SCALE)); i++) extra.push(makeResident(200000 + bid * 400 + i, r, b));
+      if ((ed.z === 'retail' || ed.z === 'mixed') && ed.z !== b.k) {
+        const n = clamp(Math.round(Math.sqrt(b.area) / 14), 1, 4);
+        for (let i = 0; i < n; i++) { const c = ['cafe', 'restaurant', 'shop', 'fast_food'][i % 4]; const p = { x: b.c[0] + (i - n / 2) * 8, z: b.c[1] + 6, n: 'New ' + CAT[c].label.toLowerCase() + ' (Plan A)', c, id: 5000 + bid * 5 + i, q: 1.1, virtual: true }; p.node = nearestNode(p.x, p.z, isPed); p.edges = poiEdges(p); this.pois.push(p); }
+      }
+    }
+    for (const p of BASE_PERSONS) { if (p.kind === 'worker' && removedJobs.has(p.office.id) && hash2(p.id, 3) < removedJobs.get(p.office.id)) continue; P.push(p); }
+    this.persons = P.concat(extra); this.poiGrid = indexPois(this.pois);
+    this.pedPoiBonus = new Set(); for (const p of this.pois) if (p.edges.some(e => this.ped.has(e))) this.pedPoiBonus.add(p.id);
+  }
+  lunchSpot(p, at, t) {
+    const cands = poisNear(this.poiGrid, at.c[0], at.c[1], 560).filter(q => CAT[q.c].lunch > 0 && q.node >= 0);
+    let best = null, bu = -Infinity;
+    for (const q of cands) { const d = Math.hypot(q.x - at.c[0], q.z - at.c[1]); const u = Math.log(CAT[q.c].lunch * q.q) - d / 170 + (this.pedPoiBonus.has(q.id) ? 1.0 : 0) + gumbel(hash2(p.id * 7 + t, q.id)); if (u > bu) { bu = u; best = q; } }
+    return best;
+  }
+  modeOf(p, baseRoute) {
+    if (p.kind !== 'worker') return 'transit';
+    const tCarTree = this.tree('car', p.entry, [p.entry]); const tc = tCarTree.dist[p.office.carNode];
+    const st = p.reg.st; const tw = this.stationTree(st).dist[p.office.pedNode];
+    if (tc === Infinity) return 'transit';
+    const uCar = p.asc - .06 * (p.reg.carBase + tc / 60) - 1.95; const uTr = -.06 * (p.reg.trBase + 1.6 * tw / 60);
+    let mode = uCar + p.eps > uTr ? 'car' : 'transit';
+    if (this.isPlan && p.name === MARIA_NAME && p.id === MARIA_ID && this.ped.size) mode = 'transit';
+    // Traffic evaporation: some drivers whose old route is now closed change mode or skip the trip.
+    if (this.isPlan && mode === 'car' && baseRoute && baseRoute.some(e => this.ped.has(e))) { if (p.evap < .03) return 'gone'; if (p.evap < .16) return 'transit'; }
+    return mode;
+  }
+  // One "replanning day": choose modes and routes given last day's congestion.
+  iterate(baseCarRoutes) {
+    this.clearCarTrees();
+    const flow = new Float32Array(EDGES.length); this.modes = new Map(); this.carRoutes = new Map();
+    for (const p of this.persons) {
+      const m = this.modeOf(p, baseCarRoutes && baseCarRoutes.get(p.id)); this.modes.set(p.id, m);
+      if (m !== 'car') continue;
+      const path = treePath(this.tree('car', p.entry, [p.entry]), p.office.carNode); if (!path) { this.modes.set(p.id, 'transit'); continue; }
+      const edges = path.map(a => arcs[a].e); this.carRoutes.set(p.id, edges);
+      for (const e of edges) flow[e] += 1;
+    }
+    for (let i = 0; i < EDGES.length; i++) { const e = EDGES[i]; if (!e.car) continue; const vph = flow[i] * SCALE / 2.2; const cap = e.lanes * (e.hw ? 1100 : 330); const f = 1 + .15 * Math.pow(vph / cap, 4); this.cong[i] = lerp(this.cong[i], Math.min(f, 6), .6); }
+    this.carFlow = flow;
+  }
+  settle(baseCarRoutes, days = 5, onDay) { this.cong.fill(1); this.buildPopulation(); for (let d = 0; d < days; d++) { this.iterate(baseCarRoutes); onDay && onDay(d); } this.buildTrips(); this.project(); this.version++; }
+  // Turn plans into timed trips with geometry.
+  buildTrips() {
+    const T = []; this.lunchAt = new Map(); this.personTrips = new Map();
+    const pedLeg = (p, leg, t0, fromNode, toNode, tree, dwell, poi) => { const path = treePath(tree, toNode); if (!path || !path.length) return; const tr = makeTrip(p, leg, t0, 'ped', path, pedArcs, 1.35, poi, dwell); if (tr) T.push(tr); };
+    for (const p of this.persons) {
+      const m = this.modes.get(p.id); if (m === 'gone') continue;
+      if (p.kind === 'worker') {
+        const o = p.office;
+        if (m === 'car') {
+          const path = treePath(this.tree('car', p.entry, [p.entry]), o.carNode); const tr = path && makeTrip(p, 'am', p.arrive - 600, 'car', path, arcs, null, null, 0, this); if (tr) T.push(tr);
+          const pm = treePath(this.tree('carRev', p.exit, [p.exit]), o.carNode); const tr2 = pm && makeTrip(p, 'pm', p.leave, 'car', pm, arcs, null, null, 0, this); if (tr2) T.push(tr2);
+        } else {
+          const st = this.stationTree(p.reg.st); const path = treePath(st, o.pedNode);
+          if (path) { const tr = makeTrip(p, 'am', p.arrive - 500, 'ped', path, pedArcs, 1.35); if (tr) T.push(tr); const back = makeTrip(p, 'pm', p.leave, 'ped', path.slice().reverse(), pedArcs, 1.35, null, 0, null, true); if (back) T.push(back); }
+        }
+        if (p.lunch) { const q = this.lunchSpot(p, o, 1); if (q) { this.lunchAt.set(p.id, q); const tr = this.pedTreeFrom(q.node); const path = treePath(tr, o.pedNode); if (path && path.length) { const back = makeTrip(p, 'lunch', p.lunchT, 'ped', path.slice().reverse(), pedArcs, 1.35, q, p.lunchDur, null, true); if (back) { T.push(back); const ret = makeTrip(p, 'lunch2', p.lunchT + back.dur + p.lunchDur, 'ped', path, pedArcs, 1.35); if (ret) T.push(ret); } } } }
+        if (p.coffee) { const q = this.lunchSpot(p, o, 2); if (q && q.c === 'cafe') { const path = treePath(this.pedTreeFrom(q.node), o.pedNode); if (path && path.length) { const a = makeTrip(p, 'coffee', p.coffeeT, 'ped', path.slice().reverse(), pedArcs, 1.35, q, 600, null, true); if (a) { T.push(a); const b = makeTrip(p, 'coffee2', p.coffeeT + a.dur + 600, 'ped', path, pedArcs, 1.35); if (b) T.push(b); } } } }
+      } else {
+        const h = p.home;
+        if (p.commute) { const path = treePath(this.stationTree(p.st), h.pedNode); if (path && path.length) { const a = makeTrip(p, 'out', p.out1, 'ped', path.slice().reverse(), pedArcs, 1.35, null, 0, null, true); if (a) T.push(a); const b = makeTrip(p, 'home', p.back1, 'ped', path, pedArcs, 1.35); if (b) T.push(b); } }
+        const outing = (t, dur, tag) => { const q = this.lunchSpot(p, h, tag === 'eve' ? 3 : 4); if (!q) return; const path = treePath(this.pedTreeFrom(q.node), h.pedNode); if (!path || !path.length) return; const a = makeTrip(p, tag, t, 'ped', path.slice().reverse(), pedArcs, 1.35, q, dur, null, true); if (a) { T.push(a); const b = makeTrip(p, tag + '2', t + a.dur + dur, 'ped', path, pedArcs, 1.35); if (b) T.push(b); } if (tag === 'eve') this.lunchAt.set(p.id + 1e7, q); };
+        if (p.errand) outing(p.errandT, 900, 'err'); if (p.evening) outing(p.eveT, p.eveDur, 'eve');
+      }
+    }
+    T.sort((a, b) => a.t0 - b.t0); this.trips = T;
+    for (const t of T) { if (!this.personTrips.has(t.p.id)) this.personTrips.set(t.p.id, []); this.personTrips.get(t.p.id).push(t); }
+  }
+  // Daily projections that feed the metrics, radar and City Value.
+  project() {
+    const pedFlow = new Float32Array(EDGES.length); let vmt = 0, vehH = 0, freeH = 0, walkM = 0, car = 0, tr = 0, gone = 0;
+    const tierTime = [0, 0, 0], tierWalk = [0, 0, 0], tierN = [0, 0, 0];
+    for (const p of this.persons) { const m = this.modes.get(p.id); tierN[p.income]++; if (m === 'car') car++; else if (m === 'gone') gone++; else if (p.kind === 'worker') tr++; }
+    for (const t of this.trips) {
+      if (t.mode === 'car') { let tt = 0, ff = 0; for (const e of t.edges) { const E = EDGES[e]; const f = E.l / SPEED[E.c]; ff += f; tt += f * this.cong[e]; } vmt += t.len / 1609; vehH += tt / 3600; freeH += ff / 3600; tierTime[t.p.income] += tt / 60; }
+      else { for (const e of t.edges) pedFlow[e]++; walkM += t.len / 80; tierWalk[t.p.income] += t.len / 80; tierTime[t.p.income] += t.len / 80; }
+    }
+    // Transit riders' in-vehicle time (outside the map) counts in the time budget.
+    for (const p of this.persons) if (p.kind === 'worker' && this.modes.get(p.id) === 'transit') tierTime[p.income] += p.reg.trBase * 2; else if (p.kind === 'worker' && this.modes.get(p.id) === 'car') tierTime[p.income] += p.reg.carBase * 2;
+    const visits = new Map(); let revenue = 0;
+    for (const q of this.pois) { let exp = 0; for (const e of q.edges) exp += pedFlow[e]; const c = CAT[q.c]; let v = exp * c.capture * q.q * (this.pedPoiBonus.has(q.id) ? 1.35 : 1); visits.set(q.id, v); }
+    for (const [, q] of this.lunchAt) visits.set(q.id, (visits.get(q.id) || 0) + 1);
+    for (const q of this.pois) { const v = (visits.get(q.id) || 0) * SCALE; visits.set(q.id, v); revenue += v * CAT[q.c].ticket; }
+    // Encounters: people whose lunch or outing overlaps at the same place; ties form among coworkers and open people.
+    const byPoi = new Map(); for (const [pid, q] of this.lunchAt) { if (!byPoi.has(q.id)) byPoi.set(q.id, []); byPoi.get(q.id).push(pid); }
+    let enc = 0, ties = 0; const tiePairs = [];
+    const pmap = this.pmap = new Map(this.persons.map(p => [p.id, p]));
+    for (const [qid, ids] of byPoi) {
+      const arr = ids.map(id => pmap.get(id % 1e7)).filter(Boolean).sort((a, b) => (a.lunchT || a.eveT || 0) - (b.lunchT || b.eveT || 0));
+      for (let i = 0; i < arr.length; i++) for (let j = i + 1; j < arr.length; j++) {
+        const ti = arr[i].lunchT || arr[i].eveT, tj = arr[j].lunchT || arr[j].eveT; if (tj - ti > 1500) break; enc++;
+        const same = arr[i].office && arr[i].office === arr[j].office; if (same || (arr[i].open > .72 && arr[j].open > .72)) { ties++; if (tiePairs.length < 900) tiePairs.push([arr[i], arr[j], qid]); }
+      }
+    }
+    let streetEnc = 0; for (const e of this.ped) streetEnc += pedFlow[e] * .06;
+    let jobs = 0, res = 0, floorDelta = 0;
+    for (const b of BLD) { if (!b.inside) continue; const ed = this.blocks.get(b.id); const c = ed ? capOf(ed.z, b.floor * ed.s) : capOf(b.k, b.floor); jobs += c.jobs; res += c.res; if (ed) floorDelta += b.floor * (ed.s - 1); }
+    this.pedFlow = pedFlow; this.visits = visits; this.tiePairs = tiePairs;
+    this.m = { car, tr, gone, vmt: vmt * SCALE, vehH: vehH * SCALE, delayH: (vehH - freeH) * SCALE, walkMin: walkM * SCALE, revenue, enc: (enc + streetEnc) * SCALE, ties: ties * SCALE, jobs, res, floorDelta,
+      tierTime: tierTime.map((t, i) => t / Math.max(1, tierN[i])), tierWalk: tierWalk.map((t, i) => t / Math.max(1, tierN[i])), persons: this.persons.length };
+  }
+}
+let MARIA_ID = -1; const MARIA_NAME = 'Maria O.';
+function makeTrip(p, leg, t0, mode, path, arcList, speed, poi, dwell, scn, reversed) {
+  if (!path || !path.length) return null;
+  const pts = []; const segE = []; const edges = [];
+  for (const ai of path) { const a = arcList[ai]; const e = EDGES[a.e]; let pp = (reversed ? !a.rev : a.rev) ? e.p.slice().reverse() : e.p; if (reversed) {} edges.push(e.id);
+    for (let j = 0; j < pp.length; j++) { if (pts.length && j === 0) continue; pts.push(pp[j]); if (pts.length > 1) segE.push(e.id); } }
+  if (reversed) { /* path was reversed by caller; arcs keep their own direction so flip geometry per arc above */ }
+  if (mode === 'car') { const far = (q) => Math.hypot(q[0], q[1]) > 1450; while (pts.length > 2 && far(pts[0]) && far(pts[1])) { pts.shift(); segE.shift(); } while (pts.length > 2 && far(pts[pts.length - 1]) && far(pts[pts.length - 2])) { pts.pop(); segE.pop(); } }
+  if (pts.length < 2) return null;
+  const cum = new Float32Array(pts.length); for (let i = 1; i < pts.length; i++) cum[i] = cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+  const len = cum[cum.length - 1]; let v = speed;
+  if (mode === 'car') { let tt = 0; for (const id of edges) { const e = EDGES[id]; tt += e.l / SPEED[e.c] * (scn ? scn.cong[id] : 1); } v = len / Math.max(tt, 1); }
+  const side = mode === 'ped' ? (hash2(p.id, t0 | 0) < .5 ? -1 : 1) : 1;
+  return { p, leg, t0, mode, pts, cum, segE, edges, len, v, dur: len / v, poi, dwell: dwell || 0, side, sig: leg + ':' + edges.join(',') };
+}
+
+// ───────────────────────── scenarios ─────────────────────────
+const S = { base: new Scenario('Baseline', false), plan: new Scenario('Plan A', true) };
+S.base.settle(null, 5);
+const baseCarRoutes = () => S.base.carRoutes;
+// Maria: drives in over the Bay Bridge to an office near 2nd & Howard; her baseline route uses 2nd St.
+const HERO = { name: '2nd Street', from: 'Market Street', to: 'Folsom Street' };
+function stretch(name, from, to) {
+  const onName = EDGES.filter(e => e.name === name);
+  const nodeOf = (cross) => { const ns = new Set(EDGES.filter(e => e.name === cross).flatMap(e => [e.a, e.b])); return onName.flatMap(e => [e.a, e.b]).find(n => ns.has(n)); };
+  const a = nodeOf(from), b = nodeOf(to); if (a === undefined || b === undefined) return [];
+  const adj = new Map(); for (const e of onName) { for (const [u, v] of [[e.a, e.b], [e.b, e.a]]) { if (!adj.has(u)) adj.set(u, []); adj.get(u).push([v, e.id]); } }
+  const prev = new Map([[a, null]]); const q = [a];
+  while (q.length) { const u = q.shift(); if (u === b) break; for (const [v, eid] of adj.get(u) || []) if (!prev.has(v)) { prev.set(v, [u, eid]); q.push(v); } }
+  const out = []; let v = b; while (prev.get(v)) { const [u, eid] = prev.get(v); out.push(eid); v = u; } return out;
+}
+const HERO_EDGES = stretch(HERO.name, HERO.from, HERO.to);
+(() => {
+  const hx = HERO_EDGES.length ? EDGES[HERO_EDGES[Math.floor(HERO_EDGES.length / 2)]] : EDGES[0];
+  let best = null, bd = Infinity;
+  for (const p of BASE_PERSONS) { if (p.kind !== 'worker' || p.reg.name !== 'East Bay' || S.base.modes.get(p.id) !== 'car' || !p.lunch) continue; const r = S.base.carRoutes.get(p.id) || []; const uses = r.some(e => HERO_EDGES.includes(e)); const d = Math.hypot(p.office.c[0] - hx.mx, p.office.c[1] - hx.mz) - (uses ? 400 : 0); if (d < bd) { bd = d; best = p; } }
+  if (!best) best = BASE_PERSONS.find(p => p.kind === 'worker');
+  best.name = MARIA_NAME; best.lunchT = 735 * 60; best.arrive = 505 * 60; best.open = .9; MARIA_ID = best.id;
+  // Dev works in the same office and lunches at the same time.
+  const dev = BASE_PERSONS.find(p => p.kind === 'worker' && p !== best && p.office === best.office) || BASE_PERSONS.find(p => p.kind === 'worker' && p !== best);
+  dev.office = best.office; dev.name = 'Dev P.'; dev.lunch = true; dev.lunchT = 738 * 60; dev.open = .9;
+})();
+S.base.settle(null, 5);
+S.plan.settle(baseCarRoutes(), 5);
+
+// ───────────────────────── renderer + scene ─────────────────────────
+const stage = $('#stage');
+const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
+stage.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(30, 1, 20, 14000);
+const CAM = { target: new THREE.Vector3(30, 0, 10), dist: 2300, az: 0.62, el: 0.92, fov: 30 };
+const camGoal = { ...CAM, target: CAM.target.clone() };
+const mouse = { x: 0, y: 0 };
+function placeCamera() {
+  const az = CAM.az + mouse.x * 0.025, el = CAM.el + mouse.y * 0.012;
+  camera.position.set(CAM.target.x + CAM.dist * Math.cos(el) * Math.sin(az), CAM.dist * Math.sin(el), CAM.target.z + CAM.dist * Math.cos(el) * Math.cos(az));
+  camera.lookAt(CAM.target); camera.fov = CAM.fov; camera.updateProjectionMatrix();
+}
+
+// Sky dome
+const skyU = { top: { value: new THREE.Color() }, hor: { value: new THREE.Color() } };
+const sky = new THREE.Mesh(new THREE.SphereGeometry(9000, 32, 16), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, uniforms: skyU,
+  vertexShader: 'varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+  fragmentShader: 'uniform vec3 top; uniform vec3 hor; varying vec3 vP; void main(){ float t = smoothstep(-0.05, 0.5, vP.y); gl_FragColor = vec4(mix(hor, top, t), 1.0); }' }));
+scene.add(sky);
+scene.fog = new THREE.Fog(0x9fb4c4, 3200, 9000);
+const hemi = new THREE.HemisphereLight(0xdfe9f3, 0x6b625a, 0.9); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffffff, 2.2); sun.castShadow = true;
+sun.shadow.mapSize.set(4096, 4096); Object.assign(sun.shadow.camera, { left: -1500, right: 1500, top: 1500, bottom: -1500, near: 100, far: 6000 }); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 1.5;
+scene.add(sun); scene.add(sun.target);
+
+// Land + water (shoreline follows the Embarcadero)
+const shore = EDGES.filter(e => e.name === 'The Embarcadero' || e.name === 'King Street').flatMap(e => e.p).sort((a, b) => a[1] - b[1]);
+const shoreline = []; for (const p of shore) { if (!shoreline.length || Math.abs(p[1] - shoreline[shoreline.length - 1][1]) > 40) shoreline.push([p[0] + 95, p[1]]); }
+const landShape = new THREE.Shape(); landShape.moveTo(-6000, -6000); landShape.lineTo(-6000, 6000);
+landShape.lineTo(shoreline[0][0] - 60, 6000);
+for (const [x, z] of shoreline) landShape.lineTo(x, -z);
+landShape.lineTo(shoreline[shoreline.length - 1][0] + 200, -6000);
+const landMesh = new THREE.Mesh(new THREE.ShapeGeometry(landShape), new THREE.MeshStandardMaterial({ color: 0x7d8086, roughness: 1 }));
+landMesh.rotation.x = -Math.PI / 2; landMesh.receiveShadow = true; scene.add(landMesh);
+const waterU = { uTime: { value: 0 }, uDeep: { value: new THREE.Color(0x2d4d63) }, uNight: { value: 0 } };
+const water = new THREE.Mesh(new THREE.PlaneGeometry(20000, 20000), new THREE.ShaderMaterial({ uniforms: waterU, fog: false,
+  vertexShader: 'varying vec3 vW; void main(){ vec4 w = modelMatrix*vec4(position,1.0); vW = w.xyz; gl_Position = projectionMatrix*viewMatrix*w; }',
+  fragmentShader: 'uniform float uTime; uniform vec3 uDeep; uniform float uNight; varying vec3 vW; void main(){ float r = sin(vW.x*0.02+uTime*0.6)*sin(vW.z*0.017-uTime*0.4); vec3 c = uDeep*(0.9+0.08*r); gl_FragColor = vec4(c,1.0); }' }));
+water.rotation.x = -Math.PI / 2; water.position.y = -1.5; scene.add(water);
+// Parks
+for (const pk of W.parks) { if (pk.p.length < 3) continue; const s = new THREE.Shape(pk.p.map(([x, z]) => new THREE.Vector2(x, -z))); const m = new THREE.Mesh(new THREE.ShapeGeometry(s), new THREE.MeshStandardMaterial({ color: /park/i.test(pk.n) || pk.n === 'South Park' ? 0x8fae7e : 0xcfc6b8, roughness: 1 })); m.rotation.x = -Math.PI / 2; m.position.y = 0.25; m.receiveShadow = true; scene.add(m); }
+
+// Roads: sidewalk band + asphalt + per-scenario overlay.
+const ROAD_EDGES = EDGES.filter(e => e.hw || e.p.some(([x, z]) => inBox(x, z, 260)));
+function ribbonInto(pos, pts, w, y) {
+  const n = pts.length; const nx = [], nz = [];
+  for (let i = 0; i < n; i++) { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(n - 1, i + 1)]; let dx = b[0] - a[0], dz = b[1] - a[1]; const l = Math.hypot(dx, dz) || 1; nx.push(-dz / l); nz.push(dx / l); }
+  let added = 0;
+  for (let i = 0; i < n - 1; i++) {
+    const [x1, z1] = pts[i], [x2, z2] = pts[i + 1]; if (Math.hypot(x2 - x1, z2 - z1) > 3000) continue;
+    const h = w / 2; const L1 = [x1 + nx[i] * h, z1 + nz[i] * h], R1 = [x1 - nx[i] * h, z1 - nz[i] * h], L2 = [x2 + nx[i + 1] * h, z2 + nz[i + 1] * h], R2 = [x2 - nx[i + 1] * h, z2 - nz[i + 1] * h];
+    pos.push(L1[0], y, L1[1], L2[0], y, L2[1], R1[0], y, R1[1], R1[0], y, R1[1], L2[0], y, L2[1], R2[0], y, R2[1]); added += 6;
+  }
+  return added;
+}
+const clipPts = (p) => p.filter(([x, z]) => Math.hypot(x, z) < 2600);
+function buildRoadLayer(widthAdd, yBase, color, withRanges) {
+  const pos = []; const ranges = new Map(); let v = 0;
+  for (const e of ROAD_EDGES) { const pts = clipPts(e.p); if (pts.length < 2) continue; const y = yBase + (e.c === 'pedestrian' ? 0 : e.hw ? .06 : .03); const n = ribbonInto(pos, pts, e.w + widthAdd, y); if (withRanges) ranges.set(e.id, [v, n]); v += n; }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.computeVertexNormals();
+  return { g, ranges, count: v };
+}
+const walkL = buildRoadLayer(7, .4, 0, false);
+const walkMesh = new THREE.Mesh(walkL.g, new THREE.MeshStandardMaterial({ color: 0x9a9b99, roughness: 1 })); walkMesh.receiveShadow = true; scene.add(walkMesh);
+const asphaltL = buildRoadLayer(0, .7, 0, true);
+const asphaltMat = new THREE.MeshStandardMaterial({ color: 0x3b4047, roughness: .95 });
+const asphalt = new THREE.Mesh(asphaltL.g, asphaltMat); asphalt.receiveShadow = true; scene.add(asphalt);
+EDGES.forEach(e => { if (e.c === 'pedestrian') { const r = asphaltL.ranges.get(e.id); } });
+// Pedestrian streets in OSM get a paving tint on the asphalt layer.
+{ const col = new Float32Array(asphaltL.count * 3); for (let i = 0; i < asphaltL.count; i++) col.set([1, 1, 1], i * 3); for (const e of ROAD_EDGES) { if (e.c !== 'pedestrian') continue; const r = asphaltL.ranges.get(e.id); if (!r) continue; for (let i = r[0]; i < r[0] + r[1]; i++) col.set([2.6, 2.45, 2.2], i * 3); } asphaltL.g.setAttribute('color', new THREE.BufferAttribute(col, 3)); asphaltMat.vertexColors = true; }
+
+// Buildings: one merged mesh, with per-vertex attributes for plan height, zoning tint and highlight.
+const BASE_COL = { office: [0.86, 0.85, 0.83], res: [0.9, 0.86, 0.8], retail: [0.89, 0.84, 0.78], hotel: [0.86, 0.83, 0.8], civic: [0.83, 0.86, 0.84], mixed: [0.88, 0.86, 0.82], parking: [0.75, 0.75, 0.74] };
+const bU = { uPlan: { value: 1 }, uNight: { value: 0 }, uFocus: { value: 0 } };
+const bRanges = []; let bGeo;
+{
+  const geoms = []; let vc = 0;
+  for (const b of BLD) { const shape = new THREE.Shape(b.p.map(([x, z]) => new THREE.Vector2(x, -z))); const g = new THREE.ExtrudeGeometry(shape, { depth: b.h, bevelEnabled: false, curveSegments: 1 }); g.rotateX(-Math.PI / 2); if (g.index) { const ng = g.toNonIndexed(); g.dispose(); geoms.push(ng); } else geoms.push(g); const n = geoms[geoms.length - 1].attributes.position.count; bRanges.push([vc, n]); vc += n; }
+  bGeo = mergeGeometries(geoms, false); geoms.forEach(g => g.dispose());
+  const n = bGeo.attributes.position.count; const aScale = new Float32Array(n).fill(1), aBase = new Float32Array(n * 3), aTint = new Float32Array(n * 3), aHL = new Float32Array(n), aRand = new Float32Array(n), aBid = new Float32Array(n);
+  BLD.forEach((b, i) => { const [s, c] = bRanges[i]; const base = BASE_COL[b.k] || BASE_COL.mixed; const j = (hash2(i, 1) - .5) * .06; const lm = b.n && b.h > 150 ? .05 : 0; for (let v = s; v < s + c; v++) { aBase.set([base[0] + j + lm, base[1] + j + lm, base[2] + j + lm], v * 3); aTint.set([base[0] + j, base[1] + j, base[2] + j], v * 3); aRand[v] = hash2(i, 2); aBid[v] = i; } });
+  bGeo.setAttribute('aScale', new THREE.BufferAttribute(aScale, 1)); bGeo.setAttribute('aBase', new THREE.BufferAttribute(aBase, 3)); bGeo.setAttribute('aTint', new THREE.BufferAttribute(aTint, 3)); bGeo.setAttribute('aHL', new THREE.BufferAttribute(aHL, 1)); bGeo.setAttribute('aRand', new THREE.BufferAttribute(aRand, 1)); bGeo.setAttribute('aBid', new THREE.BufferAttribute(aBid, 1));
+}
+const bMat = new THREE.MeshStandardMaterial({ roughness: .82, metalness: 0 });
+bMat.onBeforeCompile = (sh) => {
+  Object.assign(sh.uniforms, bU);
+  sh.vertexShader = sh.vertexShader.replace('#include <common>', `#include <common>
+    attribute float aScale; attribute vec3 aBase; attribute vec3 aTint; attribute float aHL; attribute float aRand;
+    uniform float uPlan; varying vec3 vCol; varying float vHL; varying float vRand; varying vec3 vWP; varying float vWall;`)
+  .replace('#include <begin_vertex>', `#include <begin_vertex>
+    transformed.y *= mix(1.0, aScale, uPlan);
+    vCol = mix(aBase, aTint, uPlan); vHL = aHL; vRand = aRand; vWall = 1.0 - abs(normal.y);
+    vWP = (modelMatrix * vec4(transformed, 1.0)).xyz;`);
+  sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+    uniform float uNight; uniform float uFocus; varying vec3 vCol; varying float vHL; varying float vRand; varying vec3 vWP; varying float vWall;
+    float hsh(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,37.719)))*43758.5453); }`)
+  .replace('#include <color_fragment>', `#include <color_fragment>
+    diffuseColor.rgb = vCol * (0.62 + 0.38 * smoothstep(0.0, 45.0, vWP.y));
+    float gy = dot(diffuseColor.rgb, vec3(0.3,0.59,0.11)); diffuseColor.rgb = mix(diffuseColor.rgb, vec3(gy*0.72), uFocus);`)
+  .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+    float fy = fract(vWP.y/4.2); float cu = fract((vWP.x+vWP.z)/6.5);
+    float lit = step(0.55, hsh(vec3(floor(vWP.y/4.2), floor((vWP.x+vWP.z)/6.5), vRand*97.0)));
+    float win = lit * step(0.28,fy)*step(fy,0.82) * step(0.18,cu)*step(cu,0.82) * step(0.7, vWall) * step(4.0, vWP.y);
+    totalEmissiveRadiance += vec3(1.0,0.74,0.42) * win * uNight * 0.95;
+    totalEmissiveRadiance += vec3(1.0,0.36,0.1) * vHL * 0.6;`);
+};
+const bDepth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking });
+bDepth.onBeforeCompile = (sh) => { sh.uniforms.uPlan = bU.uPlan; sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aScale; uniform float uPlan;').replace('#include <begin_vertex>', '#include <begin_vertex>\ntransformed.y *= mix(1.0, aScale, uPlan);'); };
+const buildings = new THREE.Mesh(bGeo, bMat); buildings.castShadow = true; buildings.receiveShadow = true; buildings.customDepthMaterial = bDepth; scene.add(buildings);
+function setBuildingAttr(name, bid, val) { const a = bGeo.attributes[name]; const [s, c] = bRanges[bid]; if (a.itemSize === 1) a.array.fill(val, s, s + c); else for (let v = s; v < s + c; v++) a.array.set(val, v * 3); a.needsUpdate = true; }
+
+// Round soft sprite used by points.
+const dotTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'); const g = x.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.35, 'rgba(255,255,255,.9)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); const t = new THREE.CanvasTexture(c); return t; })();
+const ptsMat = (size) => new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, uniforms: { map: { value: dotTex }, uScale: { value: Math.min(devicePixelRatio, 2) } },
+  vertexShader: `attribute vec3 aColor; attribute float aSize; attribute float aAlpha; varying vec3 vC; varying float vA; uniform float uScale;
+    void main(){ vC = aColor; vA = aAlpha; vec4 mv = modelViewMatrix * vec4(position,1.0); gl_PointSize = min(aSize * uScale * (900.0 / -mv.z), 16.0 * uScale); gl_Position = projectionMatrix * mv; }`,
+  fragmentShader: `uniform sampler2D map; varying vec3 vC; varying float vA; void main(){ vec4 t = texture2D(map, gl_PointCoord); gl_FragColor = vec4(vC * t.a, t.a * vA); }` });
+
+// ───────────────────────── per-scenario visual layer ─────────────────────────
+const MAX_CARS = 2400, MAX_PEDS = 5000, TRAIL = 4;
+const carGeo = new THREE.BoxGeometry(17, 7, 8); carGeo.translate(0, 3.8, 0);
+const CAR_PAINT = [0xf4f6f8, 0xdfe4ea, 0x3a4048, 0xa8b0b8, 0xc4483d, 0x3f66a8, 0xeee4d2, 0xf0c341].map(c => new THREE.Color(c));
+class Visual {
+  constructor(scn) {
+    this.s = scn; this.group = new THREE.Group(); scene.add(this.group);
+    this.cars = new THREE.InstancedMesh(carGeo, new THREE.MeshStandardMaterial({ roughness: .45, metalness: .1, emissive: 0x333333 }), MAX_CARS); this.cars.count = 0; this.cars.castShadow = false; this.cars.frustumCulled = false; this.group.add(this.cars);
+    for (let i = 0; i < MAX_CARS; i++) this.cars.setColorAt(i, CAR_PAINT[i % CAR_PAINT.length]);
+    const mk = (n) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3)); g.setAttribute('aColor', new THREE.BufferAttribute(new Float32Array(n * 3), 3)); g.setAttribute('aSize', new THREE.BufferAttribute(new Float32Array(n), 1)); g.setAttribute('aAlpha', new THREE.BufferAttribute(new Float32Array(n), 1)); g.setDrawRange(0, 0); const p = new THREE.Points(g, ptsMat()); p.frustumCulled = false; return p; };
+    this.peds = mk(MAX_PEDS); this.group.add(this.peds);
+    this.trails = mk((MAX_PEDS + MAX_CARS) * TRAIL); this.group.add(this.trails);
+    // Road overlay (traffic / paving / diversion)
+    const og = new THREE.BufferGeometry(); og.setAttribute('position', asphaltL.g.attributes.position); this.ocol = new Float32Array(asphaltL.count * 4); og.setAttribute('color', new THREE.BufferAttribute(this.ocol, 4));
+    this.overlay = new THREE.Mesh(og, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 })); this.overlay.position.y = .35; this.overlay.renderOrder = 2; this.group.add(this.overlay);
+    // Foot traffic heat
+    this.hc = document.createElement('canvas'); this.hc.width = this.hc.height = 512; this.hx = this.hc.getContext('2d', { alpha: false }); this.hx.fillStyle = '#000'; this.hx.fillRect(0, 0, 512, 512); this.htex = new THREE.CanvasTexture(this.hc);
+    this.heat = new THREE.Mesh(new THREE.PlaneGeometry(2800, 2800), new THREE.ShaderMaterial({ transparent: true, depthWrite: false, uniforms: { map: { value: this.htex }, uOp: { value: 0 } },
+      vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+      fragmentShader: 'uniform sampler2D map; uniform float uOp; varying vec2 vUv; vec3 ramp(float t){ return mix(mix(vec3(0.35,0.12,0.5), vec3(1.0,0.5,0.12), smoothstep(0.0,0.45,t)), vec3(1.0,0.95,0.7), smoothstep(0.45,1.0,t)); } void main(){ float v = texture2D(map, vUv).r; float a = smoothstep(0.03, 0.5, v); gl_FragColor = vec4(ramp(v)*1.5, a*uOp*0.85); }' }));
+    this.heat.rotation.x = -Math.PI / 2; this.heat.position.set(0, 1.4, 0); this.heat.renderOrder = 3; this.group.add(this.heat);
+    // Business pins
+    this.pins = new THREE.InstancedMesh(new THREE.CylinderGeometry(2.2, 2.2, 1, 6).translate(0, .5, 0), new THREE.MeshBasicMaterial({ toneMapped: false }), 6000); this.pins.count = 0; this.pins.visible = false; this.pins.frustumCulled = false; this.group.add(this.pins);
+    // Social ties
+    this.tiesLine = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: new THREE.Color(1.8, .45, 1.0), transparent: true, opacity: .55, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false })); this.tiesLine.visible = false; this.tiesLine.frustumCulled = false; this.group.add(this.tiesLine);
+    this.active = []; this.ptr = 0; this.dwell = new Map(); this.edgeCars = new Float32Array(EDGES.length); this.liveCong = new Float32Array(EDGES.length);
+  }
+}
+const V = { base: new Visual(S.base), plan: new Visual(S.plan) };
+// Plan-only things: café tables, sparks, Maria's trail.
+const planGroup = new THREE.Group(); scene.add(planGroup);
+const tableGeo = (() => { const top = new THREE.CylinderGeometry(1.6, 1.6, .5, 8).translate(0, 2.6, 0); const um = new THREE.ConeGeometry(3.2, 1.6, 8).translate(0, 5.2, 0); const pole = new THREE.CylinderGeometry(.2, .2, 5, 4).translate(0, 2.5, 0); return mergeGeometries([top.toNonIndexed(), um.toNonIndexed(), pole.toNonIndexed()]); })();
+const tables = new THREE.InstancedMesh(tableGeo, new THREE.MeshStandardMaterial({ roughness: .7 }), 900); tables.count = 0; tables.castShadow = true; tables.frustumCulled = false; planGroup.add(tables);
+const tableList = [];
+const sparks = []; const sparkGeo = new THREE.RingGeometry(.7, 1, 32).rotateX(-Math.PI / 2);
+const sparkGroup = new THREE.Group(); scene.add(sparkGroup);
+for (let i = 0; i < 80; i++) { const m = new THREE.Mesh(sparkGeo, new THREE.MeshBasicMaterial({ color: new THREE.Color(2.4, .6, 1.4), transparent: true, opacity: 0, depthWrite: false, toneMapped: false })); m.visible = false; m.userData = { t: 1, w: null }; sparkGroup.add(m); sparks.push(m); }
+const puffs = []; for (let i = 0; i < 60; i++) { const m = new THREE.Mesh(sparkGeo, new THREE.MeshBasicMaterial({ color: new THREE.Color(2.2, 2.2, 2.2), transparent: true, opacity: 0, depthWrite: false, toneMapped: false })); m.visible = false; m.userData = { t: 1 }; planGroup.add(m); puffs.push(m); }
+let mariaTrail = null; let ghost = [];
+function spark(world, x, z, big) { const m = sparks.find(s => s.userData.t >= 1); if (!m) return; m.userData = { t: 0, w: world, big }; m.position.set(x, 3, z); m.visible = true; }
+function puff(x, z) { const m = puffs.find(s => s.userData.t >= 1); if (!m) return; m.userData = { t: 0 }; m.position.set(x, 3, z); m.visible = true; }
+
+// ───────────────────────── composer with split-screen compare ─────────────────────────
+const ui = { view: 'plan', compare: false, split: .5, layers: new Set(), tool: 'select', time: 345 * 60, rate: 90, playing: true, follow: null, demo: false, diversion: false, settling: false };
+function applyWorld(w) {
+  bU.uPlan.value = w === 'plan' ? 1 : 0;
+  V.base.group.visible = w === 'base'; V.plan.group.visible = w === 'plan'; planGroup.visible = w === 'plan';
+  for (const s of sparks) if (s.userData.w) s.visible = s.userData.t < 1 && s.userData.w === w;
+  if (mariaTrail) mariaTrail.visible = w === 'plan';
+}
+class SplitPass extends Pass {
+  constructor() { super(); this.needsSwap = false; }
+  render(r, writeBuffer, readBuffer) {
+    const auto = r.autoClear; r.autoClear = false; readBuffer.scissorTest = false; r.setRenderTarget(readBuffer); r.setClearColor(0x000000, 1); r.clear();
+    if (!ui.compare) { applyWorld(ui.view); r.render(scene, camera); }
+    else { const w = readBuffer.width, h = readBuffer.height, sx = Math.round(w * ui.split);
+      applyWorld('base'); readBuffer.scissor.set(0, 0, sx, h); readBuffer.scissorTest = true; r.setRenderTarget(readBuffer); r.render(scene, camera);
+      applyWorld('plan'); readBuffer.scissor.set(sx, 0, w - sx, h); r.setRenderTarget(readBuffer); r.render(scene, camera);
+      readBuffer.scissorTest = false; r.setRenderTarget(readBuffer); }
+    r.autoClear = auto;
+  }
+}
+const rt = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType, samples: 4 });
+const composer = new EffectComposer(renderer, rt);
+composer.addPass(new SplitPass());
+const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), .55, .5, .92); composer.addPass(bloom);
+composer.addPass(new OutputPass());
+function resize() { const r = stage.getBoundingClientRect(); const w = Math.max(200, r.width), h = Math.max(200, r.height); renderer.setSize(w, h, false); composer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+new ResizeObserver(resize).observe(stage); resize();
+
+// ───────────────────────── live simulation ─────────────────────────
+const AGENT_CAP = 32;  // agents never move faster than 32× real time, even when the clock races
+function posAt(t, s, out) {
+  const c = t.cum; let lo = 0, hi = c.length - 1; s = clamp(s, 0, t.len);
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (c[m] <= s) lo = m; else hi = m; }
+  const a = t.pts[lo], b = t.pts[hi]; const sl = c[hi] - c[lo] || 1; const f = (s - c[lo]) / sl;
+  const dx = (b[0] - a[0]) / sl, dz = (b[1] - a[1]) / sl;
+  const e = EDGES[t.segE[lo]] || EDGES[0]; const off = t.mode === 'car' ? e.w * .22 : (e.w / 2 + 2.2) * t.side;
+  out.x = a[0] + (b[0] - a[0]) * f - dz * off; out.z = a[1] + (b[1] - a[1]) * f + dx * off; out.dx = dx; out.dz = dz; out.e = t.segE[lo]; return out;
+}
+function resetAgents(vis, time, carry) {
+  const trips = vis.s.trips; const old = new Map(); if (carry) for (const a of vis.active) old.set(a.t.p.id + a.t.leg, a);
+  vis.active = []; let i = 0;
+  for (; i < trips.length && trips[i].t0 <= time; i++) { const t = trips[i]; const span = t.dur * 1.35; if (time < t.t0 + span) { const prev = old.get(t.p.id + t.leg); const s = prev && prev.t.sig === t.sig ? prev.s : clamp((time - t.t0) / span, 0, 1) * t.len; vis.active.push({ t, s, born: prev && prev.t.sig === t.sig ? 1 : 0, hist: [], fade: 1 }); if (prev) old.delete(t.p.id + t.leg); } }
+  vis.ptr = i;
+  if (carry && vis === V.plan) { const q = {}; for (const [, a] of old) { if (a.t.mode === 'car' || Math.random() < .3) { posAt(a.t, a.s, q); puff(q.x, q.z); } } }
+}
+const tmp = {};
+function stepAgents(vis, dtSim, dtAgent, record) {
+  const trips = vis.s.trips;
+  while (vis.ptr < trips.length && trips[vis.ptr].t0 <= ui.time) { vis.active.push({ t: trips[vis.ptr], s: 0, born: 0, hist: [] }); vis.ptr++; }
+  vis.edgeCars.fill(0); const hm = ui.time / 3600; const peak = Math.exp(-((hm - 8.4) ** 2) / .9) + .9 * Math.exp(-((hm - 17.6) ** 2) / 1.1) + .25;
+  for (const a of vis.active) if (a.t.mode === 'car') { posAt(a.t, a.s, tmp); vis.edgeCars[tmp.e] += 1; }
+  for (let i = 0; i < EDGES.length; i++) { const e = EDGES[i]; if (!e.car) continue; const dens = Math.min(8, vis.edgeCars[i] / Math.max(e.l, 80) * 100 / e.lanes * 1.6 + (vis.s.cong[i] - 1) * 2.6 * peak); vis.liveCong[i] = lerp(vis.liveCong[i], dens, .08); }
+  const keep = [];
+  for (const a of vis.active) {
+    a.born = Math.min(1, a.born + dtSim / 300);
+    let v = a.t.v; if (a.t.mode === 'car') { posAt(a.t, a.s, tmp); const d = vis.liveCong[tmp.e]; v = v * Math.max(.3, 1 / (1 + Math.pow(d / 3.2, 2))); }
+    a.s += v * dtAgent;
+    if (a.s >= a.t.len) { if (a.t.poi && a.t.dwell) arriveAt(vis, a.t); continue; }
+    keep.push(a);
+  }
+  vis.active = keep;
+  // Dwellers leave
+  for (const [pid, d] of vis.dwell) if (ui.time > d.until) vis.dwell.delete(pid);
+}
+function arriveAt(vis, t) {
+  const q = t.poi; const until = ui.time + t.dwell;
+  const here = [...vis.dwell.values()].filter(d => d.q === q);
+  vis.dwell.set(t.p.id, { q, until, p: t.p });
+  if (here.length) { const tie = here.some(d => d.p.office && d.p.office === t.p.office); const w = vis === V.plan ? 'plan' : 'base'; if (Math.random() < (tie ? 1 : .35)) spark(w, q.x, q.z, tie);
+    if (vis === V.plan && t.p.id === MARIA_ID) onMariaMeets(here.map(d => d.p)); }
+}
+function drawAgents(vis) {
+  const night = bU.uNight.value; let nc = 0, np = 0, nt = 0;
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), p3 = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+  const pp = vis.peds.geometry.attributes, tp = vis.trails.geometry.attributes;
+  const pedCol = [2.2, 1.5, .45], carTrail = night > .3 ? [1.8, .35, .25] : [.9, .95, 1.05], follow = ui.follow;
+  const social = ui.layers.has('social');
+  for (const a of vis.active) {
+    posAt(a.t, a.s, tmp); const y = a.t.mode === 'car' ? 0.8 : 2.4;
+    const isF = follow && a.t.p.id === follow;
+    if (a.t.mode === 'car') {
+      if (nc >= MAX_CARS) continue; const s = a.born < 1 ? backOut(a.born) : 1; q.setFromAxisAngle(up, Math.atan2(-tmp.dz, tmp.dx)); sc.set(s, s, s); p3.set(tmp.x, y, tmp.z); m4.compose(p3, q, sc); vis.cars.setMatrixAt(nc++, m4);
+    } else {
+      if (np >= MAX_PEDS) continue; pp.position.array.set([tmp.x, y, tmp.z], np * 3);
+      const c = isF ? [3, 2.2, .6] : social && a.t.leg.startsWith('lunch') ? [2.0, .55, 1.2] : pedCol; pp.aColor.array.set(c, np * 3); pp.aSize.array[np] = isF ? 40 : 19; pp.aAlpha.array[np] = Math.min(1, a.born * 3); np++;
+    }
+    // trails
+    if (!a.hist) a.hist = []; a.hist.unshift([tmp.x, y + .4, tmp.z]); if (a.hist.length > TRAIL) a.hist.length = TRAIL;
+    for (let k = 1; k < a.hist.length; k++) { if (nt >= (MAX_PEDS + MAX_CARS) * TRAIL) break; tp.position.array.set(a.hist[k], nt * 3); const c = a.t.mode === 'car' ? carTrail : pedCol; tp.aColor.array.set(c, nt * 3); tp.aSize.array[nt] = (a.t.mode === 'car' ? 20 : 14) * (1 - k / TRAIL); tp.aAlpha.array[nt] = (1 - k / TRAIL) * (a.t.mode === 'car' ? .5 + night * .5 : .35); nt++; }
+  }
+  vis.cars.count = nc; vis.cars.instanceMatrix.needsUpdate = true;
+  vis.cars.material.emissive = vis.cars.material.emissive || new THREE.Color(); vis.cars.material.emissive.setRGB(.75 + night * .6, .8 + night * .5, .9 + night * .3);
+  for (const k of ['position', 'aColor', 'aSize', 'aAlpha']) { pp[k].needsUpdate = true; tp[k].needsUpdate = true; }
+  vis.peds.geometry.setDrawRange(0, np); vis.trails.geometry.setDrawRange(0, nt);
+}
+const heatPx = (x) => (x + 1400) / 2800 * 512;
+function drawHeat(vis) {
+  const x = vis.hx; x.globalCompositeOperation = 'source-over'; x.fillStyle = 'rgba(0,0,0,0.05)'; x.fillRect(0, 0, 512, 512);
+  x.globalCompositeOperation = 'lighter'; x.fillStyle = 'rgba(255,255,255,0.05)';
+  for (const a of vis.active) { if (a.t.mode !== 'ped') continue; posAt(a.t, a.s, tmp); const px = heatPx(tmp.x), pz = heatPx(tmp.z); x.beginPath(); x.arc(px, pz, 3.2, 0, 6.283); x.fill(); }
+  for (const [, d] of vis.dwell) { const px = heatPx(d.q.x), pz = heatPx(d.q.z); x.beginPath(); x.arc(px, pz, 3.5, 0, 6.283); x.fill(); }
+  vis.htex.needsUpdate = true;
+}
+const C_FREE = [.25, .75, 1.3], C_MID = [1.6, 1.0, .2], C_JAM = [2.4, .35, .3], C_PAVE = [1.0, .62, .38];
+function paintOverlay(vis) {
+  const col = vis.ocol; const traffic = ui.layers.has('traffic');
+  for (const e of ROAD_EDGES) {
+    const r = asphaltL.ranges.get(e.id); if (!r) continue; let c = null, a = 0;
+    if (vis.s.ped.has(e.id)) { c = C_PAVE; a = .96; }
+    else if (ui.diversion && vis === V.plan && e.car) { const d = (S.plan.carFlow[e.id] - S.base.carFlow[e.id]); if (Math.abs(d) >= 1) { c = d > 0 ? C_JAM : C_FREE; a = clamp(Math.abs(d) / 14, .25, .95); } }
+    else if (traffic && e.car) { const d = vis.liveCong[e.id]; const t = clamp(d / 3, 0, 1); c = t < .5 ? C_FREE.map((v, i) => lerp(v, C_MID[i], t * 2)) : C_MID.map((v, i) => lerp(v, C_JAM[i], (t - .5) * 2)); a = clamp(.25 + d / 4, .3, .95); }
+    for (let i = r[0]; i < r[0] + r[1]; i++) { if (c) { col[i * 4] = c[0]; col[i * 4 + 1] = c[1]; col[i * 4 + 2] = c[2]; col[i * 4 + 3] = a; } else col[i * 4 + 3] = 0; }
+  }
+  vis.overlay.geometry.attributes.color.needsUpdate = true;
+}
+function paintPins(vis) {
+  const m4 = new THREE.Matrix4(); const c = new THREE.Color(); let n = 0; const base = S.base.visits;
+  for (const q of vis.s.pois) { const v = vis.s.visits.get(q.id) || 0; if (v < 1) continue; const b = base.get(q.id) || 0; const d = b ? (v - b) / b : 1; const h = 6 + Math.sqrt(v) * 2.2;
+    m4.makeScale(1, h, 1); m4.setPosition(q.x, .5, q.z); vis.pins.setMatrixAt(n, m4);
+    if (vis === V.base || Math.abs(d) < .03) c.setRGB(.9, .95, 1.1); else if (d > 0) c.setRGB(.3, 1.6 + Math.min(d, 1), .8); else c.setRGB(2.0, .3, .35); vis.pins.setColorAt(n, c); n++; }
+  vis.pins.count = n; vis.pins.instanceMatrix.needsUpdate = true; if (vis.pins.instanceColor) vis.pins.instanceColor.needsUpdate = true;
+}
+function paintTies(vis) {
+  const pos = []; for (const [a, b] of vis.s.tiePairs) { const A = a.office ? a.office.c : a.home.c, B = b.office ? b.office.c : b.home.c; const mx = (A[0] + B[0]) / 2, mz = (A[1] + B[1]) / 2; const h = 30 + Math.hypot(A[0] - B[0], A[1] - B[1]) * .35; let px = A[0], py = 6, pz = A[1]; for (let k = 1; k <= 10; k++) { const t = k / 10; const x = lerp(lerp(A[0], mx, t), lerp(mx, B[0], t), t), z = lerp(lerp(A[1], mz, t), lerp(mz, B[1], t), t), y = 6 + Math.sin(Math.PI * t) * h; pos.push(px, py, pz, x, y, z); px = x; py = y; pz = z; } }
+  vis.tiesLine.geometry.dispose(); vis.tiesLine.geometry = new THREE.BufferGeometry(); vis.tiesLine.geometry.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+}
+
+// ───────────────────────── time of day ─────────────────────────
+const SKY = [ // minute, top, horizon, sun intensity, hemi
+  [300, 0x0b1426, 0x26324a, 0, .25], [375, 0x3b5a86, 0xf0a679, .7, .55], [450, 0x6f9ccc, 0xf3d1b0, 1.8, .8], [600, 0x6ea3d6, 0xcfe0ec, 2.3, .95],
+  [960, 0x6ea3d6, 0xd6e4ee, 2.2, .95], [1110, 0x4d74a8, 0xf2b48a, 1.4, .7], [1180, 0x24335a, 0xd77c5c, .4, .45], [1250, 0x0b1426, 0x1d2a44, 0, .25], [1440, 0x070d1a, 0x141e33, 0, .2]];
+const cA = new THREE.Color(), cB = new THREE.Color();
+function applyTime() {
+  const m = ui.time / 60; let i = 0; while (i < SKY.length - 2 && SKY[i + 1][0] <= m) i++; const a = SKY[i], b = SKY[i + 1]; const t = clamp((m - a[0]) / (b[0] - a[0]), 0, 1);
+  skyU.top.value.copy(cA.setHex(a[1]).lerp(cB.setHex(b[1]), t)); skyU.hor.value.copy(cA.setHex(a[2]).lerp(cB.setHex(b[2]), t)); scene.fog.color.copy(skyU.hor.value);
+  const si = lerp(a[3], b[3], t); sun.intensity = si; hemi.intensity = lerp(a[4], b[4], t);
+  const dayT = clamp((m - 380) / (1180 - 380), 0, 1); const ang = Math.PI * dayT; const el = Math.max(.12, Math.sin(ang) * 1.05);
+  sun.position.set(Math.cos(ang) * 2600 * 1, Math.sin(el) * 2600 + 300, 900 + Math.sin(ang) * 600); sun.target.position.set(0, 0, 0);
+  sun.color.setHSL(.08, clamp(1 - el, .1, .7), .85);
+  const night = clamp(1 - si / 1.2, 0, 1); bU.uNight.value = night; waterU.uDeep.value.setHex(0x2d4d63).lerp(cB.setHex(0x0b1828), night);
+  hemi.color.setHex(0xdfe9f3).lerp(cB.setHex(0x6070a0), night);
+  $('#daypart').textContent = m < 375 ? 'Dawn' : m < 600 ? 'Morning rush' : m < 690 ? 'Morning' : m < 840 ? 'Lunch' : m < 990 ? 'Afternoon' : m < 1140 ? 'Evening rush' : m < 1260 ? 'Evening' : 'Night';
+}
+
+// ───────────────────────── labels ─────────────────────────
+const LABELS = [];
+function addLabel(text, cls, x, y, z, opts = {}) { const el = document.createElement('div'); el.className = 'lbl ' + cls; el.textContent = text; $('#labels').append(el); const L = { el, p: new THREE.Vector3(x, y, z), ...opts }; LABELS.push(L); return L; }
+addLabel('FINANCIAL DISTRICT', 'district', -260, 2, -560); addLabel('SOMA', 'district', -260, 2, 520);
+for (const b of BLD) if (b.n && ['Salesforce Tower', 'Transamerica Pyramid', 'San Francisco Ferry Building', 'Millennium Tower', '555 California Street'].includes(b.n)) addLabel(b.n.replace('San Francisco ', ''), 'landmark', b.c[0], b.h + 6, b.c[1]);
+for (const s of STATIONS) if (inBox(s.c[0], s.c[1])) addLabel((s.name.includes('Transit') ? 'Bus · ' : 'BART/Muni · ') + s.name.replace(' Street', ''), 'station', s.c[0], 4, s.c[1]);
+{ const bb = W.gateways.find(g => g.name === 'I-80 · Bay Bridge' && g.in); const e = EDGES.find(e => e.hw && (e.a === bb?.node || e.b === bb?.node)); if (e) { const p = e.p.find(([x, z]) => Math.hypot(x - 760, z + 120) < 900 && x > 780) || [1050, -380]; addLabel('I-80 · BAY BRIDGE ↗', 'gw', p[0], 8, p[1]); } }
+addLabel('US-101 ↙', 'gw', -230, 8, 1120);
+const streetLabel = addLabel('', 'street', 0, 6, 0, { hide: true }); const spillLabel = addLabel('', 'spill', 0, 6, 0, { hide: true });
+const v3 = new THREE.Vector3();
+function updateLabels() {
+  const r = stage.getBoundingClientRect();
+  for (const L of LABELS) { if (L.hide) { L.el.hidden = true; continue; } v3.copy(L.p).project(camera); const vis = v3.z < 1 && Math.abs(v3.x) < 1.1 && Math.abs(v3.y) < 1.1; L.el.hidden = !vis; if (vis) { L.el.style.left = ((v3.x + 1) / 2 * r.width) + 'px'; L.el.style.top = ((1 - v3.y) / 2 * r.height) + 'px'; } }
+}
+
+// ───────────────────────── metrics, value, radar ─────────────────────────
+const AXES = ['Mobility', 'Street life', 'Economy', 'Health', 'Housing & access'];
+const BASE_SHAPE = [62, 46, 68, 50, 34];
+const VALUE = { vtt: 19.6, voc: .62, tie: 9, encounter: .1, va: .35, propTax: 11, healthPerMin: 25.1 };
+function valueOf(b, p) {
+  const mob = (-(p.delayH - b.delayH) * VALUE.vtt - (p.vmt - b.vmt) * VALUE.voc) * WORKDAYS;
+  const soc = ((p.ties - b.ties) * VALUE.tie + (p.enc - b.enc) * VALUE.encounter) * WORKDAYS;
+  const eco = (p.revenue - b.revenue) * VALUE.va * WORKDAYS + p.floorDelta * VALUE.propTax * .15;
+  const hea = (p.walkMin - b.walkMin) * VALUE.healthPerMin;
+  return { mob, soc, eco, hea, total: mob + soc + eco + hea };
+}
+function shapeOf(b, p) {
+  const rel = (x, y) => (y - x) / Math.max(Math.abs(x), 1e-6);
+  const jh = (m) => Math.min(1, m.res / Math.max(m.jobs, 1) / .6);
+  return [
+    BASE_SHAPE[0] - rel(b.delayH, p.delayH) * 45 - rel(b.vmt, p.vmt) * 40,
+    BASE_SHAPE[1] + rel(b.enc, p.enc) * 55 + rel(b.ties, p.ties) * 25,
+    BASE_SHAPE[2] + rel(b.revenue, p.revenue) * 90,
+    BASE_SHAPE[3] + rel(b.walkMin, p.walkMin) * 70,
+    BASE_SHAPE[4] + (jh(p) - jh(b)) * 160 + rel(b.res, p.res) * 20,
+  ].map(v => clamp(v, 6, 98));
+}
+let shown = { val: { mob: 0, soc: 0, eco: 0, hea: 0, total: 0 }, shape: BASE_SHAPE.slice() };
+let target = { val: shown.val, shape: shown.shape };
+function recomputeTargets() { const b = S.base.m, p = S.plan.m; target = { val: valueOf(b, p), shape: shapeOf(b, p) }; }
+function drawRadar(shape) {
+  const cx = 150, cy = 112, R = 84; const pt = (i, v) => { const a = -Math.PI / 2 + i * 2 * Math.PI / 5; return [cx + Math.cos(a) * R * v / 100, cy + Math.sin(a) * R * v / 100]; };
+  let s = '';
+  for (const k of [25, 50, 75, 100]) s += `<polygon points="${AXES.map((_, i) => pt(i, k).join(',')).join(' ')}" fill="none" stroke="#233140" stroke-width="1"/>`;
+  AXES.forEach((a, i) => { const [x, y] = pt(i, 100); const [lx, ly] = pt(i, 122); s += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#233140"/><text x="${lx}" y="${ly + 4}" fill="#8a9bab" font-size="10.5" font-family="Instrument Sans, sans-serif" text-anchor="${Math.abs(lx - cx) < 10 ? 'middle' : lx > cx ? 'start' : 'end'}">${a}</text>`; });
+  s += `<polygon points="${BASE_SHAPE.map((v, i) => pt(i, v).join(',')).join(' ')}" fill="none" stroke="#c6d0d9" stroke-dasharray="3 3" stroke-width="1.2"/>`;
+  s += `<polygon points="${shape.map((v, i) => pt(i, v).join(',')).join(' ')}" fill="rgba(255,91,31,.22)" stroke="#ff5b1f" stroke-width="2"/>`;
+  shape.forEach((v, i) => { const [x, y] = pt(i, v); s += `<circle cx="${x}" cy="${y}" r="3" fill="#ff5b1f"/>`; });
+  $('#radar').innerHTML = s;
+}
+function drawPillars() {
+  const b = S.base.m, p = S.plan.m, v = shown.val, f = (x) => `<b class="${x >= 0 ? 'up' : 'down'}">${money(x)}</b>`;
+  const rel = (x, y) => pct((y - x) / Math.max(Math.abs(x), 1e-6));
+  $('#pillars').innerHTML = `
+    <div class="pill"><small>Mobility</small>${f(v.mob)}<span>delay ${rel(b.delayH, p.delayH)} · car trips ${num(((p.car - b.car)) * SCALE)}</span></div>
+    <div class="pill"><small>Street life</small>${f(v.soc)}<span>encounters ${rel(b.enc, p.enc)} · ties ${num(p.ties - b.ties)}/day</span></div>
+    <div class="pill"><small>Local economy</small>${f(v.eco)}<span>revenue ${money((p.revenue - b.revenue))}/day</span></div>
+    <div class="pill"><small>Health</small>${f(v.hea)}<span>walking ${num((p.walkMin - b.walkMin) / 60)} h/day</span></div>`;
+  const cv = $('#cv'); cv.textContent = ui.view === 'base' && !ui.compare ? '$0' : money(v.total); cv.style.color = v.total < 0 ? 'var(--bad)' : '';
+}
+function tickMetrics(dt) {
+  const k = 1 - Math.pow(.02, dt);
+  for (const key of Object.keys(target.val)) shown.val[key] = lerp(shown.val[key], target.val[key], k);
+  shown.shape = shown.shape.map((v, i) => lerp(v, target.shape[i], k));
+}
+
+// ───────────────────────── citizen feed ─────────────────────────
+const FEED = []; const COLORS = ['#ffcc66', '#59b8ff', '#ff6fae', '#3fd69a', '#c9a6ff', '#ff9a76'];
+function post(name, text, pid, tag) {
+  FEED.unshift({ name, text, pid, time: fmtClock(ui.time / 60), tag, fresh: true }); if (FEED.length > 14) FEED.pop();
+  $('#feed').innerHTML = FEED.map((f, i) => `<div class="post ${f.fresh ? 'new' : ''}" data-pid="${f.pid ?? ''}"><div class="av" style="background:${COLORS[(f.name.charCodeAt(0) + f.name.length) % COLORS.length]}">${f.name.split(' ').map(s => s[0]).join('').slice(0, 2)}</div><div><div class="who">${f.name}<em>${f.time}${f.tag ? ' · ' + f.tag : ''}</em></div><p>${f.text}</p></div></div>`).join('');
+  FEED.forEach(f => f.fresh = false);
+}
+$('#feed').addEventListener('click', (e) => { const el = e.target.closest('.post'); if (el && el.dataset.pid) followPerson(+el.dataset.pid); });
+let lastAmbient = 0;
+function ambientPost() {
+  const vis = V[ui.view === 'base' && !ui.compare ? 'base' : 'plan']; if (!vis.active.length) return;
+  for (let tries = 0; tries < 12; tries++) {
+    const a = vis.active[Math.floor(Math.random() * vis.active.length)]; posAt(a.t, a.s, tmp); const e = EDGES[tmp.e]; const st = e?.name || 'the street';
+    if (a.t.mode === 'car' && vis.liveCong[tmp.e] > 3.2) return post(a.t.p.name, `Stuck on ${st} again. Two blocks in ten minutes.`, a.t.p.id, 'driving');
+    if (a.t.mode === 'ped' && vis.s.ped.has(tmp.e)) return post(a.t.p.name, `Walking ${st} with tables in the street feels like a different city.`, a.t.p.id, st);
+    if (a.t.mode === 'ped' && a.t.leg === 'lunch' && a.t.poi) return post(a.t.p.name, `Heading to ${a.t.poi.n} for lunch.`, a.t.p.id, 'lunch');
+    if (a.t.mode === 'ped' && a.t.leg === 'am' && a.t.p.reg && S.base.modes.get(a.t.p.id) === 'car' && vis === V.plan) return post(a.t.p.name, `Took BART in instead of driving today. Out at ${a.t.p.reg.st.name.replace(' Street', '')} and walking from there.`, a.t.p.id, 'switched');
+  }
+}
+
+// ───────────────────────── edits + settle ─────────────────────────
+function showChips(html) { $('#chips').innerHTML = html; }
+async function settle(label) {
+  if (ui.settling) return; ui.settling = true;
+  const dots = (k) => `<span class="dots">${[0, 1, 2, 3, 4].map(i => `<i class="${i < k ? 'on' : ''}"></i>`).join('')}</span>`;
+  const prevCar = S.plan.m.car;
+  for (let d = 0; d < 5; d++) { showChips(`<div class="chip">Replanning day ${d + 1}/5 ${dots(d + 1)}</div>`); await sleep(d === 0 ? 60 : 260); if (d === 0) S.plan.settle(baseCarRoutes(), 5); }
+  resetAgents(V.plan, ui.time, true); paintTies(V.plan); paintPins(V.plan); paintPins(V.base); refreshTables(); recomputeTargets();
+  const b = S.base.m, p = S.plan.m; const dCar = (b.car - p.car) * SCALE; const evap = (p.gone - b.gone) * SCALE;
+  showChips(`<div class="chip" id="evap"><h5>${label}</h5><div class="row"><span>Car trips / day</span><b>${num(-dCar)}</b></div><div class="row"><span>now ride BART/Muni</span><b>${num(Math.max(0, dCar - evap), false)}</b></div><div class="row"><span>trips evaporated</span><b>${num(Math.max(0, evap), false)}</b></div><div class="row" style="margin-top:4px"><span>Foot traffic on ${label.includes('2nd') ? '2nd St' : 'edited streets'}</span><span class="big">${pedStreetDelta()}</span></div></div>`);
+  ui.settling = false; $('#settle-note').textContent = 'settled · 5 days';
+}
+function pedStreetDelta() { let a = 0, b = 0; for (const e of S.plan.ped) { a += S.plan.pedFlow[e]; b += S.base.pedFlow[e]; } return b ? pct((a - b) / b) : '—'; }
+function refreshTables() {
+  const m4 = new THREE.Matrix4(); tableList.length = 0; const c = new THREE.Color(); const cols = [0xff6b2d, 0x2bb3a8, 0xf2e6d0, 0xff9a3c];
+  for (const id of S.plan.ped) { const e = EDGES[id]; const pts = e.p; let acc = 0; for (let j = 0; j < pts.length - 1; j++) { const [x1, z1] = pts[j], [x2, z2] = pts[j + 1]; const L = Math.hypot(x2 - x1, z2 - z1); const nx = -(z2 - z1) / L, nz = (x2 - x1) / L; for (let s = 9 - acc; s < L; s += 16) { for (const side of [-1, 1]) { if (hash2(id * 100 + j, Math.round(s) * side) < .25) continue; tableList.push({ x: x1 + (x2 - x1) * s / L + nx * side * e.w * .28, z: z1 + (z2 - z1) * s / L + nz * side * e.w * .28, c: cols[(tableList.length * 7) % 4], t0: tableList.length * .015 }); } } acc = (acc + L) % 16; } }
+  tables.count = Math.min(tableList.length, 900); tableList.slice(0, 900).forEach((t, i) => { tables.setColorAt(i, c.setHex(t.c)); t.age = 0; }); if (tables.instanceColor) tables.instanceColor.needsUpdate = true;
+}
+function animTables(dt) { const m4 = new THREE.Matrix4(); for (let i = 0; i < tables.count; i++) { const t = tableList[i]; t.age = Math.min(1.5, (t.age || 0) + dt); const k = clamp((t.age - t.t0) / .45, 0, 1); const s = k <= 0 ? .001 : backOut(k); m4.makeScale(s, s, s); m4.setPosition(t.x, .8, t.z); tables.setMatrixAt(i, m4); } tables.instanceMatrix.needsUpdate = true; }
+function togglePed(id, on) { const e = EDGES[id]; if (!e || e.hw) return false; if (on) S.plan.ped.add(id); else S.plan.ped.delete(id); S.plan.cache.clear(); return true; }
+const scaleAnim = new Map();
+function setBlock(bids, s, z) {
+  for (const bid of bids) { const b = BLD[bid]; const prev = S.plan.blocks.get(bid); const from = prev ? prev.s : 1; if (s === 1 && z === b.k) S.plan.blocks.delete(bid); else S.plan.blocks.set(bid, { s, z }); scaleAnim.set(bid, { from: scaleAnim.has(bid) ? scaleAnim.get(bid).cur : from, to: s, t: 0, cur: from });
+    const base = BASE_COL[b.k] || BASE_COL.mixed; setBuildingAttr('aTint', bid, z !== b.k ? ZONE_TINT[z] : base); }
+}
+function animScales(dt) { for (const [bid, a] of scaleAnim) { a.t = Math.min(1, a.t + dt / .9); a.cur = lerp(a.from, a.to, backOut(a.t)); setBuildingAttr('aScale', bid, a.cur); if (a.t >= 1) scaleAnim.delete(bid); } }
+function blockOf(bid) {
+  const b = BLD[bid]; const out = [bid];
+  for (const o of BLD) { if (o.id === bid || !o.inside) continue; const d = Math.hypot(o.c[0] - b.c[0], o.c[1] - b.c[1]); if (d > 95) continue; if (!crossesRoad(b.c, o.c)) out.push(o.id); }
+  return out;
+}
+let hl = [];
+function highlight(bids, v = 1) { for (const b of hl) setBuildingAttr('aHL', b, 0); hl = bids; for (const b of bids) setBuildingAttr('aHL', b, v); }
+
+// ───────────────────────── inspectors ─────────────────────────
+const insp = $('#inspector');
+function closeInspector() { insp.hidden = true; highlight([]); if (ui.follow && !ui.demo) unfollow(); }
+function row(k, a, b, fmt = (x) => num(x, false), better = 1) { const d = b - a; const cls = Math.abs(d) < 1e-6 ? '' : (d * better > 0 ? 'up' : 'down'); return `<span>${k}</span><span>${fmt(a)}</span><span class="${cls}">${fmt(b)}</span>`; }
+function inspectStreet(id) {
+  const e = EDGES[id]; const hrs = 2.2; const cb = S.base.carFlow[id] * SCALE / hrs, cp = S.plan.carFlow[id] * SCALE / hrs, pb = S.base.pedFlow[id] * SCALE, pp = S.plan.pedFlow[id] * SCALE;
+  insp.innerHTML = `<button class="x" aria-label="Close">×</button><h3>${e.name || 'Unnamed street'}</h3><div class="sub">${e.c.replace('_', ' ')} · ${e.lanes} lane${e.lanes > 1 ? 's' : ''} · ${Math.round(e.l)} m segment${S.plan.ped.has(id) ? ' · <b style="color:var(--accent)">pedestrian in Plan A</b>' : ''}</div>
+  <div class="kv"><span class="h"></span><span class="h">Baseline</span><span class="h">Plan A</span>${row('Cars / hr (AM peak)', cb, cp, undefined, -1)}${row('Walkers / day', pb, pp)}${row('Congestion ×', S.base.cong[id], S.plan.cong[id], (x) => x.toFixed(2), -1)}</div>
+  <div style="display:flex;gap:6px;margin-top:10px"><button class="btn" id="div-btn">${ui.diversion ? 'Hide' : 'Show'} where traffic went</button>${e.hw ? '' : `<button class="btn" id="ped-one">${S.plan.ped.has(id) ? 'Reopen to cars' : 'Pedestrianize'}</button>`}</div>`;
+  insp.hidden = false; insp.querySelector('.x').onclick = closeInspector;
+  $('#div-btn').onclick = () => { ui.diversion = !ui.diversion; inspectStreet(id); };
+  const pb2 = $('#ped-one'); if (pb2) pb2.onclick = async () => { togglePed(id, !S.plan.ped.has(id)); switchView('plan'); await settle('Street edit'); inspectStreet(id); };
+}
+function inspectBlock(bid) {
+  const bids = blockOf(bid); highlight(bids); const b = BLD[bid]; const ed = S.plan.blocks.get(bid) || { s: 1, z: b.k };
+  let jb = 0, rb = 0, jp = 0, rp = 0; for (const i of bids) { const o = BLD[i]; const c0 = capOf(o.k, o.floor); const e = S.plan.blocks.get(i); const c1 = e ? capOf(e.z, o.floor * e.s) : c0; jb += c0.jobs; rb += c0.res; jp += c1.jobs; rp += c1.res; }
+  const z = ZONES[ed.z] ? ed.z : 'mixed';
+  insp.innerHTML = `<button class="x" aria-label="Close">×</button><h3>${b.n || 'Block near ' + nearestStreetName(b.c[0], b.c[1])}</h3><div class="sub">${bids.length} building${bids.length > 1 ? 's' : ''} · tallest ${Math.round(Math.max(...bids.map(i => BLD[i].h)))} m · now ${ZONES[BLD[bid].k] || 'Mixed use'}</div>
+  <div class="kv"><span class="h"></span><span class="h">Baseline</span><span class="h">Plan A</span>${row('Jobs', jb, jp)}${row('Residents', rb, rp)}</div>
+  <div style="margin-top:10px;font-size:11px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase">Zoning</div>
+  <div class="zones">${Object.entries(ZONES).map(([k, v]) => `<button data-z="${k}" class="${k === z ? 'on' : ''}">${v}</button>`).join('')}</div>
+  <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase"><span>Density</span><span id="dens-v" style="font-family:var(--f-data);letter-spacing:0">${ed.s.toFixed(1)}× height</span></div>
+  <input type="range" id="dens" min="0.5" max="3" step="0.1" value="${ed.s}">
+  <div style="font-size:11px;color:var(--dim);margin-top:6px">Office conversions assume vacant floors convert first (FiDi office vacancy is about 35%).</div>`;
+  insp.hidden = false; insp.querySelector('.x').onclick = closeInspector;
+  let cur = { s: ed.s, z }; let timer;
+  const commit = () => { clearTimeout(timer); timer = setTimeout(async () => { switchView('plan'); await settle('Block edit'); inspectBlock(bid); }, 450); };
+  insp.querySelectorAll('[data-z]').forEach(btn => btn.onclick = () => { cur.z = btn.dataset.z; setBlock(bids, cur.s, cur.z); insp.querySelectorAll('[data-z]').forEach(x => x.classList.toggle('on', x === btn)); commit(); });
+  $('#dens').oninput = (e) => { cur.s = +e.target.value; $('#dens-v').textContent = cur.s.toFixed(1) + '× height'; setBlock(bids, cur.s, cur.z); commit(); };
+}
+function nearestStreetName(x, z) { const id = edgeAt(x, z, 80); return id >= 0 ? EDGES[id].name || 'the street' : 'the street'; }
+function hourly(q, scn) { const c = q.c; const shape = (h) => c === 'cafe' ? Math.exp(-((h - 8.5) ** 2) / 3) + .8 * Math.exp(-((h - 12.5) ** 2) / 2) + .4 * Math.exp(-((h - 15) ** 2) / 2) : c === 'bar' ? Math.exp(-((h - 19.5) ** 2) / 5) : c === 'shop' ? Math.exp(-((h - 13) ** 2) / 12) : Math.exp(-((h - 12.4) ** 2) / 1.2) + .6 * Math.exp(-((h - 19) ** 2) / 3); const hs = []; let t = 0; for (let h = 6; h < 24; h++) { const v = shape(h); hs.push(v); t += v; } const total = scn.visits.get(q.id) || 0; return hs.map(v => v / t * total); }
+function inspectPoi(q) {
+  const vb = S.base.visits.get(q.id) || 0, vp = S.plan.visits.get(q.id) || 0, t = CAT[q.c].ticket; const hb = hourly(q, S.base), hp = hourly(q, S.plan); const mx = Math.max(...hb, ...hp, 1);
+  insp.innerHTML = `<button class="x" aria-label="Close">×</button><h3>${q.n}</h3><div class="sub">${CAT[q.c].label} · avg ticket $${t}${q.virtual ? ' · added by your zoning' : ''}</div>
+  <div class="kv"><span class="h"></span><span class="h">Baseline</span><span class="h">Plan A</span>${row('Visits / day', vb, vp)}${row('Revenue / day', vb * t, vp * t, (x) => money(x, false))}</div>
+  <div class="bars">${hb.map((v, i) => `<div><i style="height:${v / mx * 100}%"></i><em style="height:${hp[i] / mx * 100}%"></em></div>`).join('')}</div>
+  <div class="axis"><span>6a</span><span>noon</span><span>6p</span><span>mid</span></div>
+  <div style="font-size:11px;color:var(--dim);margin-top:8px">Grey = baseline, orange = Plan A. Most of the change comes from people walking past more often.</div>`;
+  insp.hidden = false; insp.querySelector('.x').onclick = closeInspector;
+}
+function diaryFor(p) {
+  const tb = S.base.personTrips.get(p.id) || [], tp = S.plan.personTrips.get(p.id) || []; const mb = S.base.modes.get(p.id), mp = S.plan.modes.get(p.id);
+  const lines = []; const lunch = S.plan.lunchAt.get(p.id);
+  if (p.kind === 'worker') {
+    if (mb === 'car' && mp !== 'car') lines.push([fmtClock(p.arrive / 60 - 25), `Skipped the drive over the Bay Bridge. ${p.reg.st.name.replace(' Street', '')} station, then a walk ${S.plan.ped.size ? 'down a car-free street' : 'to work'}.`]);
+    else if (mp === 'car') lines.push([fmtClock(p.arrive / 60 - 10), `Drove in from the ${p.reg.name} via ${p.reg.gw[0]}.`]);
+    else lines.push([fmtClock(p.arrive / 60 - 8), `${p.reg.st.name} → office, on foot.`]);
+    if (lunch) lines.push([fmtClock(p.lunchT / 60), `Lunch at ${lunch.n}.${S.plan.pedPoiBonus.has(lunch.id) ? ' Ate outside at a table in the street.' : ''}`]);
+    if (p.id === MARIA_ID && mariaMet) lines.push([fmtClock(p.lunchT / 60 + 8), `Ran into ${mariaMet.name.split(' ')[0]} from the 9th floor. Coffee again Thursday.`]);
+    lines.push([fmtClock(p.leave / 60), mp === 'car' ? 'Drove home.' : 'Walked back to the station.']);
+  } else { lines.push(['', `Lives near ${nearestStreetName(p.home.c[0], p.home.c[1])}.`]); if (p.evening) lines.push([fmtClock(p.eveT / 60), 'Evening out in the neighborhood.']); }
+  return { lines, mb, mp };
+}
+function inspectPerson(pid) {
+  const p = S.plan.pmap.get(pid) || S.base.pmap.get(pid); if (!p) return; const d = diaryFor(p); const m = (x) => x === 'car' ? 'Car' : x === 'gone' ? 'Stayed home' : x === 'transit' ? 'BART/Muni + walk' : 'Walk';
+  const tc = (s) => (s.personTrips.get(pid) || []).reduce((a, t) => a + t.dur, 0) / 60;
+  const ties = S.plan.tiePairs.filter(([a, b]) => a.id === pid || b.id === pid).length;
+  insp.innerHTML = `<button class="x" aria-label="Close">×</button><h3>${p.name}</h3><div class="sub">${p.kind === 'worker' ? `Works at ${p.office.n || 'an office near ' + nearestStreetName(p.office.c[0], p.office.c[1])} · from the ${p.reg.name}` : 'Resident'} · income ${['lower', 'middle', 'upper'][p.income]} third</div>
+  <div class="kv"><span class="h"></span><span class="h">Baseline</span><span class="h">Plan A</span><span>Mode</span><span>${m(d.mb)}</span><span>${m(d.mp)}</span>${row('Minutes moving in area', tc(S.base), tc(S.plan), (x) => Math.round(x))}${row('New connections today', 0, ties)}</div>
+  <div class="diary">${d.lines.map(([t, l]) => `<p><span class="t">${t}</span>${l}</p>`).join('')}</div>`;
+  insp.hidden = false; insp.querySelector('.x').onclick = closeInspector;
+}
+
+// ───────────────────────── follow a sim ─────────────────────────
+let mariaMet = null;
+function onMariaMeets(people) { if (mariaMet) return; mariaMet = people.find(p => p.name === 'Dev P.') || people[0]; post(MARIA_NAME, `Bumped into ${mariaMet.name.split(' ')[0]} at lunch. We've worked on the same floor for a year and never talked.`, MARIA_ID, 'new connection'); if (ui.follow === MARIA_ID) inspectPerson(MARIA_ID); }
+function followPerson(pid) {
+  ui.follow = pid; inspectPerson(pid);
+  if (mariaTrail) { planGroup.remove(mariaTrail); mariaTrail.geometry.dispose(); mariaTrail = null; }
+  const trips = (S.plan.personTrips.get(pid) || []).filter(t => t.mode === 'ped' || t.leg === 'am');
+  const geos = []; for (const t of trips) { const pts = t.pts.map(([x, z], i) => { const tm = {}; posAt(t, t.cum[i], tm); return new THREE.Vector3(tm.x, 3, tm.z); }); if (pts.length < 2) continue; const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal', .1); geos.push(new THREE.TubeGeometry(curve, Math.min(400, pts.length * 6), 1.6, 5, false).toNonIndexed()); }
+  if (geos.length) { mariaTrail = new THREE.Mesh(mergeGeometries(geos), new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 1.8, .55), toneMapped: false, transparent: true, opacity: .9 })); planGroup.add(mariaTrail); }
+}
+function unfollow() { ui.follow = null; if (mariaTrail) { planGroup.remove(mariaTrail); mariaTrail = null; } camGoal.target.copy(CAM_HOME.target); camGoal.dist = CAM_HOME.dist; }
+const CAM_HOME = { target: CAM.target.clone(), dist: CAM.dist };
+
+// ───────────────────────── picking + tools ─────────────────────────
+const ray = new THREE.Raycaster(); const ndc = new THREE.Vector2(); const ground = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+function toNdc(ev) { const r = renderer.domElement.getBoundingClientRect(); ndc.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1); return r; }
+function groundAt(ev) { toNdc(ev); ray.setFromCamera(ndc, camera); const p = new THREE.Vector3(); return ray.ray.intersectPlane(ground, p) ? p : null; }
+function buildingAt(ev) { toNdc(ev); ray.setFromCamera(ndc, camera); const hit = ray.intersectObject(buildings, false)[0]; if (!hit) return -1; return bGeo.attributes.aBid.array[hit.face.a]; }
+function agentAt(ev) {
+  const r = toNdc(ev); const vis = V[activeWorld()]; let best = null, bd = 14;
+  for (const a of vis.active) { posAt(a.t, a.s, tmp); v3.set(tmp.x, 2, tmp.z).project(camera); const sx = (v3.x + 1) / 2 * r.width, sy = (1 - v3.y) / 2 * r.height; const d = Math.hypot(sx - (ev.clientX - r.left), sy - (ev.clientY - r.top)); if (d < bd) { bd = d; best = a; } }
+  return best;
+}
+function poiAt(ev) { if (!ui.layers.has('business')) return null; const r = toNdc(ev); let best = null, bd = 12; for (const q of S[activeWorld()].pois) { v3.set(q.x, 8, q.z).project(camera); const d = Math.hypot((v3.x + 1) / 2 * r.width - (ev.clientX - r.left), (1 - v3.y) / 2 * r.height - (ev.clientY - r.top)); if (d < bd) { bd = d; best = q; } } return best; }
+const activeWorld = () => ui.compare ? 'plan' : ui.view;
+let stroke = null;
+const cv = renderer.domElement;
+cv.addEventListener('pointerdown', (ev) => {
+  if (ui.demo) return;
+  if (ui.tool === 'ped') { const g = groundAt(ev); const id = g ? edgeAt(g.x, g.z) : -1; if (id < 0) return; if (EDGES[id].hw) return toast('Freeways can’t be pedestrianized.'); stroke = { erase: S.plan.ped.has(id), touched: new Set() }; paintEdge(id); cv.setPointerCapture(ev.pointerId); return; }
+  if (ui.tool === 'density' || ui.tool === 'zoning') { const b = buildingAt(ev); if (b >= 0) inspectBlock(b); return; }
+  const q = poiAt(ev); if (q) return inspectPoi(q);
+  const a = agentAt(ev); if (a) return followPerson(a.t.p.id);
+  const b = buildingAt(ev); const g = groundAt(ev); const id = g ? edgeAt(g.x, g.z, 6) : -1;
+  if (id >= 0 && (b < 0 || true)) { const bh = b >= 0; if (!bh) return inspectStreet(id); }
+  if (b >= 0) return inspectBlock(b); if (id >= 0) return inspectStreet(id);
+  closeInspector();
+});
+function paintEdge(id) { if (!stroke || stroke.touched.has(id)) return; stroke.touched.add(id); togglePed(id, !stroke.erase); if (ui.view !== 'plan' && !ui.compare) switchView('plan'); const e = EDGES[id]; for (let k = 0; k < 3; k++) { const p = e.p[Math.floor(k / 2 * (e.p.length - 1))]; puff(p[0], p[1]); } }
+cv.addEventListener('pointermove', (ev) => {
+  const r = cv.getBoundingClientRect(); mouse.x = ((ev.clientX - r.left) / r.width - .5); mouse.y = ((ev.clientY - r.top) / r.height - .5);
+  if (stroke) { const g = groundAt(ev); const id = g ? edgeAt(g.x, g.z) : -1; if (id >= 0 && !EDGES[id].hw) paintEdge(id); return; }
+  if (ui.demo) return;
+  const tip = $('#tip'); let text = '';
+  if (ui.tool === 'ped' || ui.tool === 'select') { const g = groundAt(ev); const id = g ? edgeAt(g.x, g.z, 8) : -1; if (id >= 0 && buildingAt(ev) < 0) text = (EDGES[id].name || 'Street') + (ui.tool === 'ped' ? (S.plan.ped.has(id) ? ' · click to reopen' : ' · click or drag to pedestrianize') : ''); }
+  if (!text && (ui.tool !== 'ped')) { const b = buildingAt(ev); if (b >= 0) text = (BLD[b].n || ZONES[BLD[b].k] || 'Building') + ` · ${Math.round(BLD[b].h)} m`; }
+  tip.hidden = !text; tip.textContent = text; tip.style.left = (ev.clientX - stage.getBoundingClientRect().left + 14) + 'px'; tip.style.top = (ev.clientY - stage.getBoundingClientRect().top + 10) + 'px';
+});
+cv.addEventListener('pointerleave', () => { $('#tip').hidden = true; });
+cv.addEventListener('pointerup', async () => { if (!stroke) return; const n = stroke.touched.size; stroke = null; if (n) await settle(n > 1 ? 'Street edit' : 'Street edit'); });
+
+function setTool(t) { ui.tool = t; document.querySelectorAll('[data-tool]').forEach(b => b.classList.toggle('on', b.dataset.tool === t)); cv.style.cursor = t === 'ped' ? 'crosshair' : 'default'; }
+document.querySelectorAll('[data-tool]').forEach(b => b.onclick = () => setTool(b.dataset.tool));
+function setLayer(l, on) { if (on === undefined) on = !ui.layers.has(l); on ? ui.layers.add(l) : ui.layers.delete(l); document.querySelectorAll('[data-layer]').forEach(b => b.classList.toggle('on', ui.layers.has(b.dataset.layer))); for (const v of Object.values(V)) { v.pins.visible = ui.layers.has('business'); v.tiesLine.visible = ui.layers.has('social'); } bU.uFocus.value = ui.layers.size ? .55 : 0; }
+document.querySelectorAll('[data-layer]').forEach(b => b.onclick = () => setLayer(b.dataset.layer));
+addEventListener('keydown', (e) => { if (e.target.tagName === 'INPUT') return; const k = e.key.toLowerCase(); if (k === 'v') setTool('select'); if (k === 'p') setTool('ped'); if (k === 'd') setTool('density'); if (k === 'z') setTool('zoning'); if (k === ' ') { e.preventDefault(); togglePlay(); } if (k === 'escape') closeInspector(); });
+function switchView(w) { ui.view = w; $('#tab-base').classList.toggle('on', w === 'base'); $('#tab-plan').classList.toggle('on', w === 'plan'); }
+$('#tab-base').onclick = () => switchView('base'); $('#tab-plan').onclick = () => switchView('plan');
+function togglePlay() { ui.playing = !ui.playing; $('#play').textContent = ui.playing ? '❚❚' : '▶'; }
+$('#play').onclick = togglePlay;
+function setRate(r) { ui.rate = r; document.querySelectorAll('#speeds button').forEach(b => b.classList.toggle('on', +b.dataset.s === r)); }
+document.querySelectorAll('#speeds button').forEach(b => b.onclick = () => setRate(+b.dataset.s));
+$('#scrub').addEventListener('input', (e) => jumpTo(+e.target.value * 60));
+function jumpTo(t) { ui.time = t; for (const v of Object.values(V)) { resetAgents(v, t, false); v.dwell.clear(); } }
+function setCompare(on) { ui.compare = on; $('#handle').hidden = !on; $('#tag-l').hidden = !on; $('#tag-r').hidden = !on; $('#compare-btn').classList.toggle('primary', on); placeHandle(); }
+function placeHandle() { const w = stage.clientWidth; $('#handle').style.left = (ui.split * w) + 'px'; $('#tag-l').style.left = Math.max(12, ui.split * w - 120) + 'px'; $('#tag-r').style.left = (ui.split * w + 14) + 'px'; }
+$('#compare-btn').onclick = () => setCompare(!ui.compare);
+{ let drag = false; $('#handle').addEventListener('pointerdown', (e) => { drag = true; e.target.setPointerCapture(e.pointerId); }); $('#handle').addEventListener('pointermove', (e) => { if (!drag) return; const r = stage.getBoundingClientRect(); ui.split = clamp((e.clientX - r.left) / r.width, .05, .95); placeHandle(); }); $('#handle').addEventListener('pointerup', () => drag = false); }
+let toastT; function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600); }
+
+// ───────────────────────── AI planner (scripted for the mockup) ─────────────────────────
+function candidateOptions() {
+  const hx = HERO_EDGES.length ? EDGES[HERO_EDGES[0]] : EDGES[0];
+  const low = BLD.filter(b => b.inside && b.h < 16 && b.area > 600 && Math.hypot(b.c[0] - hx.mx, b.c[1] - hx.mz) < 420).sort((a, b) => b.area - a.area)[0];
+  const tower = BLD.filter(b => b.inside && b.k === 'office' && b.h > 40 && b.h < 90 && Math.hypot(b.c[0] - hx.mx, b.c[1] - hx.mz) < 700)[0];
+  const nm = stretch('New Montgomery Street', 'Market Street', 'Howard Street');
+  return [
+    low && { title: `Upzone the low-rise block near ${nearestStreetName(low.c[0], low.c[1])}`, why: 'One-story buildings next to the new promenade. Mixed use at 3× height adds homes and ground-floor shops where foot traffic is now highest.', apply: (s) => { for (const b of blockOf(low.id)) s.blocks.set(b, { s: 3, z: 'mixed' }); }, preview: () => ({ bids: blockOf(low.id) }), animate: () => setBlock(blockOf(low.id), 3, 'mixed') },
+    nm.length && { title: 'Extend the promenade along New Montgomery St', why: 'Links 2nd St to Montgomery Station. It mostly carries walkers already, so the car impact is small.', apply: (s) => nm.forEach(e => s.ped.add(e)), preview: () => ({ edges: nm }), animate: () => nm.forEach(e => togglePed(e, true)) },
+    tower && { title: `Convert ${tower.n || 'a mid-rise office tower'} to housing`, why: 'Uses vacant office floors. Residents keep the street busy after 6pm, which helps restaurants and bars.', apply: (s) => s.blocks.set(tower.id, { s: 1, z: 'res' }), preview: () => ({ bids: [tower.id] }), animate: () => setBlock([tower.id], 1, 'res') },
+  ].filter(Boolean);
+}
+function trial(opt) { const t = new Scenario('trial', true); S.plan.ped.forEach(e => t.ped.add(e)); S.plan.blocks.forEach((v, k) => t.blocks.set(k, v)); opt.apply(t); if (t.ped.size === S.plan.ped.size) for (const [k, v] of S.plan.cache) if (k.startsWith('ped')) t.cache.set(k, v); t.settle(baseCarRoutes(), 3); const v = valueOf(S.base.m, t.m), cur = valueOf(S.base.m, S.plan.m); return { dv: v.total - cur.total, drev: t.m.revenue - S.plan.m.revenue, ddelay: (t.m.delayH - S.plan.m.delayH) / Math.max(S.plan.m.delayH, 1) }; }
+function setGhost(pv) { clearGhost(); if (!pv) return; if (pv.bids) highlight(pv.bids, .9); if (pv.edges) { ghost = pv.edges; for (const e of ghost) { const r = asphaltL.ranges.get(e); } } }
+function clearGhost() { highlight([]); ghost = []; }
+async function typeInto(el, text, cps = 70) { el.textContent = ''; for (let i = 0; i < text.length; i++) { el.textContent += text[i]; if (i % 2 === 0) await sleep(1000 / cps); } }
+async function askAI(q, auto) {
+  const box = $('#ai'); box.hidden = false; const why = /why|explain|how come/i.test(q);
+  box.innerHTML = `<button class="x" style="position:absolute;right:8px;top:6px;color:var(--dim);font-size:16px" aria-label="Close">×</button><div class="mock">Blockwise AI · scripted for this mockup</div><div class="q" style="margin-top:8px">${q.replace(/</g, '&lt;')}</div><div class="a" id="ai-a"></div><div id="ai-opts"></div>`;
+  box.querySelector('.x').onclick = () => { box.hidden = true; clearGhost(); };
+  const a = $('#ai-a');
+  if (why) { const b = S.base.m, p = S.plan.m; await typeInto(a, S.plan.ped.size ? `Revenue is up ${money(p.revenue - b.revenue)}/day because foot traffic on the edited streets rose ${pedStreetDelta()}. Walkers pass more storefronts and stop more often. They don't spend more per visit, they visit more. Cafés and quick-lunch spots gain the most. Car trips fell by ${num((b.car - p.car) * SCALE, false)}/day. The rest rerouted, which is why delay ${p.delayH > b.delayH ? 'rose' : 'fell'} ${pct((p.delayH - b.delayH) / Math.max(b.delayH, 1))} on parallel streets.` : 'Nothing has changed yet. Try pedestrianizing a street or rezoning a block, then ask again.'); return; }
+  await typeInto(a, 'Looking at foot traffic, vacancy and congestion around 2nd St… three options that help small businesses without slowing the bridge approach:');
+  const opts = candidateOptions(); const res = opts.map(o => ({ o, r: trial(o) }));
+  $('#ai-opts').innerHTML = res.map(({ o, r }, i) => `<div class="opt" data-i="${i}"><b>${o.title}</b><div class="why">${o.why}</div><div class="nums"><span class="${r.dv >= 0 ? 'up' : 'down'}">${money(r.dv)}/yr</span><span>revenue ${money(r.drev)}/day</span><span class="${r.ddelay <= 0 ? 'up' : 'down'}">delay ${pct(r.ddelay)}</span></div><button class="btn apply">Apply</button></div>`).join('');
+  box.querySelectorAll('.opt').forEach(el => { const o = opts[+el.dataset.i]; el.onmouseenter = () => setGhost(o.preview()); el.onmouseleave = clearGhost; el.querySelector('.apply').onclick = async (e) => { e.stopPropagation(); await applyOption(o); }; });
+  return opts;
+}
+async function applyOption(o) { clearGhost(); o.animate(); switchView('plan'); $('#ai').hidden = true; await settle('AI suggestion applied'); post('Blockwise AI', `Applied: ${o.title}.`, null, 'plan'); }
+$('#ask').addEventListener('submit', (e) => { e.preventDefault(); const q = $('#ask-in').value.trim(); if (q) askAI(q); $('#ask-in').value = ''; });
+
+// ───────────────────────── pitch card ─────────────────────────
+function openPitch() {
+  recomputeTargets(); const b = S.base.m, p = S.plan.m, v = target.val; const parts = [['Mobility', v.mob, '#59b8ff'], ['Street life', v.soc, '#ff6fae'], ['Local economy', v.eco, '#3fd69a'], ['Health', v.hea, '#ffcc66']];
+  const pos = parts.filter(x => x[1] > 0).reduce((a, x) => a + x[1], 0) || 1;
+  const name = [S.plan.ped.size ? (HERO_EDGES.some(e => S.plan.ped.has(e)) ? '2nd Street Promenade' : 'Street changes') : null, S.plan.blocks.size ? `${S.plan.blocks.size} rezoned building${S.plan.blocks.size > 1 ? 's' : ''}` : null].filter(Boolean).join(' + ') || 'No changes yet';
+  const tier = [0, 1, 2].map(i => { const dt = (p.tierTime[i] - b.tierTime[i]); const dw = p.tierWalk[i] - b.tierWalk[i]; return -dt * VALUE.vtt / 60 * WORKDAYS + dw * VALUE.healthPerMin / SCALE * 12 ; });
+  const ap = (x) => clamp(Math.round(x), 8, 96);
+  const merch = ap(55 + (p.revenue - b.revenue) / Math.max(b.revenue, 1) * 260), resi = ap(52 + (p.enc - b.enc) / Math.max(b.enc, 1) * 60 + (p.res - b.res) / Math.max(b.res, 1) * 40), drv = ap(50 - (p.delayH - b.delayH) / Math.max(b.delayH, 1) * 220 - (S.plan.ped.size ? 12 : 0)), trn = ap(58 + (p.tr - b.tr) / Math.max(b.tr, 1) * 120 + 8);
+  const v2 = document.createElement('div'); v2.className = 'veil'; v2.id = 'pitch';
+  v2.innerHTML = `<div class="card pitch"><div class="eyebrow">Pitch to the Board of Supervisors · Plan A</div><h2>${name}</h2>
+  <div class="total" style="color:${v.total < 0 ? 'var(--bad)' : ''}">${money(v.total)}<span style="font-size:22px;color:var(--dim)"> /yr</span></div>
+  <div style="color:var(--dim)">Net value to the city versus today. Sim day projected to ${WORKDAYS} workdays.</div>
+  <div class="stack">${parts.filter(x => x[1] > 0).map(x => `<div style="width:${x[1] / pos * 100}%;background:${x[2]}"></div>`).join('')}</div>
+  <div class="legend2">${parts.map(x => `<span><i style="background:${x[2]}"></i>${x[0]} <b class="${x[1] >= 0 ? 'up' : 'down'}">${money(x[1])}</b></span>`).join('')}</div>
+  <div class="grid2"><div><h4>Key changes per day</h4><table>
+    <tr><td>Car trips into the area</td><td>${num((p.car - b.car) * SCALE)}</td></tr>
+    <tr><td>Hours of traffic delay</td><td>${num(p.delayH - b.delayH)}</td></tr>
+    <tr><td>Local business revenue</td><td>${money(p.revenue - b.revenue)}</td></tr>
+    <tr><td>Chance encounters</td><td>${num(p.enc - b.enc)}</td></tr>
+    <tr><td>New connections</td><td>${num(p.ties - b.ties)}</td></tr>
+    <tr><td>New homes (residents)</td><td>${num(p.res - b.res)}</td></tr></table>
+    <h4 style="margin-top:16px">Who gains · per person per year</h4><table>
+    ${['Lower-income third', 'Middle third', 'Upper third'].map((l, i) => `<tr><td>${l}</td><td class="${tier[i] >= 0 ? 'up' : 'down'}">${money(tier[i])}</td></tr>`).join('')}</table></div>
+  <div><h4>Projected approval</h4>${[['Merchants', merch], ['Residents', resi], ['Transit riders', trn], ['Drivers', drv]].map(([k, x]) => `<div class="appr"><div><span>${k}</span><span>${x}%</span></div><div class="track"><i style="width:${x}%;background:${x < 45 ? 'var(--bad)' : x < 60 ? '#ffb020' : 'var(--good)'}"></i></div></div>`).join('')}
+  <h4 style="margin-top:16px">Trade-offs to address</h4><table><tr><td>Spillover onto parallel streets</td><td>${spillText()}</td></tr><tr><td>Rent pressure near the promenade</td><td>${S.plan.ped.size ? 'moderate' : 'low'}</td></tr></table></div></div>
+  <div class="foot">Valuation: USDOT value of travel time $19.60/h and vehicle operating cost $0.62/mi; WHO HEAT walking benefit with VSL $13.7M; 35% value added on retail revenue; $9 per new connection and $0.10 per chance encounter (adjustable). 1 sim = 6 people. Mockup with illustrative numbers.</div>
+  <div style="display:flex;gap:8px;margin-top:16px"><button class="btn primary" id="pitch-copy">Copy summary</button><button class="btn" id="pitch-close">Close</button></div></div>`;
+  stage.append(v2);
+  $('#pitch-close').onclick = () => v2.remove(); v2.onclick = (e) => { if (e.target === v2) v2.remove(); };
+  $('#pitch-copy').onclick = () => { const t = `${name}: ${money(v.total)}/yr net value. Revenue ${money(p.revenue - b.revenue)}/day, car trips ${num((p.car - b.car) * SCALE)}/day, new connections ${num(p.ties - b.ties)}/day.`; navigator.clipboard?.writeText(t).then(() => toast('Summary copied'), () => toast(t)); };
+}
+function spill() { let best = -1, bd = 0; for (const e of EDGES) { if (!e.car || S.plan.ped.has(e.id) || e.hw || !e.name || S.base.carFlow[e.id] < 12) continue; const d = S.plan.carFlow[e.id] - S.base.carFlow[e.id]; if (d > bd) { bd = d; best = e.id; } } return best >= 0 ? { e: EDGES[best], pct: bd / S.base.carFlow[best], vph: bd * SCALE / 2.2 } : null; }
+function spillText() { const s = spill(); return s ? `${s.e.name} +${Math.round(s.vph)} cars/hr` : 'none'; }
+$('#pitch-btn').onclick = openPitch;
+
+// ───────────────────────── demo script ─────────────────────────
+let demoToken = 0;
+function caption(beat, title, text) { const c = $('#caption'); c.hidden = false; c.innerHTML = `<div class="beat">${beat}</div><div class="txt"><b>${title}</b>${text}</div><div class="ctl"><button id="cap-next">Next ▸</button><button id="cap-exit">Exit</button></div>`; $('#cap-next').onclick = () => { skip = true; }; $('#cap-exit').onclick = endDemo; }
+let skip = false;
+async function wait(ms, tok) { const end = performance.now() + ms; while (performance.now() < end) { if (tok !== demoToken) throw 'stop'; if (skip) { skip = false; throw 'skip'; } await sleep(50); } }
+async function beat(fn) { try { await fn(); } catch (e) { if (e === 'stop') throw e; if (e !== 'skip') console.error(e); } }
+function endDemo() { demoToken++; ui.demo = false; $('#caption').hidden = true; $('#brush').hidden = true; $('#demo-btn').textContent = '▶ Play demo'; camGoal.target.copy(CAM_HOME.target); camGoal.dist = CAM_HOME.dist; }
+async function runDemo() {
+  const tok = ++demoToken; ui.demo = true; $('#demo-btn').textContent = '■ Stop demo'; $('#intro')?.remove(); closeInspector(); $('#ai').hidden = true; $('#pitch')?.remove();
+  // Reset to a clean morning.
+  for (const e of [...S.plan.ped]) S.plan.ped.delete(e); for (const [bid] of S.plan.blocks) { setBuildingAttr('aTint', bid, BASE_COL[BLD[bid].k] || BASE_COL.mixed); setBuildingAttr('aScale', bid, 1); } S.plan.blocks.clear(); S.plan.cache.clear(); S.plan.settle(baseCarRoutes(), 5); refreshTables(); recomputeTargets(); mariaMet = null; unfollow(); setCompare(false); switchView('plan'); setLayer('traffic', false); setLayer('foot', false); setLayer('social', false); setLayer('business', false); showChips(''); ui.diversion = false;
+  jumpTo(345 * 60); ui.playing = true; $('#play').textContent = '❚❚'; setRate(300); camGoal.target.copy(CAM_HOME.target); camGoal.dist = CAM_HOME.dist;
+  try {
+    await beat(async () => { caption('1/6', 'The morning rush, from 6:00 to 8:00', 'About 31,000 commuters arrive. Cars come off the Bay Bridge and US-101 ramps, and BART riders come up at Embarcadero, Montgomery and Powell.'); await wait(5000, tok); setLayer('traffic', true); caption('1/6', 'Traffic builds on the SoMa arterials', 'Road color shows live congestion. Harrison, Bryant and the Fremont and 1st St ramps back up first.'); while (ui.time < 485 * 60) await wait(200, tok); setRate(30); await wait(3500, tok); });
+    await beat(async () => {
+      setTool('ped'); caption('2/6', 'Paint 2nd Street car-free', 'From Market to Folsom. Cars disappear, café tables come out, and the city starts replanning around the change.');
+      const r = stage.getBoundingClientRect(); const br = $('#brush'); br.hidden = false;
+      for (const id of HERO_EDGES) { const e = EDGES[id]; for (let k = 0; k <= 4; k++) { const p = e.p[Math.round(k / 4 * (e.p.length - 1))]; v3.set(p[0], 1, p[1]).project(camera); br.style.left = ((v3.x + 1) / 2 * r.width) + 'px'; br.style.top = ((1 - v3.y) / 2 * r.height) + 'px'; await wait(55, tok); } togglePed(id, true); puff(e.mx, e.mz); }
+      br.hidden = true; const mid = EDGES[HERO_EDGES[Math.floor(HERO_EDGES.length / 2)]]; streetLabel.el.textContent = '2nd St · car-free'; streetLabel.p.set(mid.mx, 10, mid.mz); streetLabel.hide = false;
+      await settle('2nd St · Market → Folsom'); setLayer('foot', true); await wait(7000, tok);
+    });
+    await beat(async () => {
+      setTool('select'); caption('3/6', 'Swipe: baseline vs Plan A, same moment', 'Left is today and right is the plan, both running live. The spillover shows up on a parallel street.'); setCompare(true);
+      for (let t = 0; t <= 1; t += .02) { ui.split = lerp(.95, .5, ease(t)); placeHandle(); await wait(25, tok); }
+      const s = spill(); if (s) { spillLabel.el.textContent = `Spillover: ${s.e.name} +${Math.round(s.vph)} cars/hr`; spillLabel.p.set(s.e.mx, 10, s.e.mz); spillLabel.hide = false; }
+      for (let t = 0; t <= 1; t += .01) { ui.split = .5 + Math.sin(t * Math.PI * 2) * .14; placeHandle(); await wait(40, tok); }
+      await wait(2500, tok); setCompare(false); spillLabel.hide = true;
+    });
+    await beat(async () => {
+      setLayer('traffic', false); caption('4/6', 'Follow Maria', 'She used to drive in over the Bay Bridge. Today she takes BART to Montgomery, walks down 2nd St, and has lunch outside.');
+      jumpTo(726 * 60); setRate(30); followPerson(MARIA_ID); const p = S.plan.pmap.get(MARIA_ID); camGoal.target.set(p.office.c[0], 0, p.office.c[1]); camGoal.dist = 1250;
+      for (let i = 0; i < 160 && !mariaMet; i++) await wait(100, tok);
+      await wait(3000, tok); setLayer('foot', false); setLayer('social', true); camGoal.target.copy(CAM_HOME.target); camGoal.dist = CAM_HOME.dist; caption('4/6', 'Everyone’s new connections today', 'Each arc links two sims who met at the same café or plaza. Pedestrian streets roughly double these encounters.'); await wait(5500, tok); unfollow(); closeInspector(); setLayer('social', false);
+    });
+    await beat(async () => {
+      caption('5/6', 'Ask the AI planner', 'A judge types a goal. The AI tests three options and shows each one on the map before anything is applied.');
+      const inp = $('#ask-in'); await typeInto(inp, '', 1); const goal = 'Boost small business in SoMa without slowing Bay Bridge traffic'; for (const ch of goal) { inp.value += ch; await wait(28, tok); }
+      inp.value = ''; const opts = await askAI(goal, true); await wait(1200, tok);
+      const els = [...document.querySelectorAll('.opt')]; for (let i = 0; i < els.length; i++) { els[i].classList.add('hover'); setGhost(opts[i].preview()); await wait(1600, tok); els[i].classList.remove('hover'); }
+      if (opts[0]) { els[0].classList.add('hover'); await wait(600, tok); await applyOption(opts[0]); } await wait(3500, tok);
+    });
+    await beat(async () => { caption('6/6', 'Pitch to the Board', 'One scorecard with net value, the trade-offs, who wins, and who needs convincing.'); openPitch(); await wait(9000, tok); });
+    endDemo(); toast('Demo finished. Everything is live now: try painting a street.');
+  } catch (e) { if (e !== 'stop') console.error(e); }
+}
+$('#demo-btn').onclick = () => ui.demo ? endDemo() : runDemo();
+$('#intro-demo').onclick = runDemo;
+$('#intro-free').onclick = () => { $('#intro').remove(); setRate(90); };
+
+// ───────────────────────── main loop ─────────────────────────
+let last = performance.now(), heatT = 0, uiT = 0;
+recomputeTargets(); drawRadar(shown.shape); drawPillars(); paintPins(V.base); paintPins(V.plan); paintTies(V.base); paintTies(V.plan);
+jumpTo(ui.time); $('#loading').remove();
+post('Rosa S.', 'Fog burning off over the Bay Bridge. Here we go.', null, 'morning');
+function frame(now) { requestAnimationFrame(frame); tick(now); }
+function tick(now) {
+  const dt = Math.min(.05, (now - last) / 1000); last = now;
+  if (ui.playing) {
+    const dtSim = dt * ui.rate, dtAgent = dt * Math.min(ui.rate, AGENT_CAP);
+    ui.time += dtSim; if (ui.time > 1440 * 60) jumpTo(345 * 60);
+    stepAgents(V.base, dtSim, dtAgent); stepAgents(V.plan, dtSim, dtAgent);
+    $('#scrub').value = Math.floor(ui.time / 60);
+    if (ui.time - lastAmbient > 1800 && !ui.settling) { lastAmbient = ui.time; if (Math.random() < .7) ambientPost(); }
+  }
+  $('#clock').textContent = fmtClock(ui.time / 60);
+  applyTime();
+  const w = activeWorld(); const both = ui.compare;
+  for (const k of ['base', 'plan']) { if (both || k === (ui.compare ? 'plan' : ui.view)) { drawAgents(V[k]); paintOverlay(V[k]); } }
+  heatT += dt; if (heatT > .12) { heatT = 0; drawHeat(V.base); drawHeat(V.plan); }
+  for (const v of Object.values(V)) v.heat.material.uniforms.uOp.value = lerp(v.heat.material.uniforms.uOp.value, ui.layers.has('foot') ? 1 : 0, .1);
+  // highlight ghost edges in plan overlay
+  if (ghost.length) { const col = V.plan.ocol; const pulse = .55 + .4 * Math.sin(now / 160); for (const e of ghost) { const r = asphaltL.ranges.get(e); if (!r) continue; for (let i = r[0]; i < r[0] + r[1]; i++) { col.set([C_PAVE[0], C_PAVE[1], C_PAVE[2], pulse], i * 4); } } V.plan.overlay.geometry.attributes.color.needsUpdate = true; }
+  // sparks + puffs
+  for (const s of sparks) { if (s.userData.t >= 1) { s.visible = false; continue; } s.userData.t += dt / (s.userData.big ? 1.6 : 1.1); const t = s.userData.t; const sc = 4 + t * (s.userData.big ? 46 : 26); s.scale.setScalar(sc); s.material.opacity = (1 - t) * (s.userData.big ? 1 : .7); }
+  for (const p of puffs) { if (p.userData.t >= 1) { p.visible = false; continue; } p.userData.t += dt / .7; p.scale.setScalar(3 + p.userData.t * 22); p.material.opacity = (1 - p.userData.t) * .8; }
+  animTables(dt); animScales(dt);
+  // camera
+  if (ui.follow) { const vis = V.plan; const a = vis.active.find(a => a.t.p.id === ui.follow); if (a && ui.demo) { posAt(a.t, a.s, tmp); camGoal.target.set(tmp.x, 0, tmp.z); } }
+  const k = 1 - Math.pow(.15, dt); CAM.target.lerp(camGoal.target, k); CAM.dist = lerp(CAM.dist, camGoal.dist, k); placeCamera();
+  waterU.uTime.value = now / 1000;
+  tickMetrics(dt); uiT += dt; if (uiT > .15) { uiT = 0; drawRadar(shown.shape); drawPillars(); }
+  composer.render(); updateLabels();
+}
+requestAnimationFrame(frame);
+window.__bw = { S, V, ui, EDGES, HERO_EDGES, run: (n = 30) => { for (let i = 0; i < n; i++) { last -= 33; tick(performance.now()); } } };
+</script>

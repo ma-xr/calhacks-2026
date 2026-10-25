@@ -1,0 +1,12 @@
+{
+  "where": "1=1",
+  "geometry": "-122.41149999999999,37.778,-122.38600000000001,37.7995",
+  "geometryType": "esriGeometryEnvelope",
+  "inSR": 4326,
+  "spatialRel": "esriSpatialRelIntersects",
+  "outFields": "*",
+  "outSR": 4326,
+  "f": "json",
+  "url": "https://caltrans-gis.dot.ca.gov/arcgis/rest/services/CHhighway/Traffic_AADT/FeatureServer/0/query",
+  "fetched_at": "2026-10-24T22:06:15+00:00"
+}

@@ -1,0 +1,19 @@
+{
+ "answer": "The model's five biggest losers, by change in revenue per day:\n\n- **The Sentinel** (restaurant): -$1,619, with visits falling from 819 to 761.\n- **Flower Cart** (shop): -$1,485, visits 978 to 945.\n- **Local Kitchen & Wine Merchant** (restaurant): -$1,204, visits 1,120 to 1,077.\n- **Maxferd Jewelry and Company** (shop): -$1,179, visits 807 to 781.\n- **Mendocino Farms** (restaurant): -$1,118, visits 1,617 to 1,577.\n\nThese losses are small next to the top gains. Village Tea House gains $6,934 per day and Lao Table gains $6,386.\n\nFoot traffic also falls on New Montgomery, Beale and Natoma Streets, which may explain some of the losses. The model doesn't report why each business lost, and it doesn't list losers beyond these five. The citywide economic value also rests on an assumed \"retail net new share,\" so treat the totals with caution.",
+ "grounding": {
+  "scenario": "84731cbe0c91",
+  "keys": [
+   "scenario",
+   "metrics_plan",
+   "delta_vs_baseline",
+   "value_usd_per_yr",
+   "value_lines",
+   "car_traffic_change_by_street",
+   "foot_traffic_change_by_street",
+   "biggest_business_changes",
+   "assumptions_flagged",
+   "scale_people_per_agent"
+  ]
+ },
+ "model": "claude-sonnet-5-5"
+}

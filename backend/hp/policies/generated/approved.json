@@ -1,0 +1,13 @@
+{
+ "through_charge": {
+  "file": "through_charge.py",
+  "test": "test_through_charge.py",
+  "proposal": "1024-163322-8a6e",
+  "title": "Through-traffic charge",
+  "sha256": {
+   "through_charge.py": "17a3975bd1c4c3564101736e1d943bb23789f979bbc5f486b0af38d91f31f16e",
+   "test_through_charge.py": "924f51c7c0be31e66928e9401391c301f9d4fd8b0a75572ee89306e35701968d"
+  },
+  "approved_at": "2026-10-24T16:35:46"
+ }
+}

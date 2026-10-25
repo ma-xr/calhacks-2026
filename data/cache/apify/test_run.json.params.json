@@ -1,0 +1,48 @@
+{
+  "actor": "compass~crawler-google-places",
+  "input": {
+    "searchStringsArray": [
+      "coffee shop"
+    ],
+    "customGeolocation": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            -122.4095,
+            37.7975
+          ],
+          [
+            -122.388,
+            37.7975
+          ],
+          [
+            -122.388,
+            37.78
+          ],
+          [
+            -122.4095,
+            37.78
+          ],
+          [
+            -122.4095,
+            37.7975
+          ]
+        ]
+      ]
+    },
+    "maxCrawledPlacesPerSearch": 8,
+    "language": "en",
+    "scrapePlaceDetailPage": true,
+    "skipClosedPlaces": false,
+    "maxReviews": 0,
+    "maxImages": 0,
+    "maxQuestions": 0,
+    "scrapeContacts": false,
+    "includeWebResults": false,
+    "scrapeDirectories": false,
+    "scrapeTableReservationProvider": false
+  },
+  "maxTotalChargeUsd": 0.5,
+  "fetched_at": "2026-10-24T22:01:32+00:00"
+}

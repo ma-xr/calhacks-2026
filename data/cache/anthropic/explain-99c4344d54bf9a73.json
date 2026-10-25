@@ -1,0 +1,19 @@
+{
+ "answer": "**Businesses:** The model shows a net gain. Revenue rises by about $23,720 per day and visits by about 1,262. The biggest winners are restaurants near 2nd Street:\n- Lao Table: +$7,746 per day (925 to 1,167 visits)\n- North India: +$6,976 per day\n- Caramba: +$5,832 per day\n- Blue Bottle Coffee: +$3,182 per day (1,246 to 1,621 visits)\n\nThe model does not report which businesses lose revenue, so I can't name any. Foot traffic falls on New Montgomery (-16,644 per day), 3rd Street (-8,094) and Natoma (-3,990), so shops there may feel it.\n\n**Who loses out:**\n- Commuters bear the largest cost: about $4.7M per year in time and cost, with 703 few",
+ "grounding": {
+  "scenario": "84731cbe0c91",
+  "keys": [
+   "scenario",
+   "metrics_plan",
+   "delta_vs_baseline",
+   "value_usd_per_yr",
+   "value_lines",
+   "car_traffic_change_by_street",
+   "foot_traffic_change_by_street",
+   "biggest_business_changes",
+   "assumptions_flagged",
+   "scale_people_per_agent"
+  ]
+ },
+ "model": "claude-sonnet-5-5"
+}
