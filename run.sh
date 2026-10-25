@@ -49,7 +49,7 @@ trap cleanup EXIT INT TERM
 if curl -fs "http://localhost:$HP_PORT/health" >/dev/null 2>&1; then
   say "Engine already running on :$HP_PORT"
 else
-  say "Starting the simulation engine on :$HP_PORT…"
+  say "Starting the simulation engine on :${HP_PORT}…"
   (cd backend && HP_PORT="$HP_PORT" exec .venv/bin/uvicorn hp.api:app --host 0.0.0.0 --port "$HP_PORT") >.run/engine.log 2>&1 &
   PIDS+=($!)
 fi
