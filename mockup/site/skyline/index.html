@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CommonGround · Skyline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07111f; --bg2:#0b1830; --glass:rgba(18,34,62,.72); --glass2:rgba(22,42,76,.86); --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.16);
+  --fg:#eef4fc; --dim:#a7b8cf; --mute:#6f84a1; --hi:#7fd3ff; --accent:#3b9cff; --good:#4fdc7a; --bad:#ff6b6b; --warn:#ffd23a; --edit:#4fdc7a; --social:#ff4fa3;
+  --r:16px; --sh:0 18px 50px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box} [hidden]{display:none!important}
+html,body{margin:0;min-height:100%}
+body{background:radial-gradient(1200px 700px at 70% -10%,#16335f 0%,transparent 60%),radial-gradient(900px 600px at -10% 110%,#0f2a3a 0%,transparent 55%),var(--bg);color:var(--fg);font:14px/1.5 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;background-attachment:fixed}
+a{color:inherit} button,input,select,textarea{font:inherit;color:inherit} button{cursor:pointer;border:0;background:none;padding:0}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+/* top bar */
+#top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;height:60px;padding:0 22px;background:rgba(7,17,31,.72);backdrop-filter:blur(16px) saturate(1.4);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;text-decoration:none;letter-spacing:-.01em}
+.logo{width:30px;height:30px;border-radius:9px;background:conic-gradient(from 200deg,#3b9cff,#4fdc7a,#ff4fa3,#3b9cff);display:grid;place-items:center;box-shadow:0 0 20px rgba(59,156,255,.45)}
+.logo::after{content:"";width:12px;height:12px;border-radius:50%;background:var(--bg)}
+.crumb{display:flex;align-items:center;gap:8px;color:var(--dim);font-weight:500;min-width:0}
+.crumb a{text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.crumb a:hover{color:#fff}
+.crumb .sep{color:var(--mute)}
+.crumb .wsdot{width:9px;height:9px;border-radius:3px;flex:none}
+.grow{flex:1}
+.chip{display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 11px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid var(--line);font-size:12px;color:var(--dim);white-space:nowrap}
+.chip i{width:7px;height:7px;border-radius:50%;background:var(--mute)}
+.chip i.ok{background:var(--good);box-shadow:0 0 8px var(--good)}.chip i.busy{background:var(--warn)}.chip i.bad{background:var(--bad)}
+.me{display:flex;align-items:center;gap:9px;height:38px;padding:0 6px 0 4px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04)}
+.me:hover{border-color:var(--line2)}
+.av{width:28px;height:28px;border-radius:50%;display:inline-grid;place-items:center;font-size:10.5px;font-weight:800;color:#06101e;flex:none;position:relative}
+.av.sm{width:22px;height:22px;font-size:9px}.av.lg{width:42px;height:42px;font-size:14px}
+.av.on::after{content:"";position:absolute;right:-1px;bottom:-1px;width:9px;height:9px;border-radius:50%;background:var(--good);border:2px solid var(--bg)}
+.faces{display:flex}.faces .av{border:2px solid var(--bg2);margin-left:-8px}.faces .av:first-child{margin-left:0}
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:38px;padding:0 15px;border-radius:11px;font-weight:600;font-size:13.5px;background:rgba(255,255,255,.07);border:1px solid var(--line);white-space:nowrap;text-decoration:none;transition:background .15s,border-color .15s,box-shadow .15s}
+.btn:hover{background:rgba(255,255,255,.12);border-color:var(--line2)}
+.btn.primary{background:linear-gradient(180deg,#4aa6ff,#2a86ea);border-color:transparent;color:#fff;box-shadow:0 6px 24px rgba(59,156,255,.4)}
+.btn.primary:hover{box-shadow:0 8px 30px rgba(59,156,255,.55)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--dim)}.btn.ghost:hover{background:rgba(255,255,255,.06);color:#fff}
+.btn.danger{color:#ffb0b0;border-color:rgba(255,107,107,.3)}.btn.danger:hover{background:rgba(255,107,107,.12)}
+.btn.sm{height:30px;padding:0 11px;font-size:12.5px;border-radius:9px}
+.btn.lg{height:48px;padding:0 22px;font-size:15px;border-radius:14px}
+.btn:disabled{opacity:.4;cursor:default}
+.btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.glass{background:var(--glass);border:1px solid var(--line);border-radius:var(--r);backdrop-filter:blur(18px) saturate(1.3);box-shadow:var(--sh)}
+.pad{padding:18px 20px}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--hi)}
+.muted{color:var(--mute)}.dim{color:var(--dim)}
+.up{color:var(--good)}.down{color:var(--bad)}
+.pill{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.02em;background:rgba(255,255,255,.08);color:var(--dim);white-space:nowrap;text-transform:uppercase}
+.pill.review{background:rgba(255,210,58,.14);color:var(--warn)}.pill.approved{background:rgba(79,220,122,.14);color:var(--good)}.pill.archived{color:var(--mute)}
+.pill.admin{background:rgba(180,108,255,.16);color:#d3a8ff}.pill.editor{background:rgba(59,156,255,.16);color:var(--hi)}.pill.viewer{color:var(--dim)}
+.status{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--dim)}
+.status i{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 8px var(--good)}
+.status.busy i{background:var(--warn);box-shadow:0 0 8px var(--warn);animation:pulse 1s infinite}.status.error i{background:var(--bad);box-shadow:none}
+@keyframes pulse{50%{opacity:.3}}
+main{max-width:1320px;margin:0 auto;padding:28px 24px 80px}
+h1{margin:0;font-size:30px;letter-spacing:-.025em;line-height:1.15}
+.hp-map{display:block;width:100%;height:100%}
+/* hero */
+.hero{position:relative;height:min(620px,74vh);border-radius:24px;overflow:hidden;border:1px solid var(--line);margin-bottom:28px}
+.hero .hp-map{position:absolute;inset:0}
+.hero .shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(7,17,31,.96) 0%,rgba(7,17,31,.78) 38%,rgba(7,17,31,.15) 70%,rgba(7,17,31,.4) 100%)}
+.hero .copy{position:absolute;left:48px;top:50%;transform:translateY(-50%);max-width:560px}
+.hero h1{font-size:52px;line-height:1.04;letter-spacing:-.035em;margin:14px 0 16px}
+.hero h1 em{font-style:normal;background:linear-gradient(90deg,#7fd3ff,#4fdc7a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{font-size:17px;color:var(--dim);margin:0 0 26px}
+.hero .stats{position:absolute;right:24px;bottom:24px;display:flex;gap:10px}
+.hero .stat{padding:12px 16px;min-width:150px}
+.hero .stat b{display:block;font-size:22px;letter-spacing:-.02em}
+.hero .stat span{font-size:12px;color:var(--dim)}
+.hero .hp-map path.flow{stroke-dasharray:60 140;animation:flow 6s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-400}}
+.feature{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:34px}
+.feature .glass{padding:22px}
+.feature h4{margin:10px 0 6px;font-size:16px}.feature p{margin:0;color:var(--dim);font-size:13.5px}
+.feature .ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:rgba(59,156,255,.14);color:var(--hi);font-weight:800}
+.sec{display:flex;align-items:baseline;gap:10px;margin:0 0 14px}
+.sec h2{margin:0;font-size:18px;letter-spacing:-.01em}
+.sec small{color:var(--mute)}
+.wsgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.ws{display:block;text-decoration:none;overflow:hidden;transition:transform .15s,border-color .15s}
+.ws:hover{transform:translateY(-3px);border-color:var(--line2)}
+.ws .mapstrip{height:120px;position:relative;border-bottom:1px solid var(--line)}
+.ws .mapstrip .badge{position:absolute;left:14px;top:14px;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-weight:800;color:#06101e;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.ws .body{padding:14px 16px 16px}
+.ws h3{margin:0 0 4px;font-size:16px}
+.ws .meta{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:12.5px;color:var(--dim)}
+/* workspace */
+.wshead{display:flex;align-items:center;gap:16px;margin-bottom:22px}
+.wshead .badge{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;font-weight:800;font-size:20px;color:#06101e;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.wshead p{margin:4px 0 0;color:var(--dim)}
+.seg{display:inline-flex;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:12px;padding:3px;margin-bottom:18px}
+.seg a{padding:7px 14px;border-radius:9px;text-decoration:none;font-weight:600;font-size:13px;color:var(--dim)}
+.seg a.on{background:rgba(255,255,255,.1);color:#fff}
+.mc{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+.plans{display:flex;flex-direction:column;gap:10px}
+.prow{display:grid;grid-template-columns:150px minmax(0,1fr) 160px 130px;gap:16px;align-items:center;padding:10px;text-decoration:none;transition:border-color .15s,background .15s}
+.prow:hover{border-color:var(--line2);background:var(--glass2)}
+.prow .mini{height:88px;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.prow h3{margin:0 0 4px;font-size:15.5px}
+.prow .val{font-size:20px;font-weight:800;letter-spacing:-.02em;text-align:right}
+.prow .val small{display:block;font-size:11px;font-weight:500;color:var(--mute);letter-spacing:0}
+.prow .right{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.vbar{height:5px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden;margin-top:6px}
+.vbar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,#3b9cff,#4fdc7a)}
+.newrow{border:1.5px dashed var(--line2);border-radius:var(--r);padding:18px;display:flex;align-items:center;justify-content:center;gap:10px;color:var(--dim);font-weight:600}
+.newrow:hover{border-color:var(--hi);color:#fff;background:rgba(59,156,255,.06)}
+.ticker{display:flex;flex-direction:column;gap:12px;max-height:520px;overflow:auto}
+.ticker .it{display:flex;gap:10px;font-size:13px;line-height:1.4}
+.ticker .it time{display:block;font-size:11px;color:var(--mute)}
+.online{display:flex;flex-direction:column;gap:8px}
+.online .p{display:flex;align-items:center;gap:10px;font-size:13px}
+.online .p small{color:var(--mute);margin-left:auto;font-size:11.5px}
+/* plan page */
+.stage{position:relative;height:calc(100vh - 150px);min-height:560px;border-radius:22px;overflow:hidden;border:1px solid var(--line);background:#081426}
+.stage>.hp-map{position:absolute;inset:0}
+.ov{position:absolute;z-index:2}
+.ov.tl{left:18px;top:18px;max-width:460px;padding:18px 20px}
+.ov.tr{right:18px;top:18px;width:330px;padding:18px 20px}
+.ov.bl{left:18px;bottom:18px;display:flex;gap:10px;align-items:center;padding:10px 14px}
+.ov.br{right:18px;bottom:18px;display:flex;gap:8px;padding:10px}
+.bigv{font-size:40px;font-weight:800;letter-spacing:-.035em;line-height:1.05;margin:4px 0 2px}
+.pillar{display:grid;grid-template-columns:96px 1fr 74px;align-items:center;gap:10px;font-size:12.5px;margin-top:10px}
+.pillar .t{height:6px;border-radius:3px;background:rgba(255,255,255,.07);position:relative}
+.pillar .t i{position:absolute;top:0;bottom:0;border-radius:3px}
+.pillar b{text-align:right}
+.deltas{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.deltas div{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.deltas b{display:block;font-size:15px}.deltas span{font-size:11px;color:var(--mute)}
+select.inline{height:30px;border:1px solid var(--line2);border-radius:9px;padding:0 28px 0 10px;background:rgba(255,255,255,.06) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23a7b8cf' fill='none' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 10px center;appearance:none;font-size:12.5px;font-weight:600}
+select.inline option{background:#13233f}
+/* people */
+.ptable{width:100%;border-collapse:collapse}
+.ptable td,.ptable th{padding:12px 18px;border-bottom:1px solid var(--line);text-align:left;font-size:13.5px}
+.ptable th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);font-weight:700}
+.ptable tr:last-child td{border-bottom:0}
+.who{display:flex;align-items:center;gap:11px}
+.link{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(0,0,0,.18)}
+.link code{font:12px "JetBrains Mono",monospace;color:var(--hi);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.banner{display:flex;gap:10px;align-items:center;background:rgba(255,210,58,.08);color:#ffe28a;border:1px solid rgba(255,210,58,.22);border-radius:12px;padding:11px 15px;font-size:13px;margin-bottom:18px}
+.banner code{background:rgba(0,0,0,.3);padding:1px 6px;border-radius:5px}
+.empty{padding:40px;text-align:center;color:var(--dim)}
+.skel{display:grid;place-items:center;min-height:60vh;color:var(--mute)}
+.spin{width:24px;height:24px;border:2.5px solid rgba(127,211,255,.2);border-top-color:var(--hi);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+/* dialogs (shared markup) */
+#modal .back{position:fixed;inset:0;background:rgba(3,8,16,.62);backdrop-filter:blur(6px);display:grid;place-items:center;z-index:50;padding:16px;animation:fade .15s}
+@keyframes fade{from{opacity:0}}
+.dlg{background:linear-gradient(180deg,#14284a,#0e1d37);border:1px solid var(--line2);border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,.55);width:min(500px,100%);max-height:calc(100vh - 32px);overflow:auto;animation:pop .2s}
+@keyframes pop{from{transform:translateY(10px) scale(.98);opacity:.5}}
+.dlg .dh{padding:22px 24px 0;display:flex;gap:10px}
+.dlg h2{margin:0;font-size:19px;letter-spacing:-.01em}
+.dlg .sub,.dlg .note{color:var(--dim);font-size:13px;margin-top:3px}
+.dlg .x{margin-left:auto;width:32px;height:32px;border-radius:9px;color:var(--dim);font-size:20px}.dlg .x:hover{background:rgba(255,255,255,.08);color:#fff}
+.dlg .db{padding:16px 24px 24px;display:flex;flex-direction:column;gap:14px}
+.dlg .df{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+.f{display:flex;flex-direction:column;gap:7px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--dim)}
+.f i{font-style:normal;font-weight:500;text-transform:none;color:var(--mute);letter-spacing:0}
+.in{height:44px;border:1px solid var(--line2);border-radius:11px;padding:0 13px;background:rgba(0,0,0,.25);outline:none;font-size:14.5px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--fg)}
+textarea.in{height:auto;min-height:80px;padding:11px 13px;resize:vertical}
+.in:focus{border-color:var(--hi);box-shadow:0 0 0 3px rgba(127,211,255,.15)}
+.in::placeholder{color:var(--mute)}
+.swatches{display:flex;gap:9px}
+.swatches label{position:relative}.swatches input{position:absolute;opacity:0}
+.swatches span{display:block;width:30px;height:30px;border-radius:50%;cursor:pointer}
+.swatches input:checked+span{outline:2px solid #fff;outline-offset:3px}
+.choice{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.choice label{border:1px solid var(--line2);border-radius:12px;padding:10px 12px;cursor:pointer;font-weight:600;font-size:13px;color:var(--fg);text-transform:none;letter-spacing:0}
+.choice label small{display:block;color:var(--mute);font-weight:400;font-size:12px}
+.choice input{display:none}
+.choice label:has(input:checked){border-color:var(--hi);background:rgba(127,211,255,.08)}
+.menu{display:flex;flex-direction:column;gap:4px}
+.menu button{display:flex;align-items:center;gap:12px;padding:10px;border-radius:12px;text-align:left}
+.menu button:hover{background:rgba(255,255,255,.06)}
+.menu small{display:block;color:var(--mute);font-size:12px}
+.danger-zone{display:flex;align-items:center;gap:12px;border:1px solid rgba(255,107,107,.25);border-radius:12px;padding:12px 14px;font-size:13px}
+.danger-zone.soft{border-color:var(--line)}
+.danger-zone>span{flex:1}.danger-zone small{display:block;color:var(--mute);font-size:12px}
+#toasts{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;z-index:60}
+.toast{background:rgba(20,40,74,.96);border:1px solid var(--line2);color:#fff;padding:10px 16px;border-radius:999px;font-size:13px;box-shadow:0 14px 40px rgba(0,0,0,.45);animation:pop .2s;display:flex;gap:8px;align-items:center}
+.toast.good::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--good);box-shadow:0 0 8px var(--good)}
+.toast.bad{border-color:rgba(255,107,107,.4)}.toast.bad::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--bad)}
+@media (max-width:1100px){.mc{grid-template-columns:1fr}.prow{grid-template-columns:120px 1fr 120px}.prow .right{display:none}.feature{grid-template-columns:1fr}.ov.tr{display:none}}
+@media (max-width:760px){.hero h1{font-size:36px}.hero .copy{left:22px;right:22px}.hero .stats{display:none}#top .chip{display:none}main{padding:18px 16px 60px}.prow{grid-template-columns:1fr}.prow .mini{height:120px}.prow .val{text-align:left}}
+</style>
+</head>
+<body>
+<header id="top"></header>
+<main id="main"></main>
+<div id="modal"></div>
+<div id="toasts"></div>
+<script type="module">
+import { createCore, paint, esc, money, num, ago, initials, STAGES, ROLES, stageLabel, roleLabel, planStatus, editsSummary, cityMap, loadCity, heroStreets, valueLabel } from '../shared/core.js';
+import { bindActions } from '../shared/actions.js';
+import { modals } from '../shared/modals.js';
+
+const $ = (s) => document.querySelector(s);
+const MAP = { bg: '#081426', minor: '#1a2d4c', major: '#2a4670', bld: '#0f213b', tall: '#18335a', edit: '#4fdc7a' };
+const ICON = {
+  plus: '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+  play: '<svg viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z" fill="currentColor" stroke="none"/></svg>',
+  user: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5M19 8v6M16 11h6"/></svg>',
+  link: '<svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/></svg>',
+  gear: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>',
+  copy: '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 012-2h8"/></svg>',
+};
+
+const core = createCore({ onRender: render, onToast: toast });
+bindActions(core);
+function toast(msg, kind) {
+  const t = document.createElement('div'); t.className = `toast ${kind || ''}`; t.textContent = msg;
+  $('#toasts').append(t); setTimeout(() => t.remove(), kind === 'bad' ? 5200 : 3000);
+}
+const av = (p, cls = '') => `<span class="av ${cls} ${p.online ? 'on' : ''}" style="background:${esc(p.color)}" title="${esc(p.name)}${p.me ? ' (you)' : ''}">${esc(initials(p.name))}</span>`;
+const faces = (list, n = 4, cls = 'sm') => list.length ? `<span class="faces">${list.slice(0, n).map((p) => av(p, cls)).join('')}${list.length > n ? `<span class="av ${cls}" style="background:#6f84a1">+${list.length - n}</span>` : ''}</span>` : '';
+const status = (p) => { const s = planStatus(p); return `<span class="status ${s.key}" title="${esc(s.detail || '')}"><i></i>${esc(s.label)}</span>`; };
+const vcls = (p) => (!p.streets && !p.blocks ? 'muted' : p.value?.total >= 0 ? 'up' : 'down');
+
+function top(v) {
+  const r = v.route, w = v.ws, p = v.plan;
+  const sys = v.st.connected ? (v.engine === 'up' ? ['ok', 'Live · engine ready'] : v.engine === 'probing' ? ['busy', 'Live · checking engine'] : ['bad', 'Live · engine offline']) : v.connecting ? ['busy', 'Connecting…'] : ['bad', 'Offline'];
+  return `<a class="brand" href="#/"><span class="logo"></span><span>CommonGround</span></a>
+    <nav class="crumb">${w ? `<span class="sep">/</span><span class="wsdot" style="background:${esc(w.color)}"></span><a href="#/w/${w.id}">${esc(w.name)}</a>` : ''}${p ? `<span class="sep">/</span><a href="#/w/${w.id}/p/${p.id}">${esc(p.name)}</a>` : ''}</nav>
+    <span class="grow"></span>
+    ${w ? faces(w.here, 5) : ''}
+    <span class="chip"><i class="${sys[0]}"></i>${sys[1]}</span>
+    <button class="btn sm ghost" data-act="modal" data-modal="join">${ICON.link}Join</button>
+    <button class="me" data-act="modal" data-modal="account" title="Switch person">${av({ ...(v.me || { color: '#6f84a1' }), name: v.account.name || v.me?.name || '?', online: v.st.connected })}<span style="font-weight:600;font-size:13px;padding-right:6px">${esc(v.account.name || 'You')}</span></button>`;
+}
+
+function home(v) {
+  const ws = v.st.workspaces;
+  const total = ws.reduce((n, w) => n + w.plans.length, 0);
+  const hero = `<section class="hero">${cityMap({ streets: heroStreets(), colors: { ...MAP, bg: '#07111f' } })}<div class="shade"></div>
+      <div class="copy"><span class="eyebrow">Cal Hacks 2026 · 270,795 simulated people</span>
+        <h1>One city. <em>Your whole team</em> redesigning it, live.</h1>
+        <p>Create a workspace, invite colleagues, and edit the same simulated San Francisco together. Every change replans five days of commutes, lunches and chance encounters.</p>
+        <div class="row"><button class="btn primary lg" data-act="modal" data-modal="create-ws">${ICON.plus}Create a workspace</button><button class="btn lg" data-act="modal" data-modal="join">${ICON.link}I have an invite</button></div></div>
+      <div class="stats"><div class="glass stat"><b>${ws.length}</b><span>workspace${ws.length === 1 ? '' : 's'} you’re in</span></div><div class="glass stat"><b>${total}</b><span>plans in them</span></div><div class="glass stat"><b class="up">${v.st.connected ? 'Live' : '—'}</b><span>sync over SpacetimeDB</span></div></div></section>`;
+  const features = `<div class="feature">
+      <div class="glass"><div class="ic">01</div><h4>Workspaces for teams</h4><p>Plans, people and the full history of who changed what, in one place per project.</p></div>
+      <div class="glass"><div class="ic">02</div><h4>Invite with a link</h4><p>Admins hand out editor or viewer links. Colleagues pick a name and they’re in.</p></div>
+      <div class="glass"><div class="ic">03</div><h4>Same simulation, same moment</h4><p>Open a plan in 3D: edits, results and everyone’s cursors sync in about a second.</p></div></div>`;
+  const list = ws.length ? `<div class="sec"><h2>Your workspaces</h2><small>${ws.length}</small><span class="grow"></span><button class="btn sm" data-act="modal" data-modal="create-ws">${ICON.plus}New workspace</button></div>
+    <div class="wsgrid">${ws.map((w) => {
+      const best = w.plans.filter((p) => p.value && (p.streets || p.blocks)).sort((a, b) => b.value.total - a.value.total)[0];
+      const edits = w.plans.flatMap((p) => [...(core.planState(p.id)?.streets || [])]);
+      return `<a class="glass ws" href="#/w/${w.id}"><div class="mapstrip">${cityMap({ streets: edits, colors: MAP, crop: edits.length ? 'edits' : 'fit', buildings: false })}<span class="badge" style="background:${esc(w.color)}">${esc(initials(w.name))}</span></div>
+        <div class="body"><div class="row" style="justify-content:space-between"><h3>${esc(w.name)}</h3><span class="pill ${w.myRole}">${roleLabel(w.myRole)}</span></div>
+          <div class="dim" style="font-size:13px;min-height:20px">${esc(w.description || `${w.members.length} member${w.members.length === 1 ? '' : 's'}`)}</div>
+          <div class="meta"><span>${w.plans.length} plan${w.plans.length === 1 ? '' : 's'}${best ? ` · best <b class="up">${money(best.value.total)}</b>` : ''}</span>${faces(w.members, 4)}</div></div></a>`;
+    }).join('')}</div>` : '';
+  return hero + (ws.length ? list : features);
+}
+
+function wsHeader(v, w, sub) {
+  return `<div class="wshead"><span class="badge" style="background:${esc(w.color)}">${esc(initials(w.name))}</span>
+      <div class="grow" style="min-width:0"><div class="row"><h1>${esc(w.name)}</h1><span class="pill ${w.myRole}">${roleLabel(w.myRole)}</span></div>${w.description ? `<p>${esc(w.description)}</p>` : ''}</div>
+      ${v.can.admin ? `<button class="btn primary" data-act="modal" data-modal="invite" data-arg="${w.id}">${ICON.user}Invite people</button>` : ''}
+      <button class="btn ghost" data-act="modal" data-modal="ws-settings" data-arg="${w.id}" aria-label="Settings">${ICON.gear}</button></div>
+    <div class="seg"><a href="#/w/${w.id}" class="${sub === 'plans' ? 'on' : ''}">Plans · ${w.plans.length}</a><a href="#/w/${w.id}/people" class="${sub === 'people' ? 'on' : ''}">People · ${w.members.length}</a></div>`;
+}
+
+function feed(list, n = 18) {
+  const it = list.slice(-n).reverse();
+  return it.length ? `<div class="ticker">${it.map((a) => `<div class="it"><span class="av sm" style="background:${esc(a.color)}">${a.who === 'Engine' ? '⚙' : esc(initials(a.who))}</span><div><b>${esc(a.who)}</b> <span class="dim">${esc(a.text)}</span><time>${ago(a.at)}</time></div></div>`).join('')}</div>` : '<div class="muted">Nothing yet.</div>';
+}
+
+function workspace(v, w) {
+  const max = Math.max(1, ...w.plans.map((p) => Math.abs(p.value?.total || 0)));
+  const rows = w.plans.map((p) => {
+    const ps = core.planState(p.id), x = p.value?.total || 0;
+    return `<a class="glass prow" href="#/w/${w.id}/p/${p.id}"><div class="mini">${cityMap({ streets: ps?.streets, colors: MAP, crop: 'edits', thin: true })}</div>
+      <div style="min-width:0"><div class="row" style="gap:8px"><h3>${esc(p.name)}</h3><span class="pill ${p.stage}">${stageLabel(p.stage)}</span></div>
+        <div class="dim" style="font-size:12.5px">${esc(editsSummary(p))}</div><div style="margin-top:6px">${status(p)}</div></div>
+      <div><div class="val ${vcls(p)}">${valueLabel(p)}<small>city value vs today</small></div><div class="vbar"><i style="width:${p.streets || p.blocks ? Math.max(2, Math.abs(x) / max * 100) : 0}%;${x < 0 ? 'background:var(--bad)' : ''}"></i></div></div>
+      <div class="right">${faces(p.here)}<span class="muted" style="font-size:12px">${p.here.length ? `${p.here.length} simulating` : ago(p.updatedAt)}</span></div></a>`;
+  }).join('');
+  const online = w.members.filter((m) => m.online);
+  return wsHeader(v, w, 'plans') + `<div class="mc"><div class="plans">${rows}${v.can.edit ? `<button class="newrow" data-act="modal" data-modal="new-plan" data-arg="${w.id}">${ICON.plus.replace('<svg', '<svg width="18" height="18" style="fill:none;stroke:currentColor;stroke-width:2"')} New plan</button>` : ''}</div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="glass pad"><div class="eyebrow" style="margin-bottom:12px">Online now · ${online.length}</div><div class="online">${online.map((m) => `<div class="p">${av(m)}<b>${esc(m.name)}</b>${m.me ? '<span class="muted">you</span>' : ''}<small>${m.scenarioId ? `in ${esc(w.plans.find((p) => p.id === m.scenarioId)?.name || 'a plan')}` : m.workspaceId === w.id ? 'here' : 'elsewhere'}</small></div>`).join('') || '<span class="muted">Nobody else right now.</span>'}</div></div>
+      <div class="glass pad"><div class="eyebrow" style="margin-bottom:12px">Live activity</div>${feed(w.activity)}</div></div></div>`;
+}
+
+function people(v, w) {
+  const admin = v.can.admin;
+  const inv = admin ? `<div class="glass pad" style="margin-bottom:18px"><div class="row" style="justify-content:space-between;margin-bottom:12px"><div><div class="eyebrow">Invite links</div><div class="dim" style="font-size:13px">Anyone with a link joins with its role.</div></div>
+      <form class="row" data-form="invite"><input type="hidden" name="ws" value="${w.id}"><select class="inline" name="role">${ROLES.map((r) => `<option value="${r.key}" ${r.key === 'editor' ? 'selected' : ''}>${r.label}</option>`).join('')}</select><button class="btn sm">${ICON.plus}New link</button></form></div>
+      <div style="display:flex;flex-direction:column;gap:8px">${w.invites.map((i) => `<div class="link"><span class="pill ${i.role}">${roleLabel(i.role)}</span><code>${esc(core.inviteUrl(i.code))}</code><span class="muted" style="font-size:12px">${i.uses} joined</span><button class="btn sm" data-act="copy-invite" data-code="${esc(i.code)}">${ICON.copy}Copy</button><button class="btn sm ghost" data-act="revoke" data-code="${esc(i.code)}">Revoke</button></div>`).join('') || '<span class="muted">No active links.</span>'}</div></div>` : `<div class="banner">Only admins can invite people. Ask an admin of ${esc(w.name)} for a link.</div>`;
+  return wsHeader(v, w, 'people') + inv + `<div class="glass" style="overflow:hidden"><table class="ptable"><thead><tr><th>Person</th><th>Role</th><th>Status</th><th></th></tr></thead><tbody>
+    ${w.members.map((m) => `<tr><td><div class="who">${av(m, 'lg')}<div><b>${esc(m.name)}</b>${m.me ? ' <span class="muted">· you</span>' : ''}<div class="muted" style="font-size:12px">joined ${ago(m.joinedAt)}</div></div></div></td>
+      <td>${admin && !m.me ? `<select class="inline" data-act="role" data-ws="${w.id}" data-member="${m.id}">${ROLES.map((r) => `<option value="${r.key}" ${r.key === m.role ? 'selected' : ''}>${r.label}</option>`).join('')}</select>` : `<span class="pill ${m.role}">${roleLabel(m.role)}</span>`}</td>
+      <td class="dim">${m.online ? '<span class="up">●</span> online' : `seen ${ago(m.lastSeen)}`}</td>
+      <td style="text-align:right">${m.me ? `<button class="btn sm ghost" data-act="leave" data-ws="${w.id}">Leave</button>` : admin ? `<button class="btn sm ghost" data-act="remove-member" data-ws="${w.id}" data-member="${m.id}" data-name="${esc(m.name)}">Remove</button>` : ''}</td></tr>`).join('')}</tbody></table></div>
+    <div class="row dim" style="margin-top:14px;font-size:12.5px;gap:18px">${ROLES.map((r) => `<span><span class="pill ${r.key}">${r.label}</span> ${r.hint}</span>`).join('')}</div>`;
+}
+
+function planPage(v, w, p) {
+  const ps = v.ps, res = ps?.result, d = res?.delta || {}, val = p.value;
+  const empty = !p.streets && !p.blocks, ready = p.resultVersion > 0 && val && !empty;
+  const P = [['mobility', 'Mobility', '#3b9cff'], ['social', 'Social', '#ff4fa3'], ['economy', 'Economy', '#ffb547'], ['environment', 'Environment', '#4fdc7a']];
+  const max = Math.max(1, ...P.map(([k]) => Math.abs(val?.[k] || 0)));
+  return `<div class="stage">${cityMap({ streets: ps?.streets, colors: MAP, crop: p.streets ? 'edits' : 'fit' })}
+    <div class="glass ov tl"><div class="row" style="gap:8px;margin-bottom:6px"><span class="pill ${p.stage}">${stageLabel(p.stage)}</span>${status(p)}</div>
+      <h1 style="font-size:26px">${esc(p.name)}</h1>
+      <div class="dim" style="font-size:13.5px;margin-top:4px">${esc(p.description || 'No description yet.')}</div>
+      <div class="muted" style="font-size:12px;margin-top:8px">${esc(editsSummary(p))} · by ${esc(p.createdBy)} · ${ago(p.updatedAt)}</div>
+      <div class="row" style="margin-top:14px"><a class="btn primary" href="${esc(core.simUrl(w.id, p.id))}">${ICON.play}Open in 3D simulator</a>
+        ${empty && v.can.edit ? `<button class="btn" data-act="hero-edit" data-plan="${p.id}">Try: car-free 2nd St</button>` : ''}</div></div>
+    <div class="glass ov tr"><div class="eyebrow">City value vs today</div>
+      <div class="bigv ${vcls(p)}">${valueLabel(p)}</div><div class="muted" style="font-size:12px">${ready ? 'per year, after five replanning days' : empty ? 'Make an edit to see the impact' : planStatus(p).label}</div>
+      ${ready ? P.map(([k, l, c]) => { const x = val[k] || 0, wd = Math.abs(x) / max * 50; return `<div class="pillar"><span class="dim">${l}</span><div class="t"><i style="background:${x >= 0 ? c : 'var(--bad)'};left:${x >= 0 ? 50 : 50 - wd}%;width:${wd}%"></i></div><b class="${x >= 0 ? 'up' : 'down'}">${money(x, { unit: '' })}</b></div>`; }).join('') : ''}
+      ${ready && d.trips ? `<div class="deltas"><div><b class="${d.trips.car <= 0 ? 'up' : 'down'}">${num(d.trips.car)}</b><span>car trips/day</span></div><div><b class="${d.ped_trips >= 0 ? 'up' : 'down'}">${num(d.ped_trips)}</b><span>walking trips/day</span></div><div><b class="${d.revenue >= 0 ? 'up' : 'down'}">${money(d.revenue, { unit: '' })}</b><span>shop revenue/day</span></div><div><b class="${d.new_ties >= 0 ? 'up' : 'down'}">${num(d.new_ties)}</b><span>new acquaintances</span></div></div>` : ''}
+      ${p.status === 'error' ? `<div class="banner" style="margin:12px 0 0">${esc(p.error)}</div><button class="btn sm" data-act="recompute" data-plan="${p.id}">Retry</button>` : ''}</div>
+    <div class="glass ov bl">${p.here.length ? `${faces(p.here, 5)}<span class="dim" style="font-size:13px">${p.here.length} in the simulator now</span>` : '<span class="dim" style="font-size:13px">Nobody in the simulator yet</span>'}</div>
+    <div class="glass ov br">${v.can.edit ? `<select class="inline" data-act="stage" data-plan="${p.id}" title="Workflow stage">${STAGES.map((s) => `<option value="${s.key}" ${s.key === p.stage ? 'selected' : ''}>${s.label}</option>`).join('')}</select>
+      <button class="btn sm" data-act="modal" data-modal="edit-plan" data-arg="${p.id}">Rename</button><button class="btn sm" data-act="duplicate" data-plan="${p.id}">Duplicate</button>
+      <button class="btn sm" data-act="reset-plan" data-plan="${p.id}" ${empty ? 'disabled' : ''}>Reset</button><button class="btn sm danger" data-act="delete-plan" data-plan="${p.id}">Delete</button>` : '<span class="dim" style="font-size:12.5px;padding:0 6px">View only</span>'}</div>
+  </div>
+  <div class="glass pad" style="margin-top:18px"><div class="eyebrow" style="margin-bottom:12px">Plan activity</div>${feed(w.activity.filter((a) => a.scenarioId === p.id), 10)}</div>`;
+}
+
+function render(core) {
+  const v = core.view();
+  paint($('#top'), top(v));
+  let html;
+  if (v.offline) html = `<div class="banner">Can’t reach the live server. Run <code>spacetime start</code> and publish the module (see <code>backend/live/README.md</code>), then reload.</div>` + home(v);
+  else if (v.connecting) html = `<div class="skel"><div class="spin"></div></div>`;
+  else {
+    const r = v.route;
+    if (r.name === 'join') html = `<div class="skel"><div style="text-align:center"><div class="spin" style="margin:0 auto 14px"></div>Joining the workspace…</div></div>`;
+    else if (r.wsId && !v.ws) html = `<div class="glass empty"><h2>Workspace not found</h2><p>It may have been deleted, or you’re not a member.</p><a class="btn" href="#/">Go home</a></div>`;
+    else if (r.name === 'plan') html = v.plan ? planPage(v, v.ws, v.plan) : `<div class="glass empty">That plan was deleted. <a href="#/w/${v.ws.id}">Back to ${esc(v.ws.name)}</a></div>`;
+    else if (r.name === 'people') html = people(v, v.ws);
+    else if (v.ws) html = workspace(v, v.ws);
+    else html = home(v);
+    if (v.engine === 'down') html = `<div class="banner">The simulation engine isn’t reachable, so new edits won’t be simulated. Start it with <code>./run.sh</code> (or <code>run.ps1</code> on Windows).</div>` + html;
+  }
+  paint($('#main'), html);
+  paint($('#modal'), modals(core, v, { av, icons: ICON }));
+  document.title = `${v.plan ? `${v.plan.name} · ` : ''}${v.ws ? `${v.ws.name} · ` : ''}CommonGround`;
+}
+loadCity().then(() => core.render());
+</script>
+</body>
+</html>

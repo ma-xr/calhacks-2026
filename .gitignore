@@ -33,6 +33,8 @@ mockup/cities/*/live.mjs
 # Droid run artifacts
 backend/droid/runs/
 
+# Copied from backend/live/client/dist by run.sh / run.ps1 / npm run bundle
+mockup/site/live.mjs
 # Large context downloads for the other cities (re-fetch with scripts/fetch_city.py <city>)
 data/raw/chicago/osm_context.json
 data/raw/nyc/osm_context.json

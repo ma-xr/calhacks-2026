@@ -1,0 +1,22 @@
+{
+  "name": "commonground-workspaces",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SpacetimeDB module for the CommonGround website: workspaces, members, invites and shared plans",
+  "scripts": {
+    "build": "spacetime build",
+    "publish:local": "spacetime publish commonground --server local --yes",
+    "generate": "spacetime generate --lang typescript --out-dir client/module_bindings --module-path .",
+    "build:client": "npm run generate && npm run bundle",
+    "bundle": "esbuild client/live.ts --bundle --format=esm --platform=browser --target=es2022 --outfile=client/dist/live.mjs && node -e \"require('fs').copyFileSync('client/dist/live.mjs','../../mockup/site/live.mjs')\"",
+    "typecheck": "tsc --noEmit -p client",
+    "e2e": "node scripts/e2e.mjs --fresh"
+  },
+  "dependencies": {
+    "spacetimedb": "2.13.*"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.2",
+    "typescript": "~5.6.2"
+  }
+}

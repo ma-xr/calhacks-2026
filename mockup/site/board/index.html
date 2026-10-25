@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CommonGround · Civic Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f5f0e6; --card:#fffdf8; --ink:#1f1a14; --dim:#5b5248; --mute:#8f857a; --line:#e3dacb; --line2:#d3c7b4;
+  --accent:#c2410c; --accent-soft:#fbe7da; --green:#2f7d4f; --green-soft:#e3f1e7; --gold:#a16207; --gold-soft:#f8eccc; --red:#b42318; --red-soft:#fbe4e1;
+  --edit:#2f7d4f; --r:14px; --sh:0 1px 0 rgba(31,26,20,.04),0 6px 18px rgba(31,26,20,.06);
+  --serif:Fraunces,Georgia,"Times New Roman",serif;
+}
+*{box-sizing:border-box} [hidden]{display:none!important}
+html,body{margin:0;min-height:100%}
+body{background:var(--paper);color:var(--ink);font:14px/1.55 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;
+  background-image:radial-gradient(rgba(31,26,20,.035) 1px,transparent 1px);background-size:14px 14px}
+a{color:inherit} button,input,select,textarea{font:inherit;color:inherit} button{cursor:pointer;border:0;background:none;padding:0}
+h1,h2,h3,.serif{font-family:var(--serif);font-weight:600;letter-spacing:-.01em}
+/* masthead */
+#top{border-bottom:2px solid var(--ink);background:var(--paper);position:sticky;top:0;z-index:20}
+.mast{max-width:1360px;margin:0 auto;display:flex;align-items:center;gap:18px;height:64px;padding:0 24px}
+.mast .name{font-family:var(--serif);font-size:22px;font-weight:700;text-decoration:none;letter-spacing:-.02em;display:flex;align-items:center;gap:10px}
+.mast .name i{width:26px;height:26px;border:2px solid var(--ink);border-radius:50%;display:inline-grid;place-items:center;font-style:normal;font-size:12px}
+.mast nav{display:flex;gap:4px;min-width:0;overflow:auto}
+.mast nav a{padding:6px 11px;border-radius:999px;text-decoration:none;font-weight:600;font-size:13px;color:var(--dim);white-space:nowrap;display:flex;align-items:center;gap:7px}
+.mast nav a:hover{background:rgba(31,26,20,.06);color:var(--ink)}
+.mast nav a.on{background:var(--ink);color:var(--paper)}
+.mast nav a .d{width:8px;height:8px;border-radius:50%}
+.grow{flex:1}
+.sys{font-size:12px;color:var(--dim);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.sys i{width:7px;height:7px;border-radius:50%;background:var(--mute)}.sys i.ok{background:var(--green)}.sys i.busy{background:var(--gold)}.sys i.bad{background:var(--red)}
+.me{display:flex;align-items:center;gap:8px;padding:4px 10px 4px 4px;border:1.5px solid var(--ink);border-radius:999px;font-weight:600;font-size:13px;background:var(--card)}
+.me:hover{background:#fff}
+.av{width:28px;height:28px;border-radius:50%;display:inline-grid;place-items:center;font-size:10.5px;font-weight:700;color:#fff;flex:none;position:relative;border:1.5px solid rgba(31,26,20,.15)}
+.av.sm{width:22px;height:22px;font-size:9px}.av.lg{width:40px;height:40px;font-size:13px}
+.av.on::after{content:"";position:absolute;right:-2px;bottom:-2px;width:9px;height:9px;border-radius:50%;background:#3fae6a;border:2px solid var(--card)}
+.faces{display:flex}.faces .av{margin-left:-7px;border:2px solid var(--card)}.faces .av:first-child{margin-left:0}
+/* common */
+main{max-width:1360px;margin:0 auto;padding:28px 24px 80px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:36px;padding:0 15px;border-radius:999px;font-weight:600;font-size:13.5px;border:1.5px solid var(--ink);background:var(--card);white-space:nowrap;text-decoration:none;transition:transform .1s,box-shadow .1s,background .1s}
+.btn:hover{box-shadow:3px 3px 0 var(--ink);transform:translate(-1px,-1px)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{box-shadow:3px 3px 0 var(--ink)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--dim)}.btn.ghost:hover{box-shadow:none;transform:none;background:rgba(31,26,20,.06);color:var(--ink)}
+.btn.danger{color:var(--red);border-color:var(--red)}
+.btn.sm{height:30px;padding:0 12px;font-size:12.5px}
+.btn.lg{height:46px;padding:0 22px;font-size:15px}
+.btn:disabled{opacity:.4;pointer-events:none}
+.btn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.card{background:var(--card);border:1.5px solid var(--line2);border-radius:var(--r);box-shadow:var(--sh)}
+.pad{padding:18px 20px}
+.kicker{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--mute)}.dim{color:var(--dim)}
+.up{color:var(--green)}.down{color:var(--red)}
+.pill{display:inline-flex;align-items:center;height:22px;padding:0 9px;border-radius:999px;font-size:11px;font-weight:700;background:rgba(31,26,20,.07);color:var(--dim);white-space:nowrap}
+.pill.admin{background:var(--accent-soft);color:var(--accent)}.pill.editor{background:var(--green-soft);color:var(--green)}.pill.viewer{background:rgba(31,26,20,.06)}
+.pill.review{background:var(--gold-soft);color:var(--gold)}.pill.approved{background:var(--green-soft);color:var(--green)}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--dim)}
+.status i{width:7px;height:7px;border-radius:50%;background:var(--green)}
+.status.busy i{background:var(--gold);animation:pulse 1s infinite}.status.error i{background:var(--red)}
+@keyframes pulse{50%{opacity:.3}}
+.hp-map{display:block;width:100%;height:100%}
+/* front page */
+.front{display:grid;grid-template-columns:1.1fr .9fr;gap:36px;align-items:center;padding:20px 0 34px;border-bottom:1.5px solid var(--ink);margin-bottom:30px}
+.front h1{font-size:62px;line-height:1;margin:12px 0 18px;letter-spacing:-.03em}
+.front h1 em{font-style:italic;color:var(--accent)}
+.front p.lede{font-size:17.5px;color:var(--dim);max-width:560px;margin:0 0 24px}
+.front .plate{border:1.5px solid var(--ink);border-radius:6px;overflow:hidden;background:#efe7d8;height:380px;position:relative;box-shadow:8px 8px 0 var(--ink)}
+.front .plate figcaption{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-top:1.5px solid var(--ink);padding:8px 12px;font-size:12px;color:var(--dim);font-style:italic;font-family:var(--serif)}
+.cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1.5px solid var(--ink);border-radius:6px;background:var(--card);margin-bottom:34px}
+.cols3>div{padding:20px 22px;border-left:1.5px solid var(--ink)}.cols3>div:first-child{border-left:0}
+.cols3 .n{font-family:var(--serif);font-size:34px;color:var(--accent);line-height:1}
+.cols3 h3{margin:8px 0 6px;font-size:19px}.cols3 p{margin:0;color:var(--dim);font-size:13.5px}
+.sec{display:flex;align-items:baseline;gap:10px;margin:0 0 14px}
+.sec h2{margin:0;font-size:24px}
+.wsgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px}
+.ws{display:block;text-decoration:none;padding:18px;transition:transform .12s,box-shadow .12s}
+.ws:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--ink);border-color:var(--ink)}
+.ws h3{margin:10px 0 4px;font-size:21px}
+.ws .bar{height:6px;border-radius:3px;margin:-18px -18px 0}
+.ws .foot{display:flex;justify-content:space-between;align-items:center;border-top:1px dashed var(--line2);margin-top:14px;padding-top:10px;font-size:12.5px;color:var(--dim)}
+/* workspace */
+.wshead{display:flex;align-items:flex-end;gap:18px;padding-bottom:18px;border-bottom:1.5px solid var(--ink);margin-bottom:22px}
+.wshead h1{font-size:40px;margin:4px 0 0;line-height:1.05}
+.wshead p{margin:6px 0 0;color:var(--dim);max-width:720px}
+.tabs{display:flex;gap:2px;margin-bottom:20px}
+.tabs a{padding:8px 14px;text-decoration:none;font-weight:600;font-size:13.5px;color:var(--dim);border-bottom:2.5px solid transparent}
+.tabs a.on{color:var(--ink);border-color:var(--accent)}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start}
+.board{display:grid;grid-template-columns:repeat(4,minmax(200px,1fr));gap:14px;overflow-x:auto;padding-bottom:6px}
+.col{background:rgba(31,26,20,.035);border:1.5px dashed transparent;border-radius:var(--r);padding:10px;min-height:340px;display:flex;flex-direction:column;gap:10px;transition:background .12s,border-color .12s}
+.col.over{background:var(--accent-soft);border-color:var(--accent)}
+.col h4{margin:2px 4px 4px;display:flex;align-items:center;gap:8px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.col h4 .c{margin-left:auto;font-weight:600;letter-spacing:0;color:var(--mute)}
+.col h4 i{width:9px;height:9px;border-radius:50%}
+.col .hint{font-size:11.5px;color:var(--mute);margin:-6px 4px 2px}
+.ticket{display:block;text-decoration:none;background:var(--card);border:1.5px solid var(--line2);border-radius:12px;overflow:hidden;box-shadow:var(--sh);cursor:pointer;transition:transform .1s,box-shadow .1s,border-color .1s}
+.ticket:hover{border-color:var(--ink);box-shadow:4px 4px 0 var(--ink);transform:translate(-1px,-1px)}
+.ticket[draggable=true]{cursor:grab}
+.ticket.fresh{animation:fresh 1.6s ease-out}
+@keyframes fresh{0%{box-shadow:0 0 0 4px var(--accent);transform:scale(1.03)}100%{box-shadow:var(--sh)}}
+.ticket .mv{margin-top:8px;width:100%;height:28px;border:1.5px solid var(--line2);border-radius:999px;padding:0 26px 0 10px;font-size:12px;font-weight:600;color:var(--dim);cursor:pointer;
+  background:var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235b5248' fill='none' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 10px center;appearance:none}
+.ticket .mv:hover{border-color:var(--ink);color:var(--ink)}
+.ticket.dragging{opacity:.45}
+.ticket .mini{height:84px;border-bottom:1.5px solid var(--line);background:#efe7d8}
+.ticket .b{padding:10px 12px 11px}
+.ticket h3{margin:0 0 2px;font-size:16px;line-height:1.25}
+.ticket .v{font-family:var(--serif);font-size:19px;font-weight:600}
+.ticket .m{display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:11.5px;color:var(--mute)}
+.addt{border:1.5px dashed var(--line2);border-radius:12px;padding:12px;color:var(--dim);font-weight:600;font-size:13px;text-align:center}
+.addt:hover{border-color:var(--accent);color:var(--accent);background:var(--card)}
+.rail{display:flex;flex-direction:column;gap:18px}
+.rail h4{margin:0 0 10px;font-family:var(--serif);font-size:18px;font-weight:600}
+.team{display:flex;flex-direction:column;gap:9px}
+.team .p{display:flex;align-items:center;gap:10px;font-size:13px}
+.team .p small{margin-left:auto;color:var(--mute);font-size:11.5px}
+.log{display:flex;flex-direction:column;gap:0;font-size:13px}
+.log .it{padding:9px 0;border-top:1px dashed var(--line2);line-height:1.4}.log .it:first-child{border-top:0}
+.log time{display:block;font-size:11px;color:var(--mute)}
+/* plan */
+.article{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:30px;align-items:start}
+.article h1{font-size:46px;line-height:1.04;margin:8px 0 10px}
+.article .lede{font-size:17px;color:var(--dim);margin:0 0 18px;font-family:var(--serif);font-style:italic}
+.byline{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--dim);padding:10px 0;border-top:1.5px solid var(--ink);border-bottom:1px solid var(--line2);margin-bottom:18px}
+.figure{border:1.5px solid var(--ink);border-radius:6px;overflow:hidden;height:420px;background:#efe7d8;box-shadow:6px 6px 0 var(--ink)}
+.figcap{font-family:var(--serif);font-style:italic;color:var(--dim);font-size:13px;margin:12px 0 22px}
+.scores{border:1.5px solid var(--ink);border-radius:6px;background:var(--card)}
+.scores .big{padding:18px 20px;border-bottom:1.5px solid var(--ink)}
+.scores .big .v{font-family:var(--serif);font-size:44px;font-weight:700;line-height:1;letter-spacing:-.02em;margin-top:6px}
+.scores .ln{display:flex;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--line);font-size:13.5px}
+.scores .ln:last-child{border-bottom:0}
+.scores .ln b{font-family:var(--serif);font-size:15px}
+.stages{display:flex;border:1.5px solid var(--ink);border-radius:999px;overflow:hidden;background:var(--card)}
+.stages button{flex:1;padding:7px 10px;font-size:12.5px;font-weight:600;color:var(--dim);border-left:1.5px solid var(--ink)}
+.stages button:first-child{border-left:0}
+.stages button.on{background:var(--ink);color:var(--paper)}
+.stages button:disabled{cursor:default}
+/* people */
+.roster{width:100%;border-collapse:collapse;background:var(--card);border:1.5px solid var(--ink);border-radius:6px;overflow:hidden}
+.roster td,.roster th{padding:12px 16px;border-bottom:1px solid var(--line);text-align:left;font-size:13.5px}
+.roster th{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);background:rgba(31,26,20,.04)}
+.roster tr:last-child td{border-bottom:0}
+.who{display:flex;align-items:center;gap:10px}
+.link{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px dashed var(--line2);border-radius:10px;background:var(--card)}
+.link code{font:12px ui-monospace,Menlo,monospace;color:var(--dim);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+select.inline{height:30px;border:1.5px solid var(--line2);border-radius:999px;padding:0 28px 0 12px;background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235b5248' fill='none' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 11px center;appearance:none;font-size:12.5px;font-weight:600}
+.banner{display:flex;gap:10px;align-items:center;background:var(--gold-soft);color:var(--gold);border:1.5px solid #e9d39a;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:18px}
+.banner code{background:var(--card);padding:1px 6px;border-radius:5px}
+.empty{padding:40px;text-align:center;color:var(--dim)}
+.skel{display:grid;place-items:center;min-height:60vh;color:var(--mute)}
+.spin{width:24px;height:24px;border:2.5px solid var(--line2);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+/* dialogs */
+#modal .back{position:fixed;inset:0;background:rgba(31,26,20,.32);display:grid;place-items:center;z-index:50;padding:16px;animation:fade .15s}
+@keyframes fade{from{opacity:0}}
+.dlg{background:var(--card);border:2px solid var(--ink);border-radius:10px;box-shadow:10px 10px 0 var(--ink);width:min(500px,100%);max-height:calc(100vh - 32px);overflow:auto;animation:pop .18s}
+@keyframes pop{from{transform:translateY(8px);opacity:.5}}
+.dlg .dh{padding:20px 22px 0;display:flex;gap:10px}
+.dlg h2{margin:0;font-size:24px}
+.dlg .sub,.dlg .note{color:var(--dim);font-size:13px;margin-top:3px}
+.dlg .x{margin-left:auto;width:30px;height:30px;border-radius:50%;font-size:20px;color:var(--dim)}.dlg .x:hover{background:rgba(31,26,20,.06)}
+.dlg .db{padding:14px 22px 22px;display:flex;flex-direction:column;gap:14px}
+.dlg .df{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+.f{display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:700;color:var(--dim)}
+.f i{font-weight:400;color:var(--mute)}
+.in{height:42px;border:1.5px solid var(--line2);border-radius:8px;padding:0 12px;background:#fff;outline:none;font-size:14.5px;font-weight:400;color:var(--ink)}
+textarea.in{height:auto;min-height:80px;padding:10px 12px;resize:vertical}
+.in:focus{border-color:var(--ink)}
+.swatches{display:flex;gap:8px}
+.swatches label{position:relative}.swatches input{position:absolute;opacity:0}
+.swatches span{display:block;width:28px;height:28px;border-radius:50%;cursor:pointer;border:1.5px solid rgba(31,26,20,.2)}
+.swatches input:checked+span{outline:2px solid var(--ink);outline-offset:2px}
+.choice{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.choice label{border:1.5px solid var(--line2);border-radius:10px;padding:10px 12px;cursor:pointer;font-weight:600;font-size:13px;color:var(--ink)}
+.choice label small{display:block;color:var(--mute);font-weight:400;font-size:12px}
+.choice input{display:none}
+.choice label:has(input:checked){border-color:var(--ink);background:var(--accent-soft)}
+.menu{display:flex;flex-direction:column;gap:2px}
+.menu button{display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:10px;text-align:left}
+.menu button:hover{background:rgba(31,26,20,.05)}
+.menu small{display:block;color:var(--mute);font-size:12px}
+.danger-zone{display:flex;align-items:center;gap:12px;border:1.5px solid #e7b9b3;border-radius:10px;padding:12px 14px;font-size:13px}
+.danger-zone.soft{border-color:var(--line2)}
+.danger-zone>span{flex:1}.danger-zone small{display:block;color:var(--mute);font-size:12px}
+#toasts{position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;gap:8px;z-index:60}
+.toast{background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:8px;font-size:13px;box-shadow:4px 4px 0 var(--accent);animation:pop .2s;max-width:360px}
+.toast.bad{box-shadow:4px 4px 0 var(--red)}
+@media (max-width:1150px){.layout,.article{grid-template-columns:1fr}.front{grid-template-columns:1fr}.board{grid-template-columns:repeat(4,240px)}}
+@media (max-width:760px){.front h1{font-size:40px}.cols3{grid-template-columns:1fr}.cols3>div{border-left:0;border-top:1.5px solid var(--ink)}.cols3>div:first-child{border-top:0}.mast nav{display:none}.sys{display:none}main{padding:18px 16px 60px}.wshead{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<header id="top"></header>
+<main id="main"></main>
+<div id="modal"></div>
+<div id="toasts"></div>
+<script type="module">
+import { createCore, paint, esc, money, num, ago, initials, STAGES, ROLES, stageLabel, roleLabel, planStatus, editsSummary, cityMap, loadCity, heroStreets, valueLabel } from '../shared/core.js';
+import { bindActions } from '../shared/actions.js';
+import { modals } from '../shared/modals.js';
+
+const $ = (s) => document.querySelector(s);
+const MAP = { bg: '#efe7d8', minor: '#d4c6ae', major: '#a8977b', bld: '#e3d8c4', tall: '#d2c3a8', edit: '#c2410c' };
+const STAGE_COLOR = { draft: '#8f857a', review: '#a16207', approved: '#2f7d4f', archived: '#c9bfb0' };
+const ICON = {
+  plus: '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+  play: '<svg viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z" fill="currentColor" stroke="none"/></svg>',
+  user: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5M19 8v6M16 11h6"/></svg>',
+  copy: '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 012-2h8"/></svg>',
+};
+
+const core = createCore({ onRender: render, onToast: toast });
+core.ui.stayOnBoard = true; // a new plan appears in the Draft column instead of opening
+bindActions(core);
+function toast(msg, kind) {
+  const t = document.createElement('div'); t.className = `toast ${kind || ''}`; t.textContent = msg;
+  $('#toasts').append(t); setTimeout(() => t.remove(), kind === 'bad' ? 5200 : 3000);
+}
+const av = (p, cls = '') => `<span class="av ${cls} ${p.online ? 'on' : ''}" style="background:${esc(p.color)}" title="${esc(p.name)}${p.me ? ' (you)' : ''}">${esc(initials(p.name))}</span>`;
+const faces = (list, n = 4, cls = 'sm') => list.length ? `<span class="faces">${list.slice(0, n).map((p) => av(p, cls)).join('')}${list.length > n ? `<span class="av ${cls}" style="background:#8f857a">+${list.length - n}</span>` : ''}</span>` : '';
+const status = (p) => { const s = planStatus(p); return `<span class="status ${s.key}" title="${esc(s.detail || '')}"><i></i>${esc(s.label)}</span>`; };
+const vcls = (p) => (!p.streets && !p.blocks ? 'muted' : p.value?.total >= 0 ? 'up' : 'down');
+const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
+function top(v) {
+  const r = v.route;
+  const sys = v.st.connected ? (v.engine === 'up' ? ['ok', 'Live · engine ready'] : v.engine === 'probing' ? ['busy', 'Live · checking engine'] : ['bad', 'Engine offline']) : v.connecting ? ['busy', 'Connecting…'] : ['bad', 'Offline'];
+  return `<div class="mast"><a class="name" href="#/"><i>C</i>CommonGround</a>
+    <nav><a href="#/" class="${r.name === 'home' ? 'on' : ''}">Front page</a>${v.st.workspaces.map((w) => `<a href="#/w/${w.id}" class="${r.wsId === w.id ? 'on' : ''}"><span class="d" style="background:${esc(w.color)}"></span>${esc(w.name)}</a>`).join('')}</nav>
+    <span class="grow"></span><span class="sys"><i class="${sys[0]}"></i>${sys[1]}</span>
+    <button class="btn sm ghost" data-act="modal" data-modal="join">Join</button>
+    <button class="me" data-act="modal" data-modal="account">${av({ ...(v.me || { color: '#8f857a' }), name: v.account.name || v.me?.name || '?', online: v.st.connected })}${esc(v.account.name || 'You')}</button></div>`;
+}
+
+function home(v) {
+  const ws = v.st.workspaces;
+  const front = `<section class="front"><div><div class="kicker">${esc(today)} · San Francisco</div>
+      <h1>Your team decides what <em>2nd Street</em> becomes.</h1>
+      <p class="lede">Gather colleagues in a workspace, move ideas from draft to approved, and test every one of them on a simulated weekday of 270,000 people, together and live.</p>
+      <div class="row"><button class="btn primary lg" data-act="modal" data-modal="create-ws">${ICON.plus}Start a workspace</button><button class="btn lg" data-act="modal" data-modal="join">Join with an invite</button></div></div>
+    <figure class="plate" style="margin:0">${cityMap({ streets: heroStreets(), colors: MAP })}<figcaption>Fig. 1 · Financial District and SoMa, with 2nd Street car-free.</figcaption></figure></section>`;
+  const how = `<div class="cols3"><div><div class="n">i.</div><h3>Open a workspace</h3><p>A shared desk for one project: its plans, its people and a record of every decision.</p></div>
+      <div><div class="n">ii.</div><h3>Bring in colleagues</h3><p>Send an invite link as admin, editor or viewer. They choose a name and join in one step.</p></div>
+      <div><div class="n">iii.</div><h3>Work the board</h3><p>Plans move from Draft to In review to Approved, and the engine scores every change for the whole team.</p></div></div>`;
+  const list = ws.length ? `<div class="sec"><h2>Your workspaces</h2><span class="grow"></span><button class="btn sm" data-act="modal" data-modal="create-ws">${ICON.plus}New workspace</button></div>
+    <div class="wsgrid">${ws.map((w) => {
+      const by = Object.fromEntries(STAGES.map((s) => [s.key, w.plans.filter((p) => p.stage === s.key).length]));
+      return `<a class="card ws" href="#/w/${w.id}"><div class="bar" style="background:${esc(w.color)}"></div>
+        <div class="row" style="justify-content:space-between;margin-top:14px"><span class="pill ${w.myRole}">${roleLabel(w.myRole)}</span>${faces(w.members, 4)}</div>
+        <h3>${esc(w.name)}</h3><div class="dim" style="font-size:13px">${esc(w.description || 'No description')}</div>
+        <div class="foot"><span>${by.draft} draft · ${by.review} in review · ${by.approved} approved</span><span>${ago(w.updatedAt)}</span></div></a>`;
+    }).join('')}</div>` : '';
+  return front + (ws.length ? list : how);
+}
+
+function wsHead(v, w, sub) {
+  return `<div class="wshead"><div class="grow" style="min-width:0"><div class="kicker" style="color:${esc(w.color)}">Workspace · ${roleLabel(w.myRole)}</div><h1>${esc(w.name)}</h1>${w.description ? `<p>${esc(w.description)}</p>` : ''}</div>
+      ${faces(w.here, 6, '')}${v.can.admin ? `<button class="btn primary" data-act="modal" data-modal="invite" data-arg="${w.id}">${ICON.user}Invite</button>` : ''}<button class="btn" data-act="modal" data-modal="ws-settings" data-arg="${w.id}">Settings</button></div>
+    <div class="tabs"><a href="#/w/${w.id}" class="${sub === 'board' ? 'on' : ''}">Board</a><a href="#/w/${w.id}/people" class="${sub === 'people' ? 'on' : ''}">People (${w.members.length})</a></div>`;
+}
+
+function log(list, n = 14) {
+  const it = list.slice(-n).reverse();
+  return it.length ? `<div class="log">${it.map((a) => `<div class="it"><b style="color:${a.who === 'Engine' ? 'var(--dim)' : esc(a.color)}">${esc(a.who)}</b> ${esc(a.text)}<time>${ago(a.at)}</time></div>`).join('')}</div>` : '<div class="muted">Nothing yet.</div>';
+}
+
+// A card: click opens the plan; editors drag it between columns or use its "Move to" menu.
+function ticket(v, w, p) {
+  const ps = core.planState(p.id);
+  const fresh = Date.now() - p.createdAt.getTime() < 6000;
+  return `<div class="ticket ${fresh ? 'fresh' : ''}" role="link" tabindex="0" data-act="go" data-href="#/w/${w.id}/p/${p.id}" ${v.can.edit ? `draggable="true" data-drag="${p.id}"` : ''}>
+      <div class="mini">${cityMap({ streets: ps?.streets, colors: MAP, crop: 'edits', buildings: false, thin: true })}</div>
+      <div class="b"><h3>${esc(p.name)}</h3><div class="v ${vcls(p)}">${valueLabel(p)}</div>
+        <div class="m">${status(p)}<span>${ago(p.updatedAt)}</span></div>
+        ${v.can.edit ? `<select class="mv" data-act="stage" data-plan="${p.id}" aria-label="Move ${esc(p.name)} to another stage" title="Move to another stage">${STAGES.map((s) => `<option value="${s.key}" ${s.key === p.stage ? 'selected' : ''}>${s.key === p.stage ? `Stage: ${s.label}` : `Move to ${s.label}`}</option>`).join('')}</select>` : ''}</div></div>`;
+}
+
+function board(v, w) {
+  const online = w.members.filter((m) => m.online);
+  return wsHead(v, w, 'board') + `<div class="layout"><div>
+      ${v.can.edit ? '<div class="muted" style="font-size:12.5px;margin:-6px 0 12px">Drag a plan between columns to move it through the workflow.</div>' : ''}
+      <div class="board">${STAGES.map((s) => { const list = w.plans.filter((p) => p.stage === s.key); return `<section class="col" data-drop="${s.key}"><h4><i style="background:${STAGE_COLOR[s.key]}"></i>${s.label}<span class="c">${list.length}</span></h4><div class="hint">${s.hint}</div>
+        ${list.map((p) => ticket(v, w, p)).join('')}${s.key === 'draft' && v.can.edit ? `<button class="addt" data-act="modal" data-modal="new-plan" data-arg="${w.id}">+ New plan</button>` : ''}</section>`; }).join('')}</div></div>
+    <aside class="rail"><div class="card pad"><h4>On the team</h4><div class="team">${w.members.map((m) => `<div class="p">${av(m)}<span><b>${esc(m.name)}</b>${m.me ? ' <span class="muted">(you)</span>' : ''}</span><small>${m.online ? (m.scenarioId ? `in ${esc(w.plans.find((p) => p.id === m.scenarioId)?.name || 'a plan')}` : 'online') : roleLabel(m.role)}</small></div>`).join('')}</div>
+        ${v.can.admin ? `<button class="btn sm" style="margin-top:14px;width:100%" data-act="modal" data-modal="invite" data-arg="${w.id}">Invite someone</button>` : ''}</div>
+      <div class="card pad"><h4>The record</h4>${log(w.activity)}</div></aside></div>`;
+}
+
+function people(v, w) {
+  const admin = v.can.admin;
+  const inv = admin ? `<div class="card pad" style="margin-bottom:20px"><div class="row" style="justify-content:space-between;margin-bottom:12px"><div><h3 style="margin:0;font-size:20px">Invite links</h3><div class="dim" style="font-size:13px">Anyone with a link joins with its role.</div></div>
+      <form class="row" data-form="invite"><input type="hidden" name="ws" value="${w.id}"><select class="inline" name="role">${ROLES.map((r) => `<option value="${r.key}" ${r.key === 'editor' ? 'selected' : ''}>${r.label}</option>`).join('')}</select><button class="btn sm">${ICON.plus}New link</button></form></div>
+      <div style="display:flex;flex-direction:column;gap:8px">${w.invites.map((i) => `<div class="link"><span class="pill ${i.role}">${roleLabel(i.role)}</span><code>${esc(core.inviteUrl(i.code))}</code><span class="muted" style="font-size:12px">${i.uses} joined</span><button class="btn sm" data-act="copy-invite" data-code="${esc(i.code)}">${ICON.copy}Copy</button><button class="btn sm ghost" data-act="revoke" data-code="${esc(i.code)}">Revoke</button></div>`).join('') || '<span class="muted">No active links.</span>'}</div></div>` : `<div class="banner">Only admins can invite people. Ask an admin of ${esc(w.name)} for a link.</div>`;
+  return wsHead(v, w, 'people') + inv + `<table class="roster"><thead><tr><th>Name</th><th>Role</th><th>Status</th><th>Joined</th><th></th></tr></thead><tbody>
+    ${w.members.map((m) => `<tr><td><div class="who">${av(m)}<b>${esc(m.name)}</b>${m.me ? '<span class="muted">(you)</span>' : ''}</div></td>
+      <td>${admin && !m.me ? `<select class="inline" data-act="role" data-ws="${w.id}" data-member="${m.id}">${ROLES.map((r) => `<option value="${r.key}" ${r.key === m.role ? 'selected' : ''}>${r.label}</option>`).join('')}</select>` : `<span class="pill ${m.role}">${roleLabel(m.role)}</span>`}</td>
+      <td class="dim">${m.online ? '<span class="up">●</span> online' : `seen ${ago(m.lastSeen)}`}</td><td class="muted">${ago(m.joinedAt)}</td>
+      <td style="text-align:right">${m.me ? `<button class="btn sm ghost" data-act="leave" data-ws="${w.id}">Leave</button>` : admin ? `<button class="btn sm ghost" data-act="remove-member" data-ws="${w.id}" data-member="${m.id}" data-name="${esc(m.name)}">Remove</button>` : ''}</td></tr>`).join('')}</tbody></table>
+    <p class="dim" style="font-size:12.5px;margin-top:14px">${ROLES.map((r) => `<b>${r.label}</b>: ${r.hint.toLowerCase()}`).join(' · ')}.</p>`;
+}
+
+function planPage(v, w, p) {
+  const ps = v.ps, res = ps?.result, d = res?.delta || {}, val = p.value;
+  const empty = !p.streets && !p.blocks, ready = p.resultVersion > 0 && val && !empty;
+  const lines = ready ? [['Mobility', val.mobility], ['Social life', val.social], ['Local economy', val.economy], ['Environment', val.environment]] : [];
+  return `<div class="muted" style="font-size:13px;margin-bottom:8px"><a href="#/w/${w.id}" style="text-decoration:none">← ${esc(w.name)}</a></div>
+  <div class="article"><div>
+      <div class="kicker">Plan · ${stageLabel(p.stage)}</div><h1>${esc(p.name)}</h1>
+      <p class="lede">${esc(p.description || 'No description yet: say what this plan tries to change, and why.')}</p>
+      <div class="byline">${faces(w.members.filter((m) => m.name === p.createdBy), 1)}<span>Proposed by <b>${esc(p.createdBy)}</b> · ${ago(p.createdAt)}</span><span class="grow"></span>${status(p)}</div>
+      <div class="figure">${cityMap({ streets: ps?.streets, colors: MAP, crop: p.streets ? 'edits' : 'fit' })}</div>
+      <div class="figcap">${esc(editsSummary(p))}${p.here.length ? ` · ${p.here.map((x) => esc(x.name)).join(', ')} ${p.here.length === 1 ? 'is' : 'are'} in the simulator now` : ''}.</div>
+      <div class="row" style="margin-bottom:24px"><a class="btn primary lg" href="${esc(core.simUrl(w.id, p.id))}">${ICON.play}Open in the 3D simulator</a>
+        ${empty && v.can.edit ? `<button class="btn lg" data-act="hero-edit" data-plan="${p.id}">Try it: car-free 2nd Street</button>` : ''}</div>
+      <div class="card pad"><h3 style="margin:0 0 6px;font-size:20px">The record for this plan</h3>${log(w.activity.filter((a) => a.scenarioId === p.id), 10)}</div></div>
+    <aside style="display:flex;flex-direction:column;gap:18px">
+      <div class="scores"><div class="big"><div class="kicker">City value vs today</div><div class="v ${vcls(p)}">${valueLabel(p)}</div><div class="muted" style="font-size:12px;margin-top:4px">${ready ? 'per year · five replanning days' : empty ? 'Make an edit to see the impact' : planStatus(p).label}</div></div>
+        ${lines.map(([l, x]) => `<div class="ln"><span>${l}</span><b class="${x >= 0 ? 'up' : 'down'}">${money(x)}</b></div>`).join('')}
+        ${ready && d.trips ? `<div class="ln"><span>Car trips a day</span><b>${num(d.trips.car)}</b></div><div class="ln"><span>Walking trips a day</span><b>${num(d.ped_trips)}</b></div><div class="ln"><span>New acquaintances</span><b>${num(d.new_ties)}</b></div>` : ''}
+        ${p.status === 'error' ? `<div class="ln"><span class="down">${esc(p.error)}</span><button class="btn sm" data-act="recompute" data-plan="${p.id}">Retry</button></div>` : ''}</div>
+      <div class="card pad"><div class="f" style="margin-bottom:8px">Workflow stage</div>
+        <div class="stages">${STAGES.map((s) => `<button data-act="set-stage" data-plan="${p.id}" data-stage="${s.key}" class="${s.key === p.stage ? 'on' : ''}" ${v.can.edit ? '' : 'disabled'}>${s.label}</button>`).join('')}</div>
+        ${v.can.edit ? `<div class="row" style="margin-top:14px"><button class="btn sm" data-act="modal" data-modal="edit-plan" data-arg="${p.id}">Rename</button><button class="btn sm" data-act="duplicate" data-plan="${p.id}">Duplicate</button><button class="btn sm" data-act="reset-plan" data-plan="${p.id}" ${empty ? 'disabled' : ''}>Reset</button><button class="btn sm danger" data-act="delete-plan" data-plan="${p.id}">Delete</button></div>` : '<div class="muted" style="font-size:12.5px;margin-top:10px">You’re a viewer: you can follow this plan but not change it.</div>'}</div>
+    </aside></div>`;
+}
+
+function render(core) {
+  const v = core.view();
+  paint($('#top'), top(v));
+  let html;
+  if (v.offline) html = `<div class="banner">Can’t reach the live server. Run <code>spacetime start</code> and publish the module (see <code>backend/live/README.md</code>), then reload.</div>` + home(v);
+  else if (v.connecting) html = `<div class="skel"><div class="spin"></div></div>`;
+  else {
+    const r = v.route;
+    if (r.name === 'join') html = `<div class="skel"><div style="text-align:center"><div class="spin" style="margin:0 auto 14px"></div>Joining the workspace…</div></div>`;
+    else if (r.wsId && !v.ws) html = `<div class="card empty"><h2>Workspace not found</h2><p>It may have been deleted, or you’re not a member.</p><a class="btn" href="#/">Front page</a></div>`;
+    else if (r.name === 'plan') html = v.plan ? planPage(v, v.ws, v.plan) : `<div class="card empty">That plan was deleted. <a href="#/w/${v.ws.id}">Back to ${esc(v.ws.name)}</a></div>`;
+    else if (r.name === 'people') html = people(v, v.ws);
+    else if (v.ws) html = board(v, v.ws);
+    else html = home(v);
+    if (v.engine === 'down') html = `<div class="banner">The simulation engine isn’t reachable, so new edits won’t be simulated. Start it with <code>./run.sh</code> (or <code>run.ps1</code> on Windows).</div>` + html;
+    if (v.reconnecting) html = `<div class="banner">Lost the live server, reconnecting… Changes you make now won’t be saved until it’s back.</div>` + html;
+  }
+  if (!dragging) paint($('#main'), html); else pendingHtml = html;
+  paint($('#modal'), modals(core, v, { av, icons: ICON }));
+  document.title = `${v.plan ? `${v.plan.name} · ` : ''}${v.ws ? `${v.ws.name} · ` : ''}CommonGround`;
+}
+
+// ── drag a plan between stage columns (editors) ──
+let dragging = null, pendingHtml = null;
+const main = $('#main');
+main.addEventListener('dragstart', (e) => { const t = e.target.closest('[data-drag]'); if (!t) return; dragging = +t.dataset.drag; t.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(dragging)); });
+main.addEventListener('dragover', (e) => { const c = e.target.closest('[data-drop]'); if (!c || dragging == null) return; e.preventDefault(); main.querySelectorAll('.col.over').forEach((x) => x !== c && x.classList.remove('over')); c.classList.add('over'); });
+main.addEventListener('dragleave', (e) => { const c = e.target.closest('[data-drop]'); if (c && !c.contains(e.relatedTarget)) c.classList.remove('over'); });
+main.addEventListener('drop', (e) => { const c = e.target.closest('[data-drop]'); if (!c || dragging == null) return; e.preventDefault(); const id = dragging; endDrag(); core.act.setStage(id, c.dataset.drop); });
+main.addEventListener('dragend', endDrag);
+main.addEventListener('keydown', (e) => { const t = e.target.closest?.('.ticket'); if (t && e.key === 'Enter' && e.target === t) core.go(t.dataset.href); });
+function endDrag() { dragging = null; main.querySelectorAll('.over,.dragging').forEach((x) => x.classList.remove('over', 'dragging')); if (pendingHtml) { pendingHtml = null; core.render(); } }
+
+loadCity().then(() => core.render());
+</script>
+</body>
+</html>
